@@ -552,15 +552,28 @@ function Dashboard() {
                         Bots blocked
                       </span>
                     </div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">
-                      <TrendingDown className="h-3 w-3" />
-                      {(rangeTotals.total ? (rangeTotals.bots / rangeTotals.total) * 100 : 0).toFixed(1)}%
-                    </span>
+                    {analyticsLoading ? (
+                      <div className="h-5 w-16 animate-pulse rounded-full bg-muted" />
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">
+                        <TrendingDown className="h-3 w-3" />
+                        {(rangeTotals.total ? (rangeTotals.bots / rangeTotals.total) * 100 : 0).toFixed(1)}%
+                      </span>
+                    )}
                   </div>
-                  <div className="mt-3 font-display text-3xl font-bold">{rangeTotals.bots.toLocaleString()}</div>
-                  <svg viewBox="0 0 100 24" className="mt-3 h-8 w-full" preserveAspectRatio="none">
-                    <path d={linePath(botChartValues, 100, 24)} stroke="var(--color-destructive)" strokeWidth="1.5" fill="none" />
-                  </svg>
+                  {analyticsLoading ? (
+                    <div className="mt-3 space-y-3">
+                      <div className="h-8 w-28 animate-pulse rounded-lg bg-muted" />
+                      <div className="h-6 w-full animate-pulse rounded bg-muted" />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mt-3 font-display text-3xl font-bold">{rangeTotals.bots.toLocaleString()}</div>
+                      <svg viewBox="0 0 100 24" className="mt-3 h-8 w-full" preserveAspectRatio="none">
+                        <path d={linePath(botChartValues, 100, 24)} stroke="var(--color-destructive)" strokeWidth="1.5" fill="none" />
+                      </svg>
+                    </>
+                  )}
                 </div>
 
                 <div
