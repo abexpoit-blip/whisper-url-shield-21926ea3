@@ -58,7 +58,13 @@ export type Database = {
           link_id: string
           os: string | null
           referer: string | null
+          referer_host: string | null
           user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
           variant: string | null
         }
         Insert: {
@@ -74,7 +80,13 @@ export type Database = {
           link_id: string
           os?: string | null
           referer?: string | null
+          referer_host?: string | null
           user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
           variant?: string | null
         }
         Update: {
@@ -90,7 +102,13 @@ export type Database = {
           link_id?: string
           os?: string | null
           referer?: string | null
+          referer_host?: string | null
           user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
           variant?: string | null
         }
         Relationships: [
