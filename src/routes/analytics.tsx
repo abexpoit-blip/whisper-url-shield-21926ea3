@@ -92,9 +92,9 @@ function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
 
   const setDays = (n: number) =>
-    navigate({ to: "/analytics", search: (prev) => ({ ...prev, days: n }), replace: true });
+    navigate({ to: "/analytics", search: (prev: AnalyticsSearch) => ({ ...prev, days: n }), replace: true });
   const setLinkId = (id: string) =>
-    navigate({ to: "/analytics", search: (prev) => ({ ...prev, linkId: id }), replace: true });
+    navigate({ to: "/analytics", search: (prev: AnalyticsSearch) => ({ ...prev, linkId: id }), replace: true });
 
   const load = async () => {
     setLoading(true);
