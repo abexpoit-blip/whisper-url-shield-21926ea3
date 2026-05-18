@@ -155,7 +155,7 @@ function Dashboard() {
   };
 
   const goToLinkAnalytics = (id: string) => {
-    void navigate({ to: "/analytics/$linkId", params: { linkId: id } });
+    void navigate({ to: "/analytics/$linkId", params: { linkId: id }, search: { range } });
   };
 
 
