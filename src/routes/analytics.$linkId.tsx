@@ -250,6 +250,95 @@ function LinkMonitorPage() {
           </Card>
         </div>
 
+        {/* Funnel: Impressions → Real clicks → Conversions */}
+        <Card className="p-5">
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-primary" />
+              <h2 className="font-semibold">Conversion funnel</h2>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Impression → Real click → Conversion
+            </div>
+          </div>
+
+          {/* Overall funnel bars */}
+          <div className="space-y-3 mb-6">
+            {(data?.overallFunnel ?? []).map((s, i) => (
+              <div key={s.stage}>
+                <div className="flex items-center justify-between text-sm mb-1">
+                  <span className="font-medium">{s.stage}</span>
+                  <span className="tabular-nums text-muted-foreground">
+                    {s.count.toLocaleString()}{" "}
+                    <span className="text-primary">({s.pct.toFixed(1)}%)</span>
+                  </span>
+                </div>
+                <div className="h-3 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-full ${i === 0 ? "bg-primary" : i === 1 ? "bg-emerald-500" : "bg-amber-500"}`}
+                    style={{ width: `${Math.max(s.pct, 1)}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Per-source funnel chart */}
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
+              Per-source funnel
+            </h3>
+            {data && data.sourceFunnel.length > 0 ? (
+              <>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data.sourceFunnel} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="source" stroke="hsl(var(--muted-foreground))" fontSize={11} angle={-15} textAnchor="end" height={60} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
+                      <Legend />
+                      <Bar dataKey="impressions" name="Impressions" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="realClicks" name="Real clicks" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="conversions" name="Conversions" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Per-source conversion rate table */}
+                <div className="mt-5 overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="text-xs uppercase text-muted-foreground border-b border-border">
+                      <tr>
+                        <th className="text-left py-2 px-2">Source</th>
+                        <th className="text-right py-2 px-2">Impr.</th>
+                        <th className="text-right py-2 px-2">Real clicks</th>
+                        <th className="text-right py-2 px-2">Conv.</th>
+                        <th className="text-right py-2 px-2">CTR</th>
+                        <th className="text-right py-2 px-2">Conv. rate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.sourceFunnel.map((r) => (
+                        <tr key={r.source} className="border-b border-border/50">
+                          <td className="py-2 px-2 font-medium truncate max-w-[10rem]" title={r.source}>{r.source}</td>
+                          <td className="py-2 px-2 text-right tabular-nums">{r.impressions.toLocaleString()}</td>
+                          <td className="py-2 px-2 text-right tabular-nums text-emerald-500">{r.realClicks.toLocaleString()}</td>
+                          <td className="py-2 px-2 text-right tabular-nums text-amber-500">{r.conversions.toLocaleString()}</td>
+                          <td className="py-2 px-2 text-right tabular-nums">{(r.ctr * 100).toFixed(1)}%</td>
+                          <td className="py-2 px-2 text-right tabular-nums font-semibold text-primary">{(r.conversionRate * 100).toFixed(1)}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            ) : (
+              <Empty msg="Tag your links with ?utm_source=… to see per-source funnels." />
+            )}
+          </div>
+        </Card>
+
         {/* Source attribution */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="p-5">
