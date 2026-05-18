@@ -101,6 +101,47 @@ export const getLinkMonitor = createServerFn({ method: "POST" })
       return [...m.entries()].map(([k, v]) => ({ key: k, ...v })).sort((a, b) => b.total - a.total);
     };
 
+    // Per-source funnel: impressions (initial pageload) → real clicks (verified humans) → conversions (redirect to destination)
+    // In our model each visit logs:
+    //   1) resolveLink → impression row (bot_reason does NOT start with "verify:")
+    //   2) verifyHuman → outcome row (bot_reason starts with "verify:"); !is_bot = redirected to destination
+    const isVerify = (c: Click) => !!c.bot_reason?.startsWith("verify:");
+    const funnelMap = new Map<string, { impressions: number; realClicks: number; conversions: number }>();
+    for (const c of clicks) {
+      const k = c.utm_source ?? "(direct/untagged)";
+      const e = funnelMap.get(k) ?? { impressions: 0, realClicks: 0, conversions: 0 };
+      if (isVerify(c)) {
+        if (!c.is_bot) { e.realClicks += 1; e.conversions += 1; }
+      } else {
+        e.impressions += 1;
+      }
+      funnelMap.set(k, e);
+    }
+    const sourceFunnel = [...funnelMap.entries()]
+      .map(([source, v]) => ({
+        source,
+        ...v,
+        ctr: v.impressions ? v.realClicks / v.impressions : 0,
+        conversionRate: v.impressions ? v.conversions / v.impressions : 0,
+      }))
+      .sort((a, b) => b.impressions - a.impressions)
+      .slice(0, 10);
+
+    // Overall funnel totals (across all sources)
+    let impFunnel = 0, realFunnel = 0, convFunnel = 0;
+    for (const c of clicks) {
+      if (isVerify(c)) {
+        if (!c.is_bot) { realFunnel += 1; convFunnel += 1; }
+      } else {
+        impFunnel += 1;
+      }
+    }
+    const overallFunnel = [
+      { stage: "Impressions", count: impFunnel, pct: 100 },
+      { stage: "Real clicks", count: realFunnel, pct: impFunnel ? (realFunnel / impFunnel) * 100 : 0 },
+      { stage: "Conversions", count: convFunnel, pct: impFunnel ? (convFunnel / impFunnel) * 100 : 0 },
+    ];
+
     // Recent click sample
     const recent = clicks.slice(0, 25).map((c) => ({
       created_at: c.created_at,
