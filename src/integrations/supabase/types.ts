@@ -29,6 +29,7 @@ export type Database = {
           os: string | null
           referer: string | null
           user_agent: string | null
+          variant: string | null
         }
         Insert: {
           bot_reason?: string | null
@@ -44,6 +45,7 @@ export type Database = {
           os?: string | null
           referer?: string | null
           user_agent?: string | null
+          variant?: string | null
         }
         Update: {
           bot_reason?: string | null
@@ -59,6 +61,7 @@ export type Database = {
           os?: string | null
           referer?: string | null
           user_agent?: string | null
+          variant?: string | null
         }
         Relationships: [
           {

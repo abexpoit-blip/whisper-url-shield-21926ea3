@@ -103,6 +103,9 @@ function Dashboard() {
           </Link>
           <div className="flex items-center gap-3">
             <span className="hidden text-sm text-muted-foreground md:inline">{email}</span>
+            <Button asChild variant="outline" size="sm" className="gap-2">
+              <Link to="/analytics"><BarChart3 className="h-4 w-4" /> Analytics</Link>
+            </Button>
             <Button variant="ghost" size="sm" onClick={logout} className="gap-2">
               <LogOut className="h-4 w-4" /> Sign out
             </Button>
