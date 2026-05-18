@@ -34,7 +34,7 @@ export const getVariantLeaderboard = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => WindowSchema.parse(input))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    await assertAdmin(context.userId, "rotation.leaderboard.view", { window: data.window });
 
     const since =
       data.window === "all"
@@ -139,7 +139,7 @@ export const promoteVariant = createServerFn({ method: "POST" })
     z.object({ slug: z.string().min(1).max(64) }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    await assertAdmin(context.userId, "rotation.promote", { slug: data.slug });
 
     const { error: e1 } = await supabaseAdmin
       .from("prelander_variants")
@@ -160,7 +160,7 @@ export const promoteVariant = createServerFn({ method: "POST" })
 export const resetRotation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.userId);
+    await assertAdmin(context.userId, "rotation.reset");
     const { error } = await supabaseAdmin
       .from("prelander_variants")
       .update({ is_active: true })
