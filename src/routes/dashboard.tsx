@@ -202,6 +202,11 @@ function Dashboard() {
                         <ExternalLink className="h-4 w-4" />
                       </Button>
                     </a>
+                    <Button asChild size="sm" variant="ghost" title="Targeting & rotator">
+                      <Link to="/links/$linkId/settings" params={{ linkId: l.id }}>
+                        <Settings className="h-4 w-4" />
+                      </Link>
+                    </Button>
                     <Button size="sm" variant="ghost" onClick={() => remove(l.id)} className="text-destructive">
                       Delete
                     </Button>
