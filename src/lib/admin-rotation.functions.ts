@@ -1,15 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { auditAdminGate } from "./admin-audit.server";
 import { z } from "zod";
 
-async function assertAdmin(userId: string) {
-  const { data, error } = await supabaseAdmin.rpc("has_role", {
-    _user_id: userId,
-    _role: "admin",
-  });
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden: admin role required");
+async function assertAdmin(userId: string, action: string, metadata?: Record<string, unknown>) {
+  await auditAdminGate({ userId, action, metadata });
 }
 
 const WindowSchema = z.object({
