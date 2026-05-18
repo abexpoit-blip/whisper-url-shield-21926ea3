@@ -118,11 +118,16 @@ const resolveLink = createServerFn({ method: "POST" })
     if (!link || link.status !== "active") return { found: false as const };
 
     // ---- A/B variant selection (epsilon-greedy per link) ----
+    // Winning metric = REAL conversion rate = successful human redirects
+    // out of total verify attempts (bot-blocks count as failures).
+    // We only look at verify rows (bot_reason starts with "verify:")
+    // because those are the rows where a real outcome was decided.
     const { data: recent } = await supabaseAdmin
       .from("clicks")
-      .select("variant,is_bot")
+      .select("variant,is_bot,bot_reason")
       .eq("link_id", link.id)
       .not("variant", "is", null)
+      .like("bot_reason", "verify:%")
       .order("created_at", { ascending: false })
       .limit(1500);
 
@@ -132,8 +137,8 @@ const resolveLink = createServerFn({ method: "POST" })
       const v = r.variant as VariantId | null;
       if (!v || !statsMap.has(v)) continue;
       const e = statsMap.get(v)!;
-      e.total += 1;
-      if (!r.is_bot) e.humans += 1;
+      e.total += 1; // verify attempt
+      if (!r.is_bot) e.humans += 1; // successful redirect
     }
     const chosenVariant = pickVariant([...statsMap.values()]);
 
