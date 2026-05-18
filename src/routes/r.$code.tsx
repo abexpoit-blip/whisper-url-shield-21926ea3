@@ -391,7 +391,7 @@ const verifyHuman = createServerFn({ method: "POST" })
       score += 25; reasons.push("ua-mismatch");
     }
 
-    const isBot = score >= 60;
+    const isBot = score >= cfg.block_threshold_score;
 
     const uaInfo2 = parseUA(a.ua);
     await supabaseAdmin.from("clicks").insert({
