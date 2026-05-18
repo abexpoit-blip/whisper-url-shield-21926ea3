@@ -541,7 +541,6 @@ const verifyHuman = createServerFn({ method: "POST" })
 
     const isBot = score >= cfg.block_threshold_score;
 
-    const uaInfo2 = parseUA(a.ua);
     const attr2 = attributionFromReferer();
     await supabaseAdmin.from("clicks").insert({
       link_id: link.id,
