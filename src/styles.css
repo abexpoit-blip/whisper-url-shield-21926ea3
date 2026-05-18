@@ -180,6 +180,9 @@
   .bg-hero {
     background-image: var(--gradient-hero);
   }
+  .bg-mesh {
+    background-image: var(--gradient-mesh);
+  }
   .bg-card-gradient {
     background-image: var(--gradient-card);
   }
@@ -189,10 +192,25 @@
   .shadow-elegant {
     box-shadow: var(--shadow-elegant);
   }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .glass {
+    background: oklch(1 0 0 / 65%);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid oklch(1 0 0 / 60%);
+  }
+  .glass-dark {
+    background: oklch(0.99 0.005 290 / 70%);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid oklch(0.92 0.01 290 / 80%);
+  }
   .grid-pattern {
     background-image:
-      linear-gradient(to right, oklch(0.78 0.16 200 / 6%) 1px, transparent 1px),
-      linear-gradient(to bottom, oklch(0.78 0.16 200 / 6%) 1px, transparent 1px);
+      linear-gradient(to right, oklch(0.55 0.22 285 / 5%) 1px, transparent 1px),
+      linear-gradient(to bottom, oklch(0.55 0.22 285 / 5%) 1px, transparent 1px);
     background-size: 48px 48px;
   }
 }
