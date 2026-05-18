@@ -43,7 +43,7 @@ export const isAdmin = createServerFn({ method: "GET" })
 export const listVariantsAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.userId);
+    await assertAdmin(context.userId, "variants.list");
 
     const { data: variants } = await supabaseAdmin
       .from("prelander_variants")
@@ -79,7 +79,7 @@ export const upsertVariant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => VariantInputSchema.parse(input))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    await assertAdmin(context.userId, "variants.upsert", { slug: data.slug, id: data.id ?? null });
 
     if (data.id) {
       const { error } = await supabaseAdmin
@@ -115,7 +115,7 @@ export const deleteVariant = createServerFn({ method: "POST" })
     z.object({ id: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    await assertAdmin(context.userId, "variants.delete", { id: data.id });
     const { error } = await supabaseAdmin
       .from("prelander_variants")
       .delete()
@@ -132,7 +132,7 @@ export const listLinksWithOverrides = createServerFn({ method: "GET" })
     z.object({ search: z.string().max(200).default("") }).parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    await assertAdmin(context.userId, "links.overrides.list", { search: data.search });
 
     let q = supabaseAdmin
       .from("links")
@@ -178,7 +178,7 @@ export const setLinkOverride = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    await assertAdmin(context.userId, "links.override.set", { link_id: data.link_id, variant_slug: data.variant_slug });
     const { error } = await supabaseAdmin
       .from("link_variant_overrides")
       .upsert({
@@ -197,7 +197,7 @@ export const clearLinkOverride = createServerFn({ method: "POST" })
     z.object({ link_id: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    await assertAdmin(context.userId, "links.override.clear", { link_id: data.link_id });
     const { error } = await supabaseAdmin
       .from("link_variant_overrides")
       .delete()
