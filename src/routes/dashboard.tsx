@@ -89,6 +89,11 @@ function Dashboard() {
   const [search, setSearch] = useState("");
   const [range, setRange] = useState<"day" | "week" | "month">("week");
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [refreshTick, setRefreshTick] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [linksDialogOpen, setLinksDialogOpen] = useState(false);
+  const navigate = useNavigate();
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
 
@@ -112,12 +117,37 @@ function Dashboard() {
   useEffect(() => {
     const days = range === "day" ? 1 : range === "week" ? 7 : 30;
     void fetchAnalytics({ data: { days, linkId: null } })
-      .then(setAnalytics)
+      .then((res) => {
+        setAnalytics(res);
+        setLastUpdated(new Date());
+      })
       .catch((error) =>
         toast.error(error instanceof Error ? error.message : "Analytics failed to load"),
       );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [range]);
+  }, [range, refreshTick]);
+
+  // Auto-refresh every 30s
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const id = setInterval(() => {
+      setRefreshTick((t) => t + 1);
+      void load();
+    }, 30_000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRefresh]);
+
+  const manualRefresh = () => {
+    setRefreshTick((t) => t + 1);
+    void load();
+    toast.success("Refreshing...");
+  };
+
+  const goToLinkAnalytics = (id: string) => {
+    void navigate({ to: "/analytics/$linkId", params: { linkId: id } });
+  };
+
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
