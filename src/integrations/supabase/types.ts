@@ -121,6 +121,48 @@ export type Database = {
           },
         ]
       }
+      custom_domains: {
+        Row: {
+          created_at: string
+          dns_target: string
+          domain: string
+          id: string
+          is_primary: boolean
+          last_checked_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          verification_token: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          dns_target?: string
+          domain: string
+          id?: string
+          is_primary?: boolean
+          last_checked_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          verification_token?: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          dns_target?: string
+          domain?: string
+          id?: string
+          is_primary?: boolean
+          last_checked_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          verification_token?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       link_destinations: {
         Row: {
           created_at: string

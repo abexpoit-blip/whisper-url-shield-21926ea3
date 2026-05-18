@@ -1,11 +1,27 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
-  Shield, LayoutDashboard, BarChart3, Trophy, ShieldCheck, Settings,
-  GitBranch, Sparkles, LogOut,
+  Shield,
+  LayoutDashboard,
+  BarChart3,
+  Trophy,
+  ShieldCheck,
+  Settings,
+  GitBranch,
+  Sparkles,
+  LogOut,
+  Globe2,
 } from "lucide-react";
 import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
-  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter,
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarHeader,
+  SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +31,7 @@ const mainNav = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Funnel", url: "/funnel", icon: GitBranch },
+  { title: "Domains", url: "/domains", icon: Globe2 },
 ];
 
 const adminNav = [
@@ -66,7 +83,11 @@ export function AppSidebar({ email }: { email?: string }) {
             <SidebarMenu className="gap-0.5">
               {mainNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.url)} className="h-9 rounded-lg data-[active=true]:bg-gradient-to-r data-[active=true]:from-primary/15 data-[active=true]:to-transparent data-[active=true]:text-foreground data-[active=true]:shadow-[inset_2px_0_0_var(--color-primary)]">
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.url)}
+                    className="h-9 rounded-lg data-[active=true]:bg-gradient-to-r data-[active=true]:from-primary/15 data-[active=true]:to-transparent data-[active=true]:text-foreground data-[active=true]:shadow-[inset_2px_0_0_var(--color-primary)]"
+                  >
                     <Link to={item.url} className="flex items-center gap-2.5">
                       <item.icon className="h-4 w-4 shrink-0" />
                       {!collapsed && <span className="text-sm font-medium">{item.title}</span>}
@@ -88,7 +109,11 @@ export function AppSidebar({ email }: { email?: string }) {
             <SidebarMenu className="gap-0.5">
               {adminNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.url)} className="h-9 rounded-lg data-[active=true]:bg-gradient-to-r data-[active=true]:from-primary/15 data-[active=true]:to-transparent data-[active=true]:text-foreground data-[active=true]:shadow-[inset_2px_0_0_var(--color-primary)]">
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.url)}
+                    className="h-9 rounded-lg data-[active=true]:bg-gradient-to-r data-[active=true]:from-primary/15 data-[active=true]:to-transparent data-[active=true]:text-foreground data-[active=true]:shadow-[inset_2px_0_0_var(--color-primary)]"
+                  >
                     <Link to={item.url} className="flex items-center gap-2.5">
                       <item.icon className="h-4 w-4 shrink-0" />
                       {!collapsed && <span className="text-sm font-medium">{item.title}</span>}
@@ -109,7 +134,9 @@ export function AppSidebar({ email }: { email?: string }) {
             <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
               Upgrade for unlimited links, custom domains & API.
             </p>
-            <Button size="sm" className="mt-3 h-7 w-full text-xs">Upgrade</Button>
+            <Button size="sm" className="mt-3 h-7 w-full text-xs">
+              Upgrade
+            </Button>
           </div>
         )}
       </SidebarContent>
@@ -124,7 +151,13 @@ export function AppSidebar({ email }: { email?: string }) {
               <div className="truncate text-xs font-medium">{email ?? "Account"}</div>
               <div className="text-[10px] text-muted-foreground">Free tier</div>
             </div>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={logout} title="Sign out">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={logout}
+              title="Sign out"
+            >
               <LogOut className="h-3.5 w-3.5" />
             </Button>
           </div>

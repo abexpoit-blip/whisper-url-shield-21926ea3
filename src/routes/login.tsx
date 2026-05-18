@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { Shield, Zap, BarChart3, Bot, Sparkles, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
@@ -14,7 +14,6 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,12 +21,20 @@ function LoginPage() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (loading || googleLoading) return;
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) return toast.error(error.message);
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (error) {
+      setLoading(false);
+      return toast.error(error.message);
+    }
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      setLoading(false);
+      return toast.error("Login session was not saved. Please try again.");
+    }
     toast.success("Welcome back!");
-    navigate({ to: "/dashboard" });
+    window.location.assign("/dashboard");
   };
 
   const onGoogle = async () => {
@@ -41,7 +48,7 @@ function LoginPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/dashboard" });
+    window.location.assign("/dashboard");
   };
 
   return (
@@ -52,7 +59,10 @@ function LoginPage() {
         <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-primary/30 blur-3xl" />
         <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-accent/40 blur-3xl" />
 
-        <Link to="/" className="relative z-10 inline-flex items-center gap-2 font-display font-bold text-xl">
+        <Link
+          to="/"
+          className="relative z-10 inline-flex items-center gap-2 font-display font-bold text-xl"
+        >
           <Shield className="h-7 w-7 text-primary" />
           LinkShield
         </Link>
@@ -65,7 +75,8 @@ function LoginPage() {
             Stop wasting ad spend on <span className="text-gradient">bot clicks.</span>
           </h2>
           <p className="text-muted-foreground text-lg">
-            LinkShield filters fake traffic, protects your ad accounts, and turns real visitors into customers.
+            LinkShield filters fake traffic, protects your ad accounts, and turns real visitors into
+            customers.
           </p>
 
           <ul className="space-y-3 pt-2">
@@ -146,8 +157,19 @@ function LoginPage() {
                 className="h-11"
               />
             </div>
-            <Button type="submit" disabled={loading || googleLoading} className="w-full h-11 shadow-glow group">
-              {loading ? "Signing in…" : (<>Sign in <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" /></>)}
+            <Button
+              type="submit"
+              disabled={loading || googleLoading}
+              className="w-full h-11 shadow-glow group"
+            >
+              {loading ? (
+                "Signing in…"
+              ) : (
+                <>
+                  Sign in{" "}
+                  <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </>
+              )}
             </Button>
           </form>
 
@@ -166,10 +188,22 @@ function LoginPage() {
 function GoogleIcon() {
   return (
     <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden>
-      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.75h3.57c2.08-1.92 3.28-4.74 3.28-8.07z"/>
-      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.75c-.99.66-2.26 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/>
-      <path fill="#FBBC05" d="M5.84 14.12A6.6 6.6 0 0 1 5.5 12c0-.74.13-1.46.34-2.12V7.04H2.18A11 11 0 0 0 1 12c0 1.77.43 3.45 1.18 4.96l3.66-2.84z"/>
-      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.04l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/>
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.75h3.57c2.08-1.92 3.28-4.74 3.28-8.07z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.75c-.99.66-2.26 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.12A6.6 6.6 0 0 1 5.5 12c0-.74.13-1.46.34-2.12V7.04H2.18A11 11 0 0 0 1 12c0 1.77.43 3.45 1.18 4.96l3.66-2.84z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.04l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"
+      />
     </svg>
   );
 }

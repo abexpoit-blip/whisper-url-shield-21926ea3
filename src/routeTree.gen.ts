@@ -13,6 +13,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FunnelRouteImport } from './routes/funnel'
+import { Route as DomainsRouteImport } from './routes/domains'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
@@ -41,6 +42,11 @@ const LoginRoute = LoginRouteImport.update({
 const FunnelRoute = FunnelRouteImport.update({
   id: '/funnel',
   path: '/funnel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DomainsRoute = DomainsRouteImport.update({
+  id: '/domains',
+  path: '/domains',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/domains': typeof DomainsRoute
   '/funnel': typeof FunnelRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/domains': typeof DomainsRoute
   '/funnel': typeof FunnelRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/domains': typeof DomainsRoute
   '/funnel': typeof FunnelRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/dashboard'
+    | '/domains'
     | '/funnel'
     | '/login'
     | '/pricing'
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/dashboard'
+    | '/domains'
     | '/funnel'
     | '/login'
     | '/pricing'
@@ -171,6 +182,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/dashboard'
+    | '/domains'
     | '/funnel'
     | '/login'
     | '/pricing'
@@ -187,6 +199,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRouteWithChildren
   DashboardRoute: typeof DashboardRoute
+  DomainsRoute: typeof DomainsRoute
   FunnelRoute: typeof FunnelRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
@@ -226,6 +239,13 @@ declare module '@tanstack/react-router' {
       path: '/funnel'
       fullPath: '/funnel'
       preLoaderRoute: typeof FunnelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/domains': {
+      id: '/domains'
+      path: '/domains'
+      fullPath: '/domains'
+      preLoaderRoute: typeof DomainsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -310,6 +330,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRouteWithChildren,
   DashboardRoute: DashboardRoute,
+  DomainsRoute: DomainsRoute,
   FunnelRoute: FunnelRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
@@ -323,3 +344,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
