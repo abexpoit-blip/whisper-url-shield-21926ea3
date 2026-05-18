@@ -188,6 +188,76 @@ async function ipExceedsRate(ip: string, cfg: ProtectionConfig): Promise<number>
   return perMinEquivalent > cfg.ip_rate_limit_per_min ? count ?? 0 : 0;
 }
 
+// ---------- Targeting (geo / device / language / time) ----------
+
+type Targeting = {
+  allowed_countries?: string[];
+  blocked_countries?: string[];
+  allowed_devices?: string[];   // "desktop" | "mobile" | "tablet"
+  blocked_devices?: string[];
+  allowed_languages?: string[]; // e.g. ["en","bn"]
+  blocked_languages?: string[];
+  allowed_hours?: { start: number; end: number } | null; // 0-23 UTC
+};
+
+function primaryLang(acceptLang: string | undefined | null): string | null {
+  if (!acceptLang) return null;
+  const first = acceptLang.split(",")[0]?.trim().toLowerCase();
+  if (!first) return null;
+  return first.split("-")[0].slice(0, 5);
+}
+
+function checkTargeting(
+  t: Targeting | null | undefined,
+  ctx: { country: string | null; device: string | null; lang: string | null },
+): { blocked: boolean; reason: string } {
+  if (!t || typeof t !== "object") return { blocked: false, reason: "" };
+  const country = (ctx.country || "").toUpperCase();
+  const device = (ctx.device || "").toLowerCase();
+  const lang = (ctx.lang || "").toLowerCase();
+
+  if (t.allowed_countries?.length && country && !t.allowed_countries.map(c => c.toUpperCase()).includes(country)) {
+    return { blocked: true, reason: `geo-not-allowed:${country}` };
+  }
+  if (t.blocked_countries?.length && country && t.blocked_countries.map(c => c.toUpperCase()).includes(country)) {
+    return { blocked: true, reason: `geo-blocked:${country}` };
+  }
+  if (t.allowed_devices?.length && device && !t.allowed_devices.map(d => d.toLowerCase()).includes(device)) {
+    return { blocked: true, reason: `device-not-allowed:${device}` };
+  }
+  if (t.blocked_devices?.length && device && t.blocked_devices.map(d => d.toLowerCase()).includes(device)) {
+    return { blocked: true, reason: `device-blocked:${device}` };
+  }
+  if (t.allowed_languages?.length && lang && !t.allowed_languages.map(l => l.toLowerCase()).includes(lang)) {
+    return { blocked: true, reason: `lang-not-allowed:${lang}` };
+  }
+  if (t.blocked_languages?.length && lang && t.blocked_languages.map(l => l.toLowerCase()).includes(lang)) {
+    return { blocked: true, reason: `lang-blocked:${lang}` };
+  }
+  if (t.allowed_hours && typeof t.allowed_hours.start === "number" && typeof t.allowed_hours.end === "number") {
+    const h = new Date().getUTCHours();
+    const { start, end } = t.allowed_hours;
+    const inWindow = start <= end ? (h >= start && h <= end) : (h >= start || h <= end);
+    if (!inWindow) return { blocked: true, reason: `hour-blocked:${h}UTC` };
+  }
+  return { blocked: false, reason: "" };
+}
+
+function pickWeightedDestination(
+  rows: { url: string; weight: number; is_active: boolean }[],
+  fallback: string,
+): string {
+  const active = rows.filter(r => r.is_active && r.weight > 0 && r.url);
+  if (active.length === 0) return fallback;
+  const total = active.reduce((s, r) => s + r.weight, 0);
+  let pick = Math.random() * total;
+  for (const r of active) {
+    pick -= r.weight;
+    if (pick <= 0) return r.url;
+  }
+  return active[active.length - 1].url;
+}
+
 // ---------- Server functions ----------
 
 const resolveLink = createServerFn({ method: "POST" })
