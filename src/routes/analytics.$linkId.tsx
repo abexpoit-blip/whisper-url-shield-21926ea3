@@ -45,7 +45,24 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
+const ALLOWED_DAYS = [1, 7, 14, 30, 90] as const;
+const RANGE_TO_DAYS = { day: 1, week: 7, month: 30 } as const;
+type LinkSearch = { days: number };
+
 export const Route = createFileRoute("/analytics/$linkId")({
+  validateSearch: (s: Record<string, unknown>): LinkSearch => {
+    let days = 7;
+    const d = s.days;
+    const r = s.range;
+    if (typeof d === "number" && (ALLOWED_DAYS as readonly number[]).includes(d)) days = d;
+    else if (typeof d === "string" && /^\d+$/.test(d)) {
+      const n = Number(d);
+      if ((ALLOWED_DAYS as readonly number[]).includes(n)) days = n;
+    } else if (typeof r === "string" && r in RANGE_TO_DAYS) {
+      days = RANGE_TO_DAYS[r as keyof typeof RANGE_TO_DAYS];
+    }
+    return { days };
+  },
   beforeLoad: async ({ location }) => {
     const { data } = await supabase.auth.getSession();
     if (!data.session) throw redirect({ to: "/login", search: { redirect: location.href } });
