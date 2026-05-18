@@ -154,8 +154,12 @@ function Dashboard() {
     toast.success("Refreshing…");
   };
 
+  const rangeDays = range === "day" ? 1 : range === "week" ? 7 : 30;
   const goToLinkAnalytics = (id: string) => {
-    void navigate({ to: "/analytics/$linkId", params: { linkId: id } });
+    void navigate({ to: "/analytics/$linkId", params: { linkId: id }, search: { days: rangeDays } });
+  };
+  const goToAnalytics = () => {
+    void navigate({ to: "/analytics", search: { days: rangeDays, linkId: "all" } });
   };
 
 
@@ -334,7 +338,7 @@ function Dashboard() {
                   </div>
                   <div className="flex gap-2">
                     <Button asChild variant="outline" size="sm" className="gap-1.5">
-                      <Link to="/analytics">
+                      <Link to="/analytics" search={{ days: rangeDays, linkId: "all" }}>
                         <Activity className="h-3.5 w-3.5" /> View analytics
                       </Link>
                     </Button>
@@ -352,8 +356,8 @@ function Dashboard() {
                   style={{ background: "var(--gradient-primary)" }}
                   role="button"
                   tabIndex={0}
-                  onClick={() => navigate({ to: "/analytics" })}
-                  onKeyDown={(e) => { if (e.key === "Enter") void navigate({ to: "/analytics" }); }}
+                  onClick={() => goToAnalytics()}
+                  onKeyDown={(e) => { if (e.key === "Enter") void goToAnalytics(); }}
                 >
                   {/* Decorative glows */}
                   <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/15 blur-3xl" />
@@ -455,7 +459,7 @@ function Dashboard() {
                   className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient p-5 shadow-card cursor-pointer transition-all hover:border-primary/40 hover:shadow-glow"
                   role="button"
                   tabIndex={0}
-                  onClick={() => navigate({ to: "/analytics" })}
+                  onClick={() => goToAnalytics()}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -496,7 +500,7 @@ function Dashboard() {
                   className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient p-5 shadow-card cursor-pointer transition-all hover:border-success/40"
                   role="button"
                   tabIndex={0}
-                  onClick={() => navigate({ to: "/analytics" })}
+                  onClick={() => goToAnalytics()}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-success/10 text-success">
@@ -541,7 +545,7 @@ function Dashboard() {
                   className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient p-5 shadow-card cursor-pointer transition-all hover:border-destructive/40"
                   role="button"
                   tabIndex={0}
-                  onClick={() => navigate({ to: "/analytics" })}
+                  onClick={() => goToAnalytics()}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
@@ -790,7 +794,7 @@ function Dashboard() {
                               className="h-8 w-8"
                               title="Analytics"
                             >
-                              <Link to="/analytics/$linkId" params={{ linkId: l.id }}>
+                              <Link to="/analytics/$linkId" params={{ linkId: l.id }} search={{ days: rangeDays }}>
                                 <Activity className="h-3.5 w-3.5" />
                               </Link>
                             </Button>

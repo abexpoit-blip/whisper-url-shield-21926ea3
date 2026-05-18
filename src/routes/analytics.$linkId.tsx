@@ -45,7 +45,24 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
+const ALLOWED_DAYS = [1, 7, 14, 30, 90] as const;
+const RANGE_TO_DAYS = { day: 1, week: 7, month: 30 } as const;
+type LinkSearch = { days: number };
+
 export const Route = createFileRoute("/analytics/$linkId")({
+  validateSearch: (s: Record<string, unknown>): LinkSearch => {
+    let days = 7;
+    const d = s.days;
+    const r = s.range;
+    if (typeof d === "number" && (ALLOWED_DAYS as readonly number[]).includes(d)) days = d;
+    else if (typeof d === "string" && /^\d+$/.test(d)) {
+      const n = Number(d);
+      if ((ALLOWED_DAYS as readonly number[]).includes(n)) days = n;
+    } else if (typeof r === "string" && r in RANGE_TO_DAYS) {
+      days = RANGE_TO_DAYS[r as keyof typeof RANGE_TO_DAYS];
+    }
+    return { days };
+  },
   beforeLoad: async ({ location }) => {
     const { data } = await supabase.auth.getSession();
     if (!data.session) throw redirect({ to: "/login", search: { redirect: location.href } });
@@ -57,14 +74,22 @@ type Data = Awaited<ReturnType<typeof getLinkMonitor>>;
 
 function LinkMonitorPage() {
   const { linkId } = Route.useParams();
+  const { days } = Route.useSearch();
   const navigate = useNavigate();
   const fetchMonitor = useServerFn(getLinkMonitor);
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
-  const [days, setDays] = useState(7);
   const [live, setLive] = useState(false);
   const [pulse, setPulse] = useState(0);
   const reloadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const setDays = (n: number) =>
+    navigate({
+      to: "/analytics/$linkId",
+      params: { linkId },
+      search: (prev: LinkSearch) => ({ ...prev, days: n }),
+      replace: true,
+    });
 
   const load = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -145,7 +170,7 @@ function LinkMonitorPage() {
             <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/analytics" })}>
+            <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/analytics", search: { days, linkId: "all" } })}>
               <ArrowLeft className="h-4 w-4 mr-1" /> All links
             </Button>
           </div>
@@ -614,7 +639,7 @@ function LinkMonitorPage() {
         </Card>
 
         <p className="text-xs text-muted-foreground text-center pt-4">
-          <Link to="/analytics" className="hover:text-primary">
+          <Link to="/analytics" search={{ days, linkId: "all" }} className="hover:text-primary">
             ← Back to all analytics
           </Link>
         </p>
