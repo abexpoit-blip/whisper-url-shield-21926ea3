@@ -521,38 +521,45 @@ function collectFingerprint(metrics: {
   };
 }
 
+function SafePage({ message }: { message: string }) {
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border">
+        <div className="mx-auto max-w-3xl px-6 py-5">
+          <span className="font-bold tracking-tight text-lg">Daily Reads</span>
+        </div>
+      </header>
+      <main className="mx-auto max-w-3xl px-6 py-20 text-center">
+        <h1 className="text-3xl font-bold mb-4">Article unavailable</h1>
+        <p className="text-muted-foreground">{message}</p>
+      </main>
+    </div>
+  );
+}
+
+function BlockedPage({ message }: { message: string }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background px-6">
+      <div className="max-w-md text-center">
+        <h1 className="text-2xl font-bold mb-3">Access denied</h1>
+        <p className="text-sm text-muted-foreground">{message}</p>
+      </div>
+    </div>
+  );
+}
+
 function PreLanderPage() {
   const { code } = Route.useParams();
   const loaderData = Route.useLoaderData();
 
-  // Suspicious-traffic short circuits — render before any verify wiring.
-  if (loaderData.blocked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-6">
-        <div className="max-w-md text-center">
-          <h1 className="text-2xl font-bold mb-3">Access denied</h1>
-          <p className="text-sm text-muted-foreground">{loaderData.message}</p>
-        </div>
-      </div>
-    );
-  }
-  if (loaderData.safe) {
-    return (
-      <div className="min-h-screen bg-background text-foreground">
-        <header className="border-b border-border">
-          <div className="mx-auto max-w-3xl px-6 py-5">
-            <span className="font-bold tracking-tight text-lg">Daily Reads</span>
-          </div>
-        </header>
-        <main className="mx-auto max-w-3xl px-6 py-20 text-center">
-          <h1 className="text-3xl font-bold mb-4">Article unavailable</h1>
-          <p className="text-muted-foreground">{loaderData.message}</p>
-        </main>
-      </div>
-    );
-  }
+  if (loaderData.blocked) return <BlockedPage message={loaderData.message} />;
+  if (loaderData.safe) return <SafePage message={loaderData.message} />;
 
   const variant = loaderData.variant!;
+  return <PreLanderInner code={code} variant={variant} />;
+}
+
+function PreLanderInner({ code, variant }: { code: string; variant: Variant }) {
   const verify = useServerFn(verifyHuman);
   const [status, setStatus] = useState<"reading" | "verifying" | "redirecting" | "blocked">("reading");
   const [countdown, setCountdown] = useState(3);
