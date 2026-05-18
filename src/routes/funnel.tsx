@@ -1,10 +1,10 @@
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { format } from "date-fns";
 import {
   Shield, ArrowLeft, RefreshCw, GitCompare, TrendingDown, Target, BarChart3,
-  Calendar as CalendarIcon,
+  Calendar as CalendarIcon, Radio,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -36,6 +36,9 @@ function FunnelPage() {
   const fetchFunnel = useServerFn(getCrossLinkFunnel);
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
+  const [live, setLive] = useState(false);
+  const [pulse, setPulse] = useState(0);
+  const reloadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [from, setFrom] = useState<Date>(() => {
     const d = new Date();
     d.setDate(d.getDate() - 7);
@@ -49,8 +52,8 @@ function FunnelPage() {
   });
   const [sortBy, setSortBy] = useState<"impressions" | "realClicks" | "conversions" | "conversionRate">("impressions");
 
-  const load = async () => {
-    setLoading(true);
+  const load = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await fetchFunnel({
         data: {
@@ -60,11 +63,34 @@ function FunnelPage() {
       });
       setData(res);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => { void load(); /* eslint-disable-next-line */ }, [from, to]);
+
+  // Realtime: subscribe to all new clicks and debounce-refetch.
+  useEffect(() => {
+    const channel = supabase
+      .channel("cross-funnel-live")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "clicks" },
+        () => {
+          setPulse((p) => p + 1);
+          if (reloadTimer.current) clearTimeout(reloadTimer.current);
+          reloadTimer.current = setTimeout(() => void load(true), 800);
+        },
+      )
+      .subscribe((status) => {
+        setLive(status === "SUBSCRIBED");
+      });
+    return () => {
+      if (reloadTimer.current) clearTimeout(reloadTimer.current);
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line
+  }, [from, to]);
 
   const rows = useMemo(() => {
     if (!data) return [];
@@ -140,7 +166,12 @@ function FunnelPage() {
                 <Calendar mode="single" selected={to} onSelect={(d) => d && setTo(d)} initialFocus />
               </PopoverContent>
             </Popover>
-            <Button variant="outline" size="icon" onClick={load} disabled={loading}>
+            <div className="hidden sm:flex items-center gap-1.5 text-xs px-2 py-1 rounded-md border border-border">
+              <span className={`h-2 w-2 rounded-full ${live ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/40"}`} />
+              {live ? "Live" : "Offline"}
+              {pulse > 0 && <span className="text-muted-foreground tabular-nums">· {pulse}</span>}
+            </div>
+            <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
             <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
