@@ -372,11 +372,12 @@ function Empty({ msg }: { msg?: string }) {
   );
 }
 
-function BreakdownTable({ rows, showConversion }: {
+function BreakdownTable({ rows, showConversion, emptyMsg }: {
   rows: { key: string; total: number; humans: number; bots: number }[];
   showConversion?: boolean;
+  emptyMsg?: string;
 }) {
-  if (!rows.length) return <Empty />;
+  if (!rows.length) return <Empty msg={emptyMsg} />;
   const max = Math.max(...rows.map((r) => r.total), 1);
   return (
     <div className="space-y-2 max-h-72 overflow-y-auto pr-2">
