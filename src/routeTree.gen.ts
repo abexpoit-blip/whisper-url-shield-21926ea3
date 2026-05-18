@@ -20,6 +20,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as AnalyticsLinkIdRouteImport } from './routes/analytics.$linkId'
 import { Route as AdminVariantsRouteImport } from './routes/admin.variants'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminRotationRouteImport } from './routes/admin.rotation'
 import { Route as AdminProtectionRouteImport } from './routes/admin.protection'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
@@ -80,6 +81,11 @@ const AdminVariantsRoute = AdminVariantsRouteImport.update({
   path: '/admin/variants',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRotationRoute = AdminRotationRouteImport.update({
   id: '/admin/rotation',
   path: '/admin/rotation',
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/protection': typeof AdminProtectionRoute
   '/admin/rotation': typeof AdminRotationRoute
+  '/admin/users': typeof AdminUsersRoute
   '/admin/variants': typeof AdminVariantsRoute
   '/analytics/$linkId': typeof AnalyticsLinkIdRoute
   '/r/$code': typeof RCodeRoute
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/protection': typeof AdminProtectionRoute
   '/admin/rotation': typeof AdminRotationRoute
+  '/admin/users': typeof AdminUsersRoute
   '/admin/variants': typeof AdminVariantsRoute
   '/analytics/$linkId': typeof AnalyticsLinkIdRoute
   '/r/$code': typeof RCodeRoute
@@ -148,6 +156,7 @@ export interface FileRoutesById {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/protection': typeof AdminProtectionRoute
   '/admin/rotation': typeof AdminRotationRoute
+  '/admin/users': typeof AdminUsersRoute
   '/admin/variants': typeof AdminVariantsRoute
   '/analytics/$linkId': typeof AnalyticsLinkIdRoute
   '/r/$code': typeof RCodeRoute
@@ -167,6 +176,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/protection'
     | '/admin/rotation'
+    | '/admin/users'
     | '/admin/variants'
     | '/analytics/$linkId'
     | '/r/$code'
@@ -184,6 +194,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/protection'
     | '/admin/rotation'
+    | '/admin/users'
     | '/admin/variants'
     | '/analytics/$linkId'
     | '/r/$code'
@@ -201,6 +212,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/protection'
     | '/admin/rotation'
+    | '/admin/users'
     | '/admin/variants'
     | '/analytics/$linkId'
     | '/r/$code'
@@ -219,6 +231,7 @@ export interface RootRouteChildren {
   AdminAuditRoute: typeof AdminAuditRoute
   AdminProtectionRoute: typeof AdminProtectionRoute
   AdminRotationRoute: typeof AdminRotationRoute
+  AdminUsersRoute: typeof AdminUsersRoute
   AdminVariantsRoute: typeof AdminVariantsRoute
   RCodeRoute: typeof RCodeRoute
   LinksLinkIdSettingsRoute: typeof LinksLinkIdSettingsRoute
@@ -303,6 +316,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminVariantsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/rotation': {
       id: '/admin/rotation'
       path: '/admin/rotation'
@@ -358,6 +378,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminAuditRoute: AdminAuditRoute,
   AdminProtectionRoute: AdminProtectionRoute,
   AdminRotationRoute: AdminRotationRoute,
+  AdminUsersRoute: AdminUsersRoute,
   AdminVariantsRoute: AdminVariantsRoute,
   RCodeRoute: RCodeRoute,
   LinksLinkIdSettingsRoute: LinksLinkIdSettingsRoute,
