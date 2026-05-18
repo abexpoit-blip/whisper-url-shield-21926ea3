@@ -260,6 +260,25 @@ function Dashboard() {
                   className="h-8 w-56 pl-8 text-sm"
                 />
               </div>
+              <div className="hidden md:flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <span className={`flex h-1.5 w-1.5 rounded-full ${autoRefresh ? "bg-success animate-pulse" : "bg-muted-foreground/50"}`} />
+                <span>
+                  {autoRefresh ? "Auto · 30s" : "Paused"}
+                  {lastUpdated ? ` · ${lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : ""}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setAutoRefresh((v) => !v)}
+                title={autoRefresh ? "Pause auto-refresh" : "Resume auto-refresh"}
+              >
+                {autoRefresh ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={manualRefresh} title="Refresh now">
+                <RefreshCw className="h-4 w-4" />
+              </Button>
               <Button variant="ghost" size="icon" className="h-8 w-8 relative">
                 <Bell className="h-4 w-4" />
                 <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
