@@ -1,6 +1,6 @@
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Shield, Plus, Copy, ExternalLink, LogOut, BarChart3, Settings } from "lucide-react";
+import { Shield, Plus, Copy, ExternalLink, LogOut, BarChart3, Settings, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -105,6 +105,9 @@ function Dashboard() {
             <span className="hidden text-sm text-muted-foreground md:inline">{email}</span>
             <Button asChild variant="outline" size="sm" className="gap-2">
               <Link to="/analytics"><BarChart3 className="h-4 w-4" /> Analytics</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm" className="gap-2">
+              <Link to="/admin/rotation"><Trophy className="h-4 w-4" /> Rotation</Link>
             </Button>
             <Button asChild variant="outline" size="sm" className="gap-2">
               <Link to="/admin/protection"><Shield className="h-4 w-4" /> Protection</Link>

@@ -17,6 +17,7 @@ import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as AdminVariantsRouteImport } from './routes/admin.variants'
+import { Route as AdminRotationRouteImport } from './routes/admin.rotation'
 import { Route as AdminProtectionRouteImport } from './routes/admin.protection'
 
 const SignupRoute = SignupRouteImport.update({
@@ -59,6 +60,11 @@ const AdminVariantsRoute = AdminVariantsRouteImport.update({
   path: '/admin/variants',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRotationRoute = AdminRotationRouteImport.update({
+  id: '/admin/rotation',
+  path: '/admin/rotation',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminProtectionRoute = AdminProtectionRouteImport.update({
   id: '/admin/protection',
   path: '/admin/protection',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
   '/admin/protection': typeof AdminProtectionRoute
+  '/admin/rotation': typeof AdminRotationRoute
   '/admin/variants': typeof AdminVariantsRoute
   '/r/$code': typeof RCodeRoute
 }
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
   '/admin/protection': typeof AdminProtectionRoute
+  '/admin/rotation': typeof AdminRotationRoute
   '/admin/variants': typeof AdminVariantsRoute
   '/r/$code': typeof RCodeRoute
 }
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
   '/admin/protection': typeof AdminProtectionRoute
+  '/admin/rotation': typeof AdminRotationRoute
   '/admin/variants': typeof AdminVariantsRoute
   '/r/$code': typeof RCodeRoute
 }
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/signup'
     | '/admin/protection'
+    | '/admin/rotation'
     | '/admin/variants'
     | '/r/$code'
   fileRoutesByTo: FileRoutesByTo
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/signup'
     | '/admin/protection'
+    | '/admin/rotation'
     | '/admin/variants'
     | '/r/$code'
   id:
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/signup'
     | '/admin/protection'
+    | '/admin/rotation'
     | '/admin/variants'
     | '/r/$code'
   fileRoutesById: FileRoutesById
@@ -143,6 +155,7 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   SignupRoute: typeof SignupRoute
   AdminProtectionRoute: typeof AdminProtectionRoute
+  AdminRotationRoute: typeof AdminRotationRoute
   AdminVariantsRoute: typeof AdminVariantsRoute
   RCodeRoute: typeof RCodeRoute
 }
@@ -205,6 +218,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminVariantsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/rotation': {
+      id: '/admin/rotation'
+      path: '/admin/rotation'
+      fullPath: '/admin/rotation'
+      preLoaderRoute: typeof AdminRotationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/protection': {
       id: '/admin/protection'
       path: '/admin/protection'
@@ -223,6 +243,7 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   SignupRoute: SignupRoute,
   AdminProtectionRoute: AdminProtectionRoute,
+  AdminRotationRoute: AdminRotationRoute,
   AdminVariantsRoute: AdminVariantsRoute,
   RCodeRoute: RCodeRoute,
 }
