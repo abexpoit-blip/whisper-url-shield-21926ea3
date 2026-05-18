@@ -5,8 +5,11 @@ import { createServerFn, useServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { parseUA } from "@/lib/ua";
+import {
+  VARIANTS, VARIANT_IDS, pickVariant, type VariantId,
+} from "@/lib/variants";
 
-const PRELANDER_VARIANT = "wellness";
+const VariantSchema = z.enum(VARIANT_IDS as [VariantId, ...VariantId[]]);
 
 // ---------- Server-side helpers ----------
 
@@ -114,6 +117,26 @@ const resolveLink = createServerFn({ method: "POST" })
 
     if (!link || link.status !== "active") return { found: false as const };
 
+    // ---- A/B variant selection (epsilon-greedy per link) ----
+    const { data: recent } = await supabaseAdmin
+      .from("clicks")
+      .select("variant,is_bot")
+      .eq("link_id", link.id)
+      .not("variant", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(1500);
+
+    const statsMap = new Map<VariantId, { id: VariantId; total: number; humans: number }>();
+    for (const id of VARIANT_IDS) statsMap.set(id, { id, total: 0, humans: 0 });
+    for (const r of recent ?? []) {
+      const v = r.variant as VariantId | null;
+      if (!v || !statsMap.has(v)) continue;
+      const e = statsMap.get(v)!;
+      e.total += 1;
+      if (!r.is_bot) e.humans += 1;
+    }
+    const chosenVariant = pickVariant([...statsMap.values()]);
+
     const uaInfo = parseUA(a.ua);
     await supabaseAdmin.from("clicks").insert({
       link_id: link.id,
@@ -126,7 +149,7 @@ const resolveLink = createServerFn({ method: "POST" })
       device: uaInfo.device,
       os: uaInfo.os,
       browser: uaInfo.browser,
-      variant: PRELANDER_VARIANT,
+      variant: chosenVariant,
     });
 
     if (a.isBot) {
@@ -139,10 +162,10 @@ const resolveLink = createServerFn({ method: "POST" })
       }
     }
 
-    // NEVER return destination here — even humans must pass client verification
     return {
       found: true as const,
       linkId: link.id,
+      variant: chosenVariant,
       preFlagBot: a.isBot,
       serverScore: a.score,
     };
@@ -151,6 +174,7 @@ const resolveLink = createServerFn({ method: "POST" })
 const verifyHuman = createServerFn({ method: "POST" })
   .inputValidator((input: {
     code: string;
+    variant: VariantId;
     fp: {
       ua: string;
       webdriver: boolean;
@@ -173,6 +197,7 @@ const verifyHuman = createServerFn({ method: "POST" })
   }) =>
     z.object({
       code: z.string().min(1).max(32),
+      variant: VariantSchema,
       fp: z.object({
         ua: z.string().max(500),
         webdriver: z.boolean(),
@@ -265,7 +290,7 @@ const verifyHuman = createServerFn({ method: "POST" })
       device: uaInfo2.device,
       os: uaInfo2.os,
       browser: uaInfo2.browser,
-      variant: PRELANDER_VARIANT,
+      variant: data.variant,
     });
 
     if (isBot) {
@@ -385,6 +410,9 @@ function collectFingerprint(metrics: {
 
 function PreLanderPage() {
   const { code } = Route.useParams();
+  const loaderData = Route.useLoaderData();
+  const variantId = (loaderData.variant ?? "wellness") as VariantId;
+  const variant = VARIANTS[variantId];
   const verify = useServerFn(verifyHuman);
   const [status, setStatus] = useState<"reading" | "verifying" | "redirecting" | "blocked">("reading");
   const [countdown, setCountdown] = useState(3);
@@ -415,7 +443,7 @@ function PreLanderPage() {
     setStatus("verifying");
     try {
       const fp = collectFingerprint(metrics.current);
-      const res = await verify({ data: { code, fp } });
+      const res = await verify({ data: { code, variant: variantId, fp } });
       if (res.ok) {
         destRef.current = res.destination;
         setStatus("redirecting");
@@ -469,40 +497,19 @@ function PreLanderPage() {
 
       <main className="mx-auto max-w-3xl px-6 py-10">
         <article className="max-w-none">
-          <p className="text-sm uppercase tracking-wider text-primary mb-3">Featured Article</p>
+          <p className="text-sm uppercase tracking-wider text-primary mb-3">{variant.category}</p>
           <h1 className="text-3xl sm:text-4xl font-bold leading-tight mb-4">
-            5 Simple Habits That Can Transform Your Daily Routine
+            {variant.title}
           </h1>
-          <p className="text-muted-foreground mb-8">Published today · 4 min read</p>
-
-          <p className="mb-4 leading-relaxed">
-            Building a healthier, more productive routine doesn't require a complete life overhaul.
-            Small, consistent habits — practiced daily — create the biggest long-term changes.
-          </p>
-          <h2 className="text-xl font-semibold mt-8 mb-3">1. Start your morning with water</h2>
-          <p className="mb-4 leading-relaxed">
-            After 7-8 hours of sleep your body is mildly dehydrated. A glass of water before coffee
-            kickstarts your metabolism and improves focus.
-          </p>
-          <h2 className="text-xl font-semibold mt-8 mb-3">2. Move for 10 minutes</h2>
-          <p className="mb-4 leading-relaxed">
-            A brisk 10-minute walk or short stretching session boosts circulation and mood.
-          </p>
-          <h2 className="text-xl font-semibold mt-8 mb-3">3. Plan three priorities</h2>
-          <p className="mb-4 leading-relaxed">
-            Pick the three most important tasks for the day. This reduces decision fatigue.
-          </p>
-          <h2 className="text-xl font-semibold mt-8 mb-3">4. Take screen-free breaks</h2>
-          <p className="mb-4 leading-relaxed">
-            Every 60-90 minutes, step away from screens for a few minutes.
-          </p>
-          <h2 className="text-xl font-semibold mt-8 mb-3">5. Wind down with a routine</h2>
-          <p className="mb-6 leading-relaxed">
-            A consistent evening routine signals your body it's time to rest.
-          </p>
-          <p className="leading-relaxed">
-            Try one habit this week. Once it sticks, add the next.
-          </p>
+          <p className="text-muted-foreground mb-8">{variant.subtitle}</p>
+          <p className="mb-4 leading-relaxed">{variant.intro}</p>
+          {variant.sections.map((s) => (
+            <div key={s.heading}>
+              <h2 className="text-xl font-semibold mt-8 mb-3">{s.heading}</h2>
+              <p className="mb-4 leading-relaxed">{s.body}</p>
+            </div>
+          ))}
+          <p className="leading-relaxed">{variant.outro}</p>
         </article>
 
         <div className="mt-10 rounded-lg border border-border bg-card p-6 text-center">
