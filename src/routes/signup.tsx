@@ -41,9 +41,9 @@ function SignupPage() {
     });
     setLoading(false);
     if (error) return toast.error(error.message);
-    // If email confirmation is required, no session is returned.
+    // Cloud auth is configured for instant access, but keep a safe fallback.
     if (!data.session) {
-      toast.success("Check your email to confirm your account, then sign in.");
+      toast.success("Account created. Please sign in to continue.");
       navigate({ to: "/login" });
       return;
     }
@@ -141,7 +141,7 @@ function SignupPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" className="h-11" />
+              <Input id="password" type="password" minLength={6} required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Minimum 6 characters" className="h-11" />
             </div>
             <Button type="submit" disabled={loading || googleLoading} className="w-full h-11 shadow-glow group">
               {loading ? "Creating…" : (<>Create account <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" /></>)}
