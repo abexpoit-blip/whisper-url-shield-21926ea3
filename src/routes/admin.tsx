@@ -191,9 +191,6 @@ function AdminLayout() {
             </Badge>
 
             {/* Account menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="ml-auto h-9 gap-2 px-1.5 sm:ml-1 sm:px-2">
 
             {/* Account menu */}
             <DropdownMenu>
