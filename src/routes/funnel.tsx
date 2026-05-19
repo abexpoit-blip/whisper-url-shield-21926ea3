@@ -224,8 +224,8 @@ function FunnelPage() {
               {live ? "Live" : "Offline"}
               {pulse > 0 && <span className="text-muted-foreground tabular-nums">· {pulse}</span>}
             </div>
-            <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading} aria-label="Refresh funnel data">
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} aria-hidden="true" />
             </Button>
             <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
               <ArrowLeft className="h-4 w-4 mr-1" /> Dashboard
