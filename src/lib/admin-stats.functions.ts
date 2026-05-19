@@ -85,88 +85,115 @@ export const getAdminAdvancedStats = createServerFn({ method: "GET" })
     const since7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const since24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const since30d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const since7dIso = since7d.toISOString();
+    const since30dIso = since30d.toISOString();
 
-    // Pull last 30d clicks once (used for trend + top lists). Cap rows.
-    const { data: clicks30d } = await supabaseAdmin
+    // Single 7d scan covers daily series, 24h KPIs and all top lists.
+    // Tighter window + smaller cap than the old 30d/20k pull = faster & more accurate.
+    const clicks7dPromise = supabaseAdmin
       .from("clicks")
-      .select("id,is_bot,country,referer_host,created_at,link_id,bot_reason")
-      .gte("created_at", since30d.toISOString())
+      .select("is_bot,country,referer_host,created_at,link_id,bot_reason")
+      .gte("created_at", since7dIso)
       .order("created_at", { ascending: false })
-      .limit(20000);
+      .limit(10000);
 
-    const rows = clicks30d ?? [];
+    // Run all independent reads in parallel.
+    const [
+      clicks7dRes,
+      approvedReqsRes,
+      newUsers7dRes,
+      newUsers30dRes,
+      bannedUsersRes,
+      activeLinksRes,
+    ] = await Promise.all([
+      clicks7dPromise,
+      supabaseAdmin
+        .from("upgrade_requests")
+        .select("amount,package_slug")
+        .eq("status", "approved")
+        .gte("created_at", since30dIso)
+        .limit(5000),
+      supabaseAdmin
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .gte("created_at", since7dIso),
+      supabaseAdmin
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .gte("created_at", since30dIso),
+      supabaseAdmin
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .eq("is_banned", true),
+      supabaseAdmin
+        .from("links")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "active"),
+    ]);
 
-    // Daily series (last 7 days)
+    const rows = clicks7dRes.data ?? [];
+
     const dayKey = (d: Date) => d.toISOString().slice(0, 10);
     const seriesMap: Record<string, { total: number; bot: number; human: number }> = {};
     for (let i = 6; i >= 0; i--) {
-      const k = dayKey(new Date(now.getTime() - i * 86400000));
-      seriesMap[k] = { total: 0, bot: 0, human: 0 };
+      seriesMap[dayKey(new Date(now.getTime() - i * 86400000))] = { total: 0, bot: 0, human: 0 };
     }
-    let last24hTotal = 0;
-    let last24hBot = 0;
-    let last24hHuman = 0;
+
+    let last24hTotal = 0, last24hBot = 0, last24hHuman = 0;
     const countryCounts: Record<string, number> = {};
     const refererCounts: Record<string, number> = {};
     const linkCounts: Record<string, { total: number; bot: number; human: number }> = {};
     const botReasonCounts: Record<string, number> = {};
 
-    for (const r of rows) {
-      const created = new Date(r.created_at as string);
-      const k = dayKey(created);
-      if (seriesMap[k]) {
-        seriesMap[k].total++;
-        if (r.is_bot) seriesMap[k].bot++; else seriesMap[k].human++;
+    for (const r of rows as any[]) {
+      const created = new Date(r.created_at);
+      const bucket = seriesMap[dayKey(created)];
+      if (bucket) {
+        bucket.total++;
+        if (r.is_bot) bucket.bot++; else bucket.human++;
       }
       if (created >= since24h) {
         last24hTotal++;
         if (r.is_bot) last24hBot++; else last24hHuman++;
       }
-      // 7d aggregates for top lists
-      if (created >= since7d) {
-        const cc = (r.country || "??").toUpperCase();
-        countryCounts[cc] = (countryCounts[cc] ?? 0) + 1;
-        const rh = (r.referer_host || "(direct)").toLowerCase();
-        refererCounts[rh] = (refererCounts[rh] ?? 0) + 1;
-        const lid = r.link_id as string;
-        if (!linkCounts[lid]) linkCounts[lid] = { total: 0, bot: 0, human: 0 };
-        linkCounts[lid].total++;
-        if (r.is_bot) linkCounts[lid].bot++; else linkCounts[lid].human++;
-        if (r.is_bot && r.bot_reason) {
+      const cc = (r.country || "??").toUpperCase();
+      countryCounts[cc] = (countryCounts[cc] ?? 0) + 1;
+      const rh = (r.referer_host || "(direct)").toLowerCase();
+      refererCounts[rh] = (refererCounts[rh] ?? 0) + 1;
+      const lid = r.link_id as string;
+      const lc = linkCounts[lid] ?? (linkCounts[lid] = { total: 0, bot: 0, human: 0 });
+      lc.total++;
+      if (r.is_bot) {
+        lc.bot++;
+        if (r.bot_reason) {
           const tag = String(r.bot_reason).split(":")[0];
           botReasonCounts[tag] = (botReasonCounts[tag] ?? 0) + 1;
         }
+      } else {
+        lc.human++;
       }
     }
 
     const dailySeries = Object.entries(seriesMap).map(([date, v]) => ({ date, ...v }));
 
     const topCountries = Object.entries(countryCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
+      .sort((a, b) => b[1] - a[1]).slice(0, 8)
       .map(([country, count]) => ({ country, count }));
-
     const topReferers = Object.entries(refererCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
+      .sort((a, b) => b[1] - a[1]).slice(0, 8)
       .map(([host, count]) => ({ host, count }));
-
     const topBotReasons = Object.entries(botReasonCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
+      .sort((a, b) => b[1] - a[1]).slice(0, 6)
       .map(([reason, count]) => ({ reason, count }));
 
-    // Resolve top link metadata
     const topLinkIds = Object.entries(linkCounts)
-      .sort((a, b) => b[1].total - a[1].total)
-      .slice(0, 8)
+      .sort((a, b) => b[1].total - a[1].total).slice(0, 8)
       .map(([id]) => id);
+
     let topLinks: Array<{ id: string; short_code: string; title: string | null; total: number; bot: number; human: number }> = [];
     if (topLinkIds.length) {
       const { data: linkRows } = await supabaseAdmin
-        .from("links")
-        .select("id,short_code,title")
-        .in("id", topLinkIds);
+        .from("links").select("id,short_code,title").in("id", topLinkIds);
       const byId = new Map((linkRows ?? []).map((l: any) => [l.id, l]));
       topLinks = topLinkIds.map((id) => {
         const l: any = byId.get(id) || { id, short_code: id.slice(0, 8), title: null };
@@ -174,39 +201,13 @@ export const getAdminAdvancedStats = createServerFn({ method: "GET" })
       });
     }
 
-    // Revenue (approved upgrade requests last 30d)
-    const { data: approvedReqs } = await supabaseAdmin
-      .from("upgrade_requests")
-      .select("amount,created_at,package_slug,status")
-      .eq("status", "approved")
-      .gte("created_at", since30d.toISOString())
-      .limit(5000);
-
-    const revenue30d = (approvedReqs ?? []).reduce((sum: number, r: any) => sum + Number(r.amount ?? 0), 0);
+    let revenue30d = 0;
     const revenueByPackage: Record<string, number> = {};
-    (approvedReqs ?? []).forEach((r: any) => {
-      revenueByPackage[r.package_slug] = (revenueByPackage[r.package_slug] ?? 0) + Number(r.amount ?? 0);
-    });
-
-    // New users last 7d / 30d
-    const { count: newUsers7d } = await supabaseAdmin
-      .from("profiles")
-      .select("id", { count: "exact", head: true })
-      .gte("created_at", since7d.toISOString());
-    const { count: newUsers30d } = await supabaseAdmin
-      .from("profiles")
-      .select("id", { count: "exact", head: true })
-      .gte("created_at", since30d.toISOString());
-
-    // Banned + active link counts
-    const { count: bannedUsers } = await supabaseAdmin
-      .from("profiles")
-      .select("id", { count: "exact", head: true })
-      .eq("is_banned", true);
-    const { count: activeLinks } = await supabaseAdmin
-      .from("links")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "active");
+    for (const r of (approvedReqsRes.data ?? []) as any[]) {
+      const amt = Number(r.amount ?? 0);
+      revenue30d += amt;
+      revenueByPackage[r.package_slug] = (revenueByPackage[r.package_slug] ?? 0) + amt;
+    }
 
     const total7d = dailySeries.reduce((a, b) => a + b.total, 0);
     const bot7d = dailySeries.reduce((a, b) => a + b.bot, 0);
@@ -222,10 +223,11 @@ export const getAdminAdvancedStats = createServerFn({ method: "GET" })
       topBotReasons,
       revenue: { last30d: revenue30d, byPackage: revenueByPackage },
       growth: {
-        newUsers7d: newUsers7d ?? 0,
-        newUsers30d: newUsers30d ?? 0,
-        bannedUsers: bannedUsers ?? 0,
-        activeLinks: activeLinks ?? 0,
+        newUsers7d: newUsers7dRes.count ?? 0,
+        newUsers30d: newUsers30dRes.count ?? 0,
+        bannedUsers: bannedUsersRes.count ?? 0,
+        activeLinks: activeLinksRes.count ?? 0,
       },
+      truncated: rows.length >= 10000,
     };
   });
