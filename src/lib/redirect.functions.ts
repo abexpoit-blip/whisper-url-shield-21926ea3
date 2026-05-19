@@ -669,7 +669,10 @@ export const verifyHuman = createServerFn({ method: "POST" })
 
     // Batch-1: FB blocklist + referer rules (silently fail any FB / safe-referer hit)
     const asn = asnFromHeaders();
-    const fbHit = await checkFbBlocklist(ip, asn);
+    const fbHitRaw = await checkFbBlocklist(ip, asn);
+    // Same fix as resolveLink: only honor FB IP/ASN hit when UA itself is a
+    // known scraper. Real users in FB in-app browser share these IP ranges.
+    const fbHit = fbHitRaw && a.hardBot ? fbHitRaw : null;
     const refHost = refererHost(getRequestHeader("referer"));
     const refAction = await checkRefererRule(refHost);
     const timeAction = await checkTimeRule(link.id);
