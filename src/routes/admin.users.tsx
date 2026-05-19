@@ -2,14 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import {
-  Users, RefreshCw, ShieldAlert, ShieldCheck, Search, Loader2,
+  Users, RefreshCw, ShieldCheck, Search, Loader2,
   MoreVertical, KeyRound, Package, PlusCircle, LogIn,
 } from "lucide-react";
 import {
   listMembers, setMemberRole, listPackages, updateMemberPlan,
   topUpMemberQuota, changeMemberPassword, impersonateMember,
 } from "@/lib/admin-users.functions";
-import { isAdmin as isAdminFn } from "@/lib/admin-variants.functions";
 import { beginImpersonation } from "@/lib/impersonation";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,7 +44,6 @@ type Pkg = { slug: string; name: string; link_limit: number; price_monthly: numb
 type ActionKind = "plan" | "topup" | "password" | null;
 
 function AdminUsersPage() {
-  const checkAdmin = useServerFn(isAdminFn);
   const fetchMembers = useServerFn(listMembers);
   const fetchPackages = useServerFn(listPackages);
   const mutateRole = useServerFn(setMemberRole);
@@ -54,7 +52,6 @@ function AdminUsersPage() {
   const mutatePass = useServerFn(changeMemberPassword);
   const mutateImp = useServerFn(impersonateMember);
 
-  const [admin, setAdmin] = useState<boolean | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [packages, setPackages] = useState<Pkg[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,16 +82,10 @@ function AdminUsersPage() {
   };
 
   useEffect(() => {
-    void checkAdmin().then(async (r) => {
-      setAdmin(r.isAdmin);
-      if (r.isAdmin) {
-        void refresh("");
-        try {
-          const p = await fetchPackages();
-          setPackages(p.packages as Pkg[]);
-        } catch { /* ignore */ }
-      } else setLoading(false);
-    });
+    void Promise.all([
+      refresh(""),
+      fetchPackages().then((p) => setPackages(p.packages as Pkg[])).catch(() => undefined),
+    ]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -182,16 +173,6 @@ function AdminUsersPage() {
       toast.error(e instanceof Error ? e.message : String(e));
     } finally { setPending(null); }
   };
-
-  if (admin === false) {
-    return (
-      <div className="mx-auto max-w-2xl p-10 text-center">
-        <ShieldAlert className="mx-auto mb-3 h-10 w-10 text-destructive" />
-        <h1 className="font-display text-2xl font-bold">Admin only</h1>
-        <p className="mt-2 text-muted-foreground">You need the admin role to manage members.</p>
-      </div>
-    );
-  }
 
   return (
     <div className="container max-w-6xl py-8 space-y-6">

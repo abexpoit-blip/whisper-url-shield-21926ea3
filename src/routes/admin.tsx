@@ -39,6 +39,21 @@ const SEG_LABELS: Record<string, string> = Object.fromEntries(
 );
 SEG_LABELS["admin"] = "Admin";
 
+const ADMIN_CHECK_TTL_MS = 60_000;
+let adminCheckCache: { userId: string; isAdmin: boolean; checkedAt: number } | null = null;
+
+async function getCachedAdminAccess(userId: string) {
+  if (
+    adminCheckCache?.userId === userId &&
+    Date.now() - adminCheckCache.checkedAt < ADMIN_CHECK_TTL_MS
+  ) {
+    return adminCheckCache.isAdmin;
+  }
+  const r = await getIsAdmin();
+  adminCheckCache = { userId, isAdmin: r.isAdmin, checkedAt: Date.now() };
+  return r.isAdmin;
+}
+
 function pretty(seg: string) {
   return SEG_LABELS[seg] ?? seg.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -46,14 +61,14 @@ function pretty(seg: string) {
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin Console — LinkShield" }, { name: "robots", content: "noindex,nofollow" }] }),
   // Role-based gate: only admins reach any /admin/* route.
-  beforeLoad: async ({ location }) => {
+  beforeLoad: async () => {
     const { data } = await supabase.auth.getSession();
     if (!data.session) {
       throw redirect({ to: "/control-panel" });
     }
     try {
-      const r = await getIsAdmin();
-      if (!r.isAdmin) {
+      const isAdmin = await getCachedAdminAccess(data.session.user.id);
+      if (!isAdmin) {
         throw redirect({ to: "/dashboard" });
       }
     } catch (e) {
@@ -80,7 +95,7 @@ function AdminLayout() {
   const [email, setEmail] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    void supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? undefined));
+    void supabase.auth.getSession().then(({ data }) => setEmail(data.session?.user.email ?? undefined));
   }, []);
 
   const segments = pathname.split("/").filter(Boolean);

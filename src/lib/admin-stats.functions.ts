@@ -28,29 +28,29 @@ export const getIsAdmin = createServerFn({ method: "GET" })
 export const getAdminOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase } = context;
+    await assertAdmin(context.supabase, context.userId);
     const [users, links, clicks, pending, domains, packages] = await Promise.all([
-      (supabase as any).from("profiles").select("id", { count: "exact", head: true }),
-      (supabase as any).from("links").select("id", { count: "exact", head: true }),
-      (supabase as any).from("clicks").select("id", { count: "exact", head: true }),
-      (supabase as any).from("upgrade_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
-      (supabase as any).from("shared_domains").select("id", { count: "exact", head: true }).eq("is_active", true),
-      (supabase as any).from("packages").select("id", { count: "exact", head: true }).eq("is_active", true),
+      supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("links").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("clicks").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("upgrade_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
+      supabaseAdmin.from("shared_domains").select("id", { count: "exact", head: true }).eq("is_active", true),
+      supabaseAdmin.from("packages").select("id", { count: "exact", head: true }).eq("is_active", true),
     ]);
 
-    const { data: recentReqs } = await (supabase as any)
+    const { data: recentReqs } = await supabaseAdmin
       .from("upgrade_requests")
       .select("id,user_id,package_slug,status,amount,created_at")
       .order("created_at", { ascending: false })
       .limit(5);
 
-    const { data: recentLinks } = await (supabase as any)
+    const { data: recentLinks } = await supabaseAdmin
       .from("links")
       .select("id,short_code,title,clicks_count,created_at")
       .order("created_at", { ascending: false })
       .limit(5);
 
-    const { data: topPlans } = await (supabase as any)
+    const { data: topPlans } = await supabaseAdmin
       .from("profiles")
       .select("plan_slug")
       .limit(1000);

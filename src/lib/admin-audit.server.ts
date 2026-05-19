@@ -14,6 +14,29 @@ export interface AuditEntry {
   userAgent?: string | null;
 }
 
+const WRITE_SUCCESS_AUDIT_ACTIONS = [
+  ".create",
+  ".add",
+  ".insert",
+  ".update",
+  ".save",
+  ".delete",
+  ".remove",
+  ".toggle",
+  ".role.",
+  ".plan.",
+  ".quota.",
+  ".password.",
+  ".impersonate",
+  ".promote",
+  ".reset",
+  ".upsert",
+];
+
+function shouldWriteSuccessAudit(action: string) {
+  return WRITE_SUCCESS_AUDIT_ACTIONS.some((token) => action.includes(token));
+}
+
 // Fire-and-forget audit log writer. Never throws — auditing must never break
 // the admin action itself.
 export async function writeAuditLog(entry: AuditEntry): Promise<void> {
@@ -76,12 +99,14 @@ export async function auditAdminGate(opts: {
     throw new Error("Forbidden: admin role required");
   }
 
-  await writeAuditLog({
-    userId: opts.userId,
-    userEmail: opts.userEmail,
-    action: opts.action,
-    resource: opts.resource,
-    status: "success",
-    metadata: opts.metadata,
-  });
+  if (shouldWriteSuccessAudit(opts.action)) {
+    await writeAuditLog({
+      userId: opts.userId,
+      userEmail: opts.userEmail,
+      action: opts.action,
+      resource: opts.resource,
+      status: "success",
+      metadata: opts.metadata,
+    });
+  }
 }
