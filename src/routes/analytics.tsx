@@ -83,7 +83,7 @@ export const Route = createFileRoute("/analytics")({
 });
 
 const PIE_COLORS = [
-  "hsl(var(--primary))",
+  "#7c3aed",
   "#22c55e",
   "#f59e0b",
   "#ef4444",
@@ -222,13 +222,13 @@ function AnalyticsPage() {
                       <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
+                  <YAxis stroke="#6b7280" fontSize={12} />
                   <Tooltip
                     contentStyle={{
-                      background: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
+                      background: "#ffffff",
+                      border: "1px solid #e5e7eb",
                     }}
                   />
                   <Legend />
@@ -265,22 +265,22 @@ function AnalyticsPage() {
               {data && data.topReasons.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.topReasons} layout="vertical" margin={{ left: 80 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis type="number" stroke="#6b7280" fontSize={12} />
                     <YAxis
                       type="category"
                       dataKey="reason"
-                      stroke="hsl(var(--muted-foreground))"
+                      stroke="#6b7280"
                       fontSize={11}
                       width={120}
                     />
                     <Tooltip
                       contentStyle={{
-                        background: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
+                        background: "#ffffff",
+                        border: "1px solid #e5e7eb",
                       }}
                     />
-                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="count" fill="#7c3aed" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -314,8 +314,8 @@ function AnalyticsPage() {
                     </Pie>
                     <Tooltip
                       contentStyle={{
-                        background: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
+                        background: "#ffffff",
+                        border: "1px solid #e5e7eb",
                       }}
                     />
                     <Legend />
