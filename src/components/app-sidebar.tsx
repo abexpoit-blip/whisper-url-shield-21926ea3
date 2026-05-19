@@ -1,5 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
+  Sparkles,
   LayoutDashboard,
   BarChart3,
   Trophy,
