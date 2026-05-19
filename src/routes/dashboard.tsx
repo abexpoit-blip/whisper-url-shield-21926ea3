@@ -41,6 +41,17 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { getAnalytics } from "@/lib/analytics.functions";
 
 export const Route = createFileRoute("/dashboard")({
+  head: () => ({
+    meta: [
+      { title: "Dashboard — LinkShield" },
+      { name: "description", content: "Manage your bot-filtered short links, monitor click quality, and pause underperforming campaigns from one place." },
+      { property: "og:title", content: "Dashboard — LinkShield" },
+      { property: "og:description", content: "Manage short links and ad-campaign click quality in real time." },
+      { property: "og:url", content: "https://sleepox.com/dashboard" },
+      { name: "robots", content: "noindex" },
+    ],
+    links: [{ rel: "canonical", href: "https://sleepox.com/dashboard" }],
+  }),
   beforeLoad: async ({ location }) => {
     const { data } = await supabase.auth.getSession();
     if (!data.session) throw redirect({ to: "/login", search: { redirect: location.href } });
