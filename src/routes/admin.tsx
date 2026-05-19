@@ -194,6 +194,11 @@ function AdminLayout() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="ml-auto h-9 gap-2 px-1.5 sm:ml-1 sm:px-2">
+
+            {/* Account menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="ml-auto h-9 gap-2 px-1.5 sm:ml-1 sm:px-2">
                   <Avatar className="h-7 w-7 border border-sky-500/30">
                     <AvatarFallback className="bg-gradient-to-br from-sky-500/30 to-cyan-500/20 text-[11px] font-semibold text-sky-700 dark:text-sky-200">
                       {initialsOf(email)}
