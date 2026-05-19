@@ -325,6 +325,18 @@ async function checkRefererRule(host: string | null): Promise<"safe" | "cloak" |
   return null;
 }
 
+async function checkTimeRule(linkId: string): Promise<"safe" | "cloak" | "pass" | null> {
+  const { data } = await supabaseAdmin
+    .from("link_time_rules")
+    .select("days_mask,start_minute,end_minute,action,timezone,priority")
+    .eq("link_id", linkId)
+    .eq("is_active", true)
+    .order("priority", { ascending: true });
+  if (!data || data.length === 0) return null;
+  const { pickActiveTimeRule } = await import("@/lib/time-rule-eval");
+  return pickActiveTimeRule(data as any);
+}
+
 async function pickGeoDeviceDestination(
   linkId: string,
   country: string | null,
