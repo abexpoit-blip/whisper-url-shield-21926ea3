@@ -670,12 +670,12 @@ function Dashboard() {
                   <form onSubmit={create} className="mt-4 grid gap-2 md:grid-cols-[1fr_220px_auto]">
                     <div className="relative">
                       <Label htmlFor="url" className="sr-only">
-                        Destination URL
+                        Destination URL (your Adsterra direct link)
                       </Label>
                       <Link2 className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="url"
-                        placeholder="https://your-offer.com/landing"
+                        placeholder="https://your-adsterra-direct-link..."
                         required
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
@@ -691,18 +691,6 @@ function Dashboard() {
                         placeholder="Title (optional)"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="adsterra" className="sr-only">
-                        Adsterra Direct Link
-                      </Label>
-                      <Input
-                        id="adsterra"
-                        type="url"
-                        placeholder="Adsterra Direct Link (optional — overrides destination for real users)"
-                        value={adsterraUrl}
-                        onChange={(e) => setAdsterraUrl(e.target.value)}
                       />
                     </div>
                     <Button type="submit" disabled={creating} className="gap-1.5 shadow-glow">
