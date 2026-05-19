@@ -114,10 +114,11 @@ export function AppSidebar({ email }: { email?: string }) {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {isAdmin && (
         <SidebarGroup className="mt-4">
           {!collapsed && (
             <SidebarGroupLabel className="px-3 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
-              Pro tools
+              Admin
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
@@ -139,6 +140,7 @@ export function AppSidebar({ email }: { email?: string }) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
 
         {!collapsed && (
           <div className="mx-2 mt-6 overflow-hidden rounded-xl border border-sidebar-border/60 bg-gradient-to-br from-primary/10 via-transparent to-primary-glow/10 p-4">
