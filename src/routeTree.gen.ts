@@ -25,6 +25,7 @@ import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminRotationRouteImport } from './routes/admin.rotation'
 import { Route as AdminProtectionRouteImport } from './routes/admin.protection'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
+import { Route as LinksLinkIdTargetingRouteImport } from './routes/links.$linkId.targeting'
 import { Route as LinksLinkIdSettingsRouteImport } from './routes/links.$linkId.settings'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -107,6 +108,11 @@ const AdminAuditRoute = AdminAuditRouteImport.update({
   path: '/admin/audit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LinksLinkIdTargetingRoute = LinksLinkIdTargetingRouteImport.update({
+  id: '/links/$linkId/targeting',
+  path: '/links/$linkId/targeting',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LinksLinkIdSettingsRoute = LinksLinkIdSettingsRouteImport.update({
   id: '/links/$linkId/settings',
   path: '/links/$linkId/settings',
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/analytics/$linkId': typeof AnalyticsLinkIdRoute
   '/r/$code': typeof RCodeRoute
   '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
+  '/links/$linkId/targeting': typeof LinksLinkIdTargetingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/analytics/$linkId': typeof AnalyticsLinkIdRoute
   '/r/$code': typeof RCodeRoute
   '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
+  '/links/$linkId/targeting': typeof LinksLinkIdTargetingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -170,6 +178,7 @@ export interface FileRoutesById {
   '/analytics/$linkId': typeof AnalyticsLinkIdRoute
   '/r/$code': typeof RCodeRoute
   '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
+  '/links/$linkId/targeting': typeof LinksLinkIdTargetingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -191,6 +200,7 @@ export interface FileRouteTypes {
     | '/analytics/$linkId'
     | '/r/$code'
     | '/links/$linkId/settings'
+    | '/links/$linkId/targeting'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/analytics/$linkId'
     | '/r/$code'
     | '/links/$linkId/settings'
+    | '/links/$linkId/targeting'
   id:
     | '__root__'
     | '/'
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/analytics/$linkId'
     | '/r/$code'
     | '/links/$linkId/settings'
+    | '/links/$linkId/targeting'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -248,6 +260,7 @@ export interface RootRouteChildren {
   AdminVariantsRoute: typeof AdminVariantsRoute
   RCodeRoute: typeof RCodeRoute
   LinksLinkIdSettingsRoute: typeof LinksLinkIdSettingsRoute
+  LinksLinkIdTargetingRoute: typeof LinksLinkIdTargetingRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -364,6 +377,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAuditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/links/$linkId/targeting': {
+      id: '/links/$linkId/targeting'
+      path: '/links/$linkId/targeting'
+      fullPath: '/links/$linkId/targeting'
+      preLoaderRoute: typeof LinksLinkIdTargetingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/links/$linkId/settings': {
       id: '/links/$linkId/settings'
       path: '/links/$linkId/settings'
@@ -403,6 +423,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminVariantsRoute: AdminVariantsRoute,
   RCodeRoute: RCodeRoute,
   LinksLinkIdSettingsRoute: LinksLinkIdSettingsRoute,
+  LinksLinkIdTargetingRoute: LinksLinkIdTargetingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

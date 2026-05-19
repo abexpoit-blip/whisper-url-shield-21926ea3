@@ -839,6 +839,17 @@ function Dashboard() {
                               size="icon"
                               variant="ghost"
                               className="h-8 w-8"
+                              title="Smart Targeting (Geo / Device / Duplicate)"
+                            >
+                              <Link to="/links/$linkId/targeting" params={{ linkId: l.id }}>
+                                <Activity className="h-3.5 w-3.5" />
+                              </Link>
+                            </Button>
+                            <Button
+                              asChild
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8"
                               title="Settings"
                             >
                               <Link to="/links/$linkId/settings" params={{ linkId: l.id }}>
