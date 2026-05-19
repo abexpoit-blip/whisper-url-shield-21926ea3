@@ -138,22 +138,8 @@ function LinkSettingsPage() {
     toast.success("Targeting rules saved");
     void load();
   };
-  const saveAdsterra = async () => {
-    const trimmed = adsterraInput.trim();
-    if (trimmed) {
-      try { new URL(trimmed); }
-      catch { return toast.error("Invalid Adsterra URL"); }
-    }
-    setSavingAdsterra(true);
-    const { error } = await supabase
-      .from("links")
-      .update({ adsterra_direct_link: trimmed || null })
-      .eq("id", linkId);
-    setSavingAdsterra(false);
-    if (error) return toast.error(error.message);
-    toast.success("Adsterra link saved");
-    void load();
-  };
+
+
 
 
   const addDest = async () => {
