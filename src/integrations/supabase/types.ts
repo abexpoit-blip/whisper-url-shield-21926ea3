@@ -756,6 +756,42 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_domains: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          domain: string
+          id: string
+          ip_address: string
+          is_active: boolean
+          label: string | null
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          domain: string
+          id?: string
+          ip_address: string
+          is_active?: boolean
+          label?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          domain?: string
+          id?: string
+          ip_address?: string
+          is_active?: boolean
+          label?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

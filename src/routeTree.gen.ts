@@ -26,6 +26,7 @@ import { Route as AdminScoresRouteImport } from './routes/admin.scores'
 import { Route as AdminRotationRouteImport } from './routes/admin.rotation'
 import { Route as AdminRefererRulesRouteImport } from './routes/admin.referer-rules'
 import { Route as AdminProtectionRouteImport } from './routes/admin.protection'
+import { Route as AdminDomainsRouteImport } from './routes/admin.domains'
 import { Route as AdminDomainHealthRouteImport } from './routes/admin.domain-health'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminAsnBlocklistRouteImport } from './routes/admin.asn-blocklist'
@@ -120,6 +121,11 @@ const AdminProtectionRoute = AdminProtectionRouteImport.update({
   path: '/admin/protection',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminDomainsRoute = AdminDomainsRouteImport.update({
+  id: '/admin/domains',
+  path: '/admin/domains',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminDomainHealthRoute = AdminDomainHealthRouteImport.update({
   id: '/admin/domain-health',
   path: '/admin/domain-health',
@@ -175,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/admin/asn-blocklist': typeof AdminAsnBlocklistRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/domain-health': typeof AdminDomainHealthRoute
+  '/admin/domains': typeof AdminDomainsRoute
   '/admin/protection': typeof AdminProtectionRoute
   '/admin/referer-rules': typeof AdminRefererRulesRoute
   '/admin/rotation': typeof AdminRotationRoute
@@ -202,6 +209,7 @@ export interface FileRoutesByTo {
   '/admin/asn-blocklist': typeof AdminAsnBlocklistRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/domain-health': typeof AdminDomainHealthRoute
+  '/admin/domains': typeof AdminDomainsRoute
   '/admin/protection': typeof AdminProtectionRoute
   '/admin/referer-rules': typeof AdminRefererRulesRoute
   '/admin/rotation': typeof AdminRotationRoute
@@ -230,6 +238,7 @@ export interface FileRoutesById {
   '/admin/asn-blocklist': typeof AdminAsnBlocklistRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/domain-health': typeof AdminDomainHealthRoute
+  '/admin/domains': typeof AdminDomainsRoute
   '/admin/protection': typeof AdminProtectionRoute
   '/admin/referer-rules': typeof AdminRefererRulesRoute
   '/admin/rotation': typeof AdminRotationRoute
@@ -259,6 +268,7 @@ export interface FileRouteTypes {
     | '/admin/asn-blocklist'
     | '/admin/audit'
     | '/admin/domain-health'
+    | '/admin/domains'
     | '/admin/protection'
     | '/admin/referer-rules'
     | '/admin/rotation'
@@ -286,6 +296,7 @@ export interface FileRouteTypes {
     | '/admin/asn-blocklist'
     | '/admin/audit'
     | '/admin/domain-health'
+    | '/admin/domains'
     | '/admin/protection'
     | '/admin/referer-rules'
     | '/admin/rotation'
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '/admin/asn-blocklist'
     | '/admin/audit'
     | '/admin/domain-health'
+    | '/admin/domains'
     | '/admin/protection'
     | '/admin/referer-rules'
     | '/admin/rotation'
@@ -341,6 +353,7 @@ export interface RootRouteChildren {
   AdminAsnBlocklistRoute: typeof AdminAsnBlocklistRoute
   AdminAuditRoute: typeof AdminAuditRoute
   AdminDomainHealthRoute: typeof AdminDomainHealthRoute
+  AdminDomainsRoute: typeof AdminDomainsRoute
   AdminProtectionRoute: typeof AdminProtectionRoute
   AdminRefererRulesRoute: typeof AdminRefererRulesRoute
   AdminRotationRoute: typeof AdminRotationRoute
@@ -476,6 +489,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProtectionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/domains': {
+      id: '/admin/domains'
+      path: '/admin/domains'
+      fullPath: '/admin/domains'
+      preLoaderRoute: typeof AdminDomainsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/domain-health': {
       id: '/admin/domain-health'
       path: '/admin/domain-health'
@@ -560,6 +580,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminAsnBlocklistRoute: AdminAsnBlocklistRoute,
   AdminAuditRoute: AdminAuditRoute,
   AdminDomainHealthRoute: AdminDomainHealthRoute,
+  AdminDomainsRoute: AdminDomainsRoute,
   AdminProtectionRoute: AdminProtectionRoute,
   AdminRefererRulesRoute: AdminRefererRulesRoute,
   AdminRotationRoute: AdminRotationRoute,

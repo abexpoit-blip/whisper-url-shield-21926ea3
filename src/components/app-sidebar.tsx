@@ -40,6 +40,7 @@ const adminNav = [
   { title: "Rotation", url: "/admin/rotation", icon: Trophy },
   { title: "Protection", url: "/admin/protection", icon: ShieldCheck },
   { title: "Variants", url: "/admin/variants", icon: Settings },
+  { title: "Domain Pool", url: "/admin/domains", icon: Globe2 },
   { title: "Members", url: "/admin/users", icon: Users },
   { title: "Audit Logs", url: "/admin/audit", icon: ScrollText },
 ];
