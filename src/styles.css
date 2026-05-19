@@ -214,3 +214,13 @@
     background-size: 48px 48px;
   }
 }
+
+/* ExpoIT glow animation */
+@keyframes expo-glow {
+  0% {
+    filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.5)) drop-shadow(0 0 8px rgba(59, 130, 246, 0.3));
+  }
+  100% {
+    filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.8)) drop-shadow(0 0 20px rgba(59, 130, 246, 0.6));
+  }
+}
