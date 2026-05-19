@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { useIsAdmin } from "@/hooks/use-is-admin";
+import { LayoutGrid } from "lucide-react";
 
 const mainNav = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -41,6 +43,7 @@ const mainNav = [
 ];
 
 const adminNav = [
+  { title: "Admin Dashboard", url: "/admin", icon: LayoutGrid },
   { title: "Packages", url: "/admin/packages", icon: Package },
   { title: "Payments", url: "/admin/payments", icon: CreditCard },
   { title: "Rotation", url: "/admin/rotation", icon: Trophy },
@@ -56,6 +59,7 @@ export function AppSidebar({ email }: { email?: string }) {
   const collapsed = state === "collapsed";
   const navigate = useNavigate();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
+  const isAdmin = useIsAdmin();
 
   const isActive = (path: string) =>
     path === "/dashboard" ? currentPath === path : currentPath.startsWith(path);
@@ -110,10 +114,11 @@ export function AppSidebar({ email }: { email?: string }) {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {isAdmin && (
         <SidebarGroup className="mt-4">
           {!collapsed && (
             <SidebarGroupLabel className="px-3 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
-              Pro tools
+              Admin
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
@@ -135,6 +140,7 @@ export function AppSidebar({ email }: { email?: string }) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
 
         {!collapsed && (
           <div className="mx-2 mt-6 overflow-hidden rounded-xl border border-sidebar-border/60 bg-gradient-to-br from-primary/10 via-transparent to-primary-glow/10 p-4">

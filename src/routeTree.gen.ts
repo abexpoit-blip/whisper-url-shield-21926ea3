@@ -19,6 +19,7 @@ import { Route as DomainsRouteImport } from './routes/domains'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as AnalyticsLinkIdRouteImport } from './routes/analytics.$linkId'
 import { Route as AdminVariantsRouteImport } from './routes/admin.variants'
@@ -87,6 +88,11 @@ const AnalyticsRoute = AnalyticsRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RCodeRoute = RCodeRouteImport.update({
@@ -211,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/admin/variants': typeof AdminVariantsRoute
   '/analytics/$linkId': typeof AnalyticsLinkIdRoute
   '/r/$code': typeof RCodeRoute
+  '/admin/': typeof AdminIndexRoute
   '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
   '/links/$linkId/targeting': typeof LinksLinkIdTargetingRoute
   '/links/$linkId/time-rules': typeof LinksLinkIdTimeRulesRoute
@@ -242,6 +249,7 @@ export interface FileRoutesByTo {
   '/admin/variants': typeof AdminVariantsRoute
   '/analytics/$linkId': typeof AnalyticsLinkIdRoute
   '/r/$code': typeof RCodeRoute
+  '/admin': typeof AdminIndexRoute
   '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
   '/links/$linkId/targeting': typeof LinksLinkIdTargetingRoute
   '/links/$linkId/time-rules': typeof LinksLinkIdTimeRulesRoute
@@ -274,6 +282,7 @@ export interface FileRoutesById {
   '/admin/variants': typeof AdminVariantsRoute
   '/analytics/$linkId': typeof AnalyticsLinkIdRoute
   '/r/$code': typeof RCodeRoute
+  '/admin/': typeof AdminIndexRoute
   '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
   '/links/$linkId/targeting': typeof LinksLinkIdTargetingRoute
   '/links/$linkId/time-rules': typeof LinksLinkIdTimeRulesRoute
@@ -307,6 +316,7 @@ export interface FileRouteTypes {
     | '/admin/variants'
     | '/analytics/$linkId'
     | '/r/$code'
+    | '/admin/'
     | '/links/$linkId/settings'
     | '/links/$linkId/targeting'
     | '/links/$linkId/time-rules'
@@ -338,6 +348,7 @@ export interface FileRouteTypes {
     | '/admin/variants'
     | '/analytics/$linkId'
     | '/r/$code'
+    | '/admin'
     | '/links/$linkId/settings'
     | '/links/$linkId/targeting'
     | '/links/$linkId/time-rules'
@@ -369,6 +380,7 @@ export interface FileRouteTypes {
     | '/admin/variants'
     | '/analytics/$linkId'
     | '/r/$code'
+    | '/admin/'
     | '/links/$linkId/settings'
     | '/links/$linkId/targeting'
     | '/links/$linkId/time-rules'
@@ -400,6 +412,7 @@ export interface RootRouteChildren {
   AdminUsersRoute: typeof AdminUsersRoute
   AdminVariantsRoute: typeof AdminVariantsRoute
   RCodeRoute: typeof RCodeRoute
+  AdminIndexRoute: typeof AdminIndexRoute
   LinksLinkIdSettingsRoute: typeof LinksLinkIdSettingsRoute
   LinksLinkIdTargetingRoute: typeof LinksLinkIdTargetingRoute
   LinksLinkIdTimeRulesRoute: typeof LinksLinkIdTimeRulesRoute
@@ -477,6 +490,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/r/$code': {
@@ -651,6 +671,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminUsersRoute: AdminUsersRoute,
   AdminVariantsRoute: AdminVariantsRoute,
   RCodeRoute: RCodeRoute,
+  AdminIndexRoute: AdminIndexRoute,
   LinksLinkIdSettingsRoute: LinksLinkIdSettingsRoute,
   LinksLinkIdTargetingRoute: LinksLinkIdTargetingRoute,
   LinksLinkIdTimeRulesRoute: LinksLinkIdTimeRulesRoute,
