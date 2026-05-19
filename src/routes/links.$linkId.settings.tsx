@@ -51,7 +51,10 @@ function LinkSettingsPage() {
     short_code: string;
     title: string | null;
     destination_url: string;
+    adsterra_direct_link: string | null;
   } | null>(null);
+  const [adsterraInput, setAdsterraInput] = useState("");
+  const [savingAdsterra, setSavingAdsterra] = useState(false);
   const [t, setT] = useState<Targeting>({});
   const [allowedCountries, setAllowedCountries] = useState("");
   const [blockedCountries, setBlockedCountries] = useState("");
