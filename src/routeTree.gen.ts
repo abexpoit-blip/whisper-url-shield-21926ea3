@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
@@ -26,6 +27,11 @@ import { Route as AdminProtectionRouteImport } from './routes/admin.protection'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as LinksLinkIdSettingsRouteImport } from './routes/links.$linkId.settings'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/protection': typeof AdminProtectionRoute
   '/admin/rotation': typeof AdminRotationRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/protection': typeof AdminProtectionRoute
   '/admin/rotation': typeof AdminRotationRoute
@@ -153,6 +161,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/protection': typeof AdminProtectionRoute
   '/admin/rotation': typeof AdminRotationRoute
@@ -173,6 +182,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pricing'
     | '/signup'
+    | '/sitemap.xml'
     | '/admin/audit'
     | '/admin/protection'
     | '/admin/rotation'
@@ -191,6 +201,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pricing'
     | '/signup'
+    | '/sitemap.xml'
     | '/admin/audit'
     | '/admin/protection'
     | '/admin/rotation'
@@ -209,6 +220,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pricing'
     | '/signup'
+    | '/sitemap.xml'
     | '/admin/audit'
     | '/admin/protection'
     | '/admin/rotation'
@@ -228,6 +240,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   SignupRoute: typeof SignupRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AdminAuditRoute: typeof AdminAuditRoute
   AdminProtectionRoute: typeof AdminProtectionRoute
   AdminRotationRoute: typeof AdminRotationRoute
@@ -239,6 +252,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -375,6 +395,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   SignupRoute: SignupRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   AdminAuditRoute: AdminAuditRoute,
   AdminProtectionRoute: AdminProtectionRoute,
   AdminRotationRoute: AdminRotationRoute,
