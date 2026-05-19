@@ -126,11 +126,27 @@ function PreLanderPage() {
 
   if (loaderData.blocked) return <BlockedPage message={loaderData.message} />;
 
+  if ("direct" in loaderData && loaderData.direct && loaderData.redirectTo) {
+    return <DirectRedirect destination={loaderData.redirectTo} />;
+  }
+
   const variant = loaderData.variant!;
   // silentBot: render the same real article a human would see, but do NOT
   // auto-verify or expose the destination. Looks like a legit page to FB
   // ad-review crawlers — no "Article unavailable" giveaway.
   return <PreLanderInner code={code} variant={variant} silent={Boolean(loaderData.silentBot)} />;
+}
+
+function DirectRedirect({ destination }: { destination: string }) {
+  useEffect(() => {
+    window.location.replace(destination);
+  }, [destination]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+      <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+    </div>
+  );
 }
 
 function PreLanderInner({ code, variant, silent }: { code: string; variant: Variant; silent: boolean }) {
