@@ -9,7 +9,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 
 export const Route = createFileRoute("/signup")({
-  head: () => ({ meta: [{ title: "Sign up — LinkShield" }] }),
+  head: () => ({
+    meta: [
+      { title: "Join LinkShield — Smart Ad Boosting" },
+      { name: "description", content: "Create your free LinkShield account and start protecting Facebook & Instagram ad spend with bot-filtered short links." },
+      { property: "og:title", content: "Join LinkShield — Smart Ad Boosting" },
+      { property: "og:description", content: "Free signup. Bot-filtered short links built for Facebook & Instagram ad campaigns." },
+      { property: "og:url", content: "https://sleepox.com/signup" },
+    ],
+    links: [{ rel: "canonical", href: "https://sleepox.com/signup" }],
+  }),
   component: SignupPage,
 });
 
