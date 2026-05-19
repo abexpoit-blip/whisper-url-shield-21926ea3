@@ -205,6 +205,39 @@ export type Database = {
         }
         Relationships: []
       }
+      domain_health_checks: {
+        Row: {
+          checked_at: string
+          dns_ok: boolean
+          dns_target_observed: string | null
+          domain_id: string
+          error: string | null
+          http_ok: boolean
+          http_status: number | null
+          id: string
+        }
+        Insert: {
+          checked_at?: string
+          dns_ok?: boolean
+          dns_target_observed?: string | null
+          domain_id: string
+          error?: string | null
+          http_ok?: boolean
+          http_status?: number | null
+          id?: string
+        }
+        Update: {
+          checked_at?: string
+          dns_ok?: boolean
+          dns_target_observed?: string | null
+          domain_id?: string
+          error?: string | null
+          http_ok?: boolean
+          http_status?: number | null
+          id?: string
+        }
+        Relationships: []
+      }
       duplicate_clicks: {
         Row: {
           hit_count: number
@@ -392,6 +425,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      link_time_rules: {
+        Row: {
+          action: string
+          created_at: string
+          days_mask: number
+          end_minute: number
+          id: string
+          is_active: boolean
+          link_id: string
+          note: string | null
+          priority: number
+          start_minute: number
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          days_mask?: number
+          end_minute?: number
+          id?: string
+          is_active?: boolean
+          link_id: string
+          note?: string | null
+          priority?: number
+          start_minute?: number
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          days_mask?: number
+          end_minute?: number
+          id?: string
+          is_active?: boolean
+          link_id?: string
+          note?: string | null
+          priority?: number
+          start_minute?: number
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       link_variant_overrides: {
         Row: {
