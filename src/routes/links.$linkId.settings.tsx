@@ -69,7 +69,7 @@ function LinkSettingsPage() {
     setLoading(true);
     const { data: linkRow, error: e1 } = await supabase
       .from("links")
-      .select("short_code,title,destination_url,adsterra_direct_link,targeting")
+      .select("short_code,title,destination_url,targeting")
       .eq("id", linkId)
       .maybeSingle();
     if (e1 || !linkRow) {
@@ -81,9 +81,7 @@ function LinkSettingsPage() {
       short_code: linkRow.short_code,
       title: linkRow.title,
       destination_url: linkRow.destination_url,
-      adsterra_direct_link: linkRow.adsterra_direct_link,
     });
-    setAdsterraInput(linkRow.adsterra_direct_link ?? "");
     const tg = (linkRow.targeting ?? {}) as Targeting;
     setT(tg);
     setAllowedCountries((tg.allowed_countries ?? []).join(", "));
