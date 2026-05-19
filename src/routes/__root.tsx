@@ -166,6 +166,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthSync />
+      <ImpersonationBanner />
       <main>
         <Outlet />
       </main>
