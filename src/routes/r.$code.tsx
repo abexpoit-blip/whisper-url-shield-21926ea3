@@ -13,16 +13,30 @@ export const Route = createFileRoute("/r/$code")({
     return r;
   },
   component: PreLanderPage,
-  head: () => ({
-    meta: [
-      { title: "Daily Reads — Articles & Tips" },
-      {
-        name: "description",
-        content: "Practical lifestyle, wellness and productivity tips for everyday readers.",
-      },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    // Pull title/description from the chosen variant so FB / WhatsApp /
+    // Twitter share previews look like a legitimate article — NOT a redirect.
+    // Intentionally NO `noindex` here: that's a giveaway flag to ad scanners.
+    const v = loaderData && "variant" in loaderData ? loaderData.variant : null;
+    const title = v?.title ?? "Daily Reads — Articles & Tips";
+    const desc =
+      v?.subtitle ||
+      (v?.intro ? v.intro.slice(0, 155) : "Practical lifestyle, wellness and productivity tips for everyday readers.");
+    return {
+      meta: [
+        { title },
+        { name: "description", content: desc },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc },
+        { property: "og:type", content: "article" },
+        { property: "og:site_name", content: "Daily Reads" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: desc },
+        { name: "author", content: "Daily Reads Editorial" },
+      ],
+    };
+  },
   notFoundComponent: () => (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
