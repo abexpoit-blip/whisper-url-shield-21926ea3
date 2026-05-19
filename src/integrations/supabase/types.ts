@@ -275,6 +275,7 @@ export type Database = {
       }
       links: {
         Row: {
+          adsterra_direct_link: string | null
           bot_clicks_count: number
           clicks_count: number
           created_at: string
@@ -289,6 +290,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          adsterra_direct_link?: string | null
           bot_clicks_count?: number
           clicks_count?: number
           created_at?: string
@@ -303,6 +305,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          adsterra_direct_link?: string | null
           bot_clicks_count?: number
           clicks_count?: number
           created_at?: string

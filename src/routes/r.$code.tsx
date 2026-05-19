@@ -95,22 +95,6 @@ function collectFingerprint(metrics: {
   };
 }
 
-function SafePage({ message }: { message: string }) {
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border">
-        <div className="mx-auto max-w-3xl px-6 py-5">
-          <span className="font-bold tracking-tight text-lg">Daily Reads</span>
-        </div>
-      </header>
-      <main className="mx-auto max-w-3xl px-6 py-20 text-center">
-        <h1 className="text-3xl font-bold mb-4">Article unavailable</h1>
-        <p className="text-muted-foreground">{message}</p>
-      </main>
-    </div>
-  );
-}
-
 function BlockedPage({ message }: { message: string }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-6">
@@ -127,13 +111,15 @@ function PreLanderPage() {
   const loaderData = Route.useLoaderData();
 
   if (loaderData.blocked) return <BlockedPage message={loaderData.message} />;
-  if (loaderData.safe) return <SafePage message={loaderData.message} />;
 
   const variant = loaderData.variant!;
-  return <PreLanderInner code={code} variant={variant} />;
+  // silentBot: render the same real article a human would see, but do NOT
+  // auto-verify or expose the destination. Looks like a legit page to FB
+  // ad-review crawlers — no "Article unavailable" giveaway.
+  return <PreLanderInner code={code} variant={variant} silent={Boolean(loaderData.silentBot)} />;
 }
 
-function PreLanderInner({ code, variant }: { code: string; variant: Variant }) {
+function PreLanderInner({ code, variant, silent }: { code: string; variant: Variant; silent: boolean }) {
   const verify = useServerFn(verifyHuman);
   const [status, setStatus] = useState<"reading" | "verifying" | "redirecting" | "blocked">("reading");
   const [countdown, setCountdown] = useState(3);
@@ -159,6 +145,7 @@ function PreLanderInner({ code, variant }: { code: string; variant: Variant }) {
   }, []);
 
   const runVerify = async () => {
+    if (silent) return; // silent bot: never call verify, never reveal destination
     if (triggered.current) return;
     triggered.current = true;
     setStatus("verifying");
@@ -177,6 +164,7 @@ function PreLanderInner({ code, variant }: { code: string; variant: Variant }) {
   };
 
   useEffect(() => {
+    if (silent) return; // silent bot: no auto-trigger either
     const timer = window.setInterval(() => {
       const m = metrics.current;
       const interactions = m.mouse + m.scroll + m.key + m.touch;
@@ -187,7 +175,7 @@ function PreLanderInner({ code, variant }: { code: string; variant: Variant }) {
     }, 500);
     return () => window.clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [silent]);
 
   useEffect(() => {
     if (status !== "redirecting" || !destRef.current) return;
@@ -233,43 +221,54 @@ function PreLanderInner({ code, variant }: { code: string; variant: Variant }) {
         </article>
 
         <div className="mt-10 rounded-lg border border-border bg-card p-6 text-center">
-          {status === "reading" && (
-            <>
-              <h3 className="text-lg font-semibold mb-2">Continue reading</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Scroll or interact with the page to load the next article.
-              </p>
-              <button
-                onClick={runVerify}
-                className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition"
-              >
-                Continue
-              </button>
-            </>
-          )}
-          {status === "verifying" && (
-            <>
-              <h3 className="text-lg font-semibold mb-2">Loading next article...</h3>
-              <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            </>
-          )}
-          {status === "redirecting" && (
-            <>
-              <h3 className="text-lg font-semibold mb-2">Continuing in {countdown}...</h3>
-              <button
-                onClick={() => destRef.current && window.location.replace(destRef.current)}
-                className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition"
-              >
-                Continue now
-              </button>
-            </>
-          )}
-          {status === "blocked" && (
+          {silent ? (
             <>
               <h3 className="text-lg font-semibold mb-2">Thanks for reading</h3>
               <p className="text-sm text-muted-foreground">
                 Browse more articles on our homepage.
               </p>
+            </>
+          ) : (
+            <>
+              {status === "reading" && (
+                <>
+                  <h3 className="text-lg font-semibold mb-2">Continue reading</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Scroll or interact with the page to load the next article.
+                  </p>
+                  <button
+                    onClick={runVerify}
+                    className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition"
+                  >
+                    Continue
+                  </button>
+                </>
+              )}
+              {status === "verifying" && (
+                <>
+                  <h3 className="text-lg font-semibold mb-2">Loading next article...</h3>
+                  <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                </>
+              )}
+              {status === "redirecting" && (
+                <>
+                  <h3 className="text-lg font-semibold mb-2">Continuing in {countdown}...</h3>
+                  <button
+                    onClick={() => destRef.current && window.location.replace(destRef.current)}
+                    className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition"
+                  >
+                    Continue now
+                  </button>
+                </>
+              )}
+              {status === "blocked" && (
+                <>
+                  <h3 className="text-lg font-semibold mb-2">Thanks for reading</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Browse more articles on our homepage.
+                  </p>
+                </>
+              )}
             </>
           )}
         </div>

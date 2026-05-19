@@ -302,10 +302,10 @@ export const resolveLink = createServerFn({ method: "POST" })
       targetingCheck.blocked ? `target:${targetingCheck.reason}` : "",
     ].filter(Boolean).join(",");
 
-    // Targeting block always shows safe page (never reveals destination)
+    // Targeting block: also serve silent prelander instead of giving away that we filtered
     const effectiveAction = targetingCheck.blocked ? "safe_page" : cfg.suspicious_action;
 
-    // Hard block path
+    // Hard block path — only when admin explicitly chose "block"
     if (suspicious && effectiveAction === "block") {
       const uaInfoB = parseUA(a.ua);
       const attrB = attributionFromRequestUrl();
@@ -331,31 +331,12 @@ export const resolveLink = createServerFn({ method: "POST" })
       };
     }
 
-    // Safe page path — show innocuous content, never reveal destination
-    if (suspicious && effectiveAction === "safe_page") {
-      const uaInfoS = parseUA(a.ua);
-      const attrS = attributionFromRequestUrl();
-      await supabaseAdmin.from("clicks").insert({
-        link_id: link.id,
-        ip_address: ip || null,
-        country,
-        user_agent: a.ua || null,
-        referer: referer || null,
-        is_bot: true,
-        bot_reason: `safe:${suspicionReasons}`,
-        device: uaInfoS.device,
-        os: uaInfoS.os,
-        browser: uaInfoS.browser,
-        variant: null,
-        ...attrS,
-      });
-      return {
-        found: true as const,
-        blocked: false as const,
-        safe: true as const,
-        message: cfg.safe_page_message,
-      };
-    }
+    // NOTE: "safe page" path no longer renders a separate "Article unavailable"
+    // screen — that was a giveaway cloaking signal to Facebook's ad reviewer
+    // bot. Instead we fall through and render a real prelander variant, but
+    // set silentBot:true so the client never auto-triggers verifyHuman and
+    // never reveals the real destination. To the reviewer this looks like a
+    // legitimate article page that simply isn't auto-redirecting.
 
     // Load active variants from DB
     const { data: variantRows } = await supabaseAdmin
@@ -405,14 +386,15 @@ export const resolveLink = createServerFn({ method: "POST" })
 
     const uaInfo = parseUA(a.ua);
     const attr = attributionFromRequestUrl();
+    const silentBot = suspicious; // bots/targeting-blocked still get a real article, just no redirect
     await supabaseAdmin.from("clicks").insert({
       link_id: link.id,
       ip_address: ip || null,
       country,
       user_agent: a.ua || null,
       referer: referer || null,
-      is_bot: a.isBot,
-      bot_reason: suspicionReasons || null,
+      is_bot: silentBot || a.isBot,
+      bot_reason: silentBot ? `silent:${suspicionReasons}` : (suspicionReasons || null),
       device: uaInfo.device,
       os: uaInfo.os,
       browser: uaInfo.browser,
@@ -420,7 +402,7 @@ export const resolveLink = createServerFn({ method: "POST" })
       ...attr,
     });
 
-    if (a.isBot) {
+    if (a.isBot || silentBot) {
       const { data: cur } = await supabaseAdmin
         .from("links").select("bot_clicks_count").eq("id", link.id).single();
       if (cur) {
@@ -434,6 +416,7 @@ export const resolveLink = createServerFn({ method: "POST" })
       found: true as const,
       blocked: false as const,
       safe: false as const,
+      silentBot,
       linkId: link.id,
       variant: chosenVariant,
       preFlagBot: a.isBot,
@@ -480,7 +463,7 @@ export const verifyHuman = createServerFn({ method: "POST" })
 
     const { data: link } = await supabaseAdmin
       .from("links")
-      .select("id, destination_url, status, targeting")
+      .select("id, destination_url, adsterra_direct_link, status, targeting")
       .eq("short_code", data.code)
       .maybeSingle();
 
@@ -573,12 +556,16 @@ export const verifyHuman = createServerFn({ method: "POST" })
         .eq("id", link.id);
     }
 
-    // Smart rotator: pick weighted destination if any active rows exist
+    // Final destination priority:
+    //   1) Per-link Adsterra direct link (monetize ad traffic)
+    //   2) Weighted rotator over link_destinations
+    //   3) Plain destination_url fallback
     const { data: destRows } = await supabaseAdmin
       .from("link_destinations")
       .select("url,weight,is_active")
       .eq("link_id", link.id);
-    const destination = pickWeightedDestination(destRows ?? [], link.destination_url);
+    const rotated = pickWeightedDestination(destRows ?? [], link.destination_url);
+    const destination = link.adsterra_direct_link?.trim() || rotated;
 
     return { ok: true as const, destination };
   });

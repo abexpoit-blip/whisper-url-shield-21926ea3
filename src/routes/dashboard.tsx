@@ -97,6 +97,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
+  const [adsterraUrl, setAdsterraUrl] = useState("");
   const [creating, setCreating] = useState(false);
   const [email, setEmail] = useState<string>("");
   const [search, setSearch] = useState("");
@@ -186,10 +187,20 @@ function Dashboard() {
       setCreating(false);
       return;
     }
+    const trimmedAdsterra = adsterraUrl.trim();
+    if (trimmedAdsterra) {
+      try { new URL(trimmedAdsterra); }
+      catch {
+        toast.error("Invalid Adsterra Direct Link URL");
+        setCreating(false);
+        return;
+      }
+    }
     const { error } = await supabase.from("links").insert({
       user_id: userData.user.id,
       short_code: genCode(),
       destination_url: url,
+      adsterra_direct_link: trimmedAdsterra || null,
       title: title || null,
     });
     setCreating(false);
@@ -197,6 +208,7 @@ function Dashboard() {
     toast.success("Link created");
     setUrl("");
     setTitle("");
+    setAdsterraUrl("");
     load();
   };
 
@@ -689,6 +701,18 @@ function Dashboard() {
                         placeholder="Title (optional)"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="adsterra" className="sr-only">
+                        Adsterra Direct Link
+                      </Label>
+                      <Input
+                        id="adsterra"
+                        type="url"
+                        placeholder="Adsterra Direct Link (optional — overrides destination for real users)"
+                        value={adsterraUrl}
+                        onChange={(e) => setAdsterraUrl(e.target.value)}
                       />
                     </div>
                     <Button type="submit" disabled={creating} className="gap-1.5 shadow-glow">

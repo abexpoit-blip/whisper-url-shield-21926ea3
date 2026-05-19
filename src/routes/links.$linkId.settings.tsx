@@ -51,7 +51,10 @@ function LinkSettingsPage() {
     short_code: string;
     title: string | null;
     destination_url: string;
+    adsterra_direct_link: string | null;
   } | null>(null);
+  const [adsterraInput, setAdsterraInput] = useState("");
+  const [savingAdsterra, setSavingAdsterra] = useState(false);
   const [t, setT] = useState<Targeting>({});
   const [allowedCountries, setAllowedCountries] = useState("");
   const [blockedCountries, setBlockedCountries] = useState("");
@@ -69,7 +72,7 @@ function LinkSettingsPage() {
     setLoading(true);
     const { data: linkRow, error: e1 } = await supabase
       .from("links")
-      .select("short_code,title,destination_url,targeting")
+      .select("short_code,title,destination_url,adsterra_direct_link,targeting")
       .eq("id", linkId)
       .maybeSingle();
     if (e1 || !linkRow) {
@@ -81,7 +84,9 @@ function LinkSettingsPage() {
       short_code: linkRow.short_code,
       title: linkRow.title,
       destination_url: linkRow.destination_url,
+      adsterra_direct_link: linkRow.adsterra_direct_link,
     });
+    setAdsterraInput(linkRow.adsterra_direct_link ?? "");
     const tg = (linkRow.targeting ?? {}) as Targeting;
     setT(tg);
     setAllowedCountries((tg.allowed_countries ?? []).join(", "));
@@ -138,6 +143,23 @@ function LinkSettingsPage() {
     toast.success("Targeting rules saved");
     void load();
   };
+  const saveAdsterra = async () => {
+    const trimmed = adsterraInput.trim();
+    if (trimmed) {
+      try { new URL(trimmed); }
+      catch { return toast.error("Invalid Adsterra URL"); }
+    }
+    setSavingAdsterra(true);
+    const { error } = await supabase
+      .from("links")
+      .update({ adsterra_direct_link: trimmed || null })
+      .eq("id", linkId);
+    setSavingAdsterra(false);
+    if (error) return toast.error(error.message);
+    toast.success("Adsterra link saved");
+    void load();
+  };
+
 
   const addDest = async () => {
     try {
@@ -206,6 +228,28 @@ function LinkSettingsPage() {
           <h1 className="text-2xl font-bold">/r/{link?.short_code}</h1>
           <p className="mt-1 truncate text-sm text-muted-foreground">{link?.destination_url}</p>
         </div>
+
+        {/* Adsterra Direct Link */}
+        <section className="rounded-2xl border border-border bg-card-gradient p-6 space-y-4">
+          <div>
+            <h2 className="font-display text-lg font-semibold">Adsterra Direct Link</h2>
+            <p className="text-sm text-muted-foreground">
+              যদি সেট করা থাকে, real visitors (bot check পার করার পর) এই Adsterra URL-এ যাবে। খালি রাখলে উপরের destination URL ব্যবহার হবে।
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="url"
+              placeholder="https://otieu.com/4/xxxxxxx"
+              value={adsterraInput}
+              onChange={(e) => setAdsterraInput(e.target.value)}
+            />
+            <Button onClick={saveAdsterra} disabled={savingAdsterra}>
+              {savingAdsterra ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        </section>
+
 
         {/* Targeting */}
         <section className="rounded-2xl border border-border bg-card-gradient p-6 space-y-5">
