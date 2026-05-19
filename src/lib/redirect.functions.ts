@@ -694,11 +694,12 @@ export const verifyHuman = createServerFn({ method: "POST" })
     }
 
     // Batch-1: Duplicate click protection
+    let duplicateClick = false;
     if (link.duplicate_protection) {
       const dup = await isDuplicateClick(ip, link.id, link.duplicate_window_minutes ?? 30);
       if (dup) {
         await recordDuplicateClick(ip, link.id);
-        return { ok: false as const, reason: "duplicate" };
+        duplicateClick = true;
       }
     }
 
@@ -736,8 +737,16 @@ export const verifyHuman = createServerFn({ method: "POST" })
     if (fp.canvasHash === "blocked" || fp.canvasHash.length < 4) {
       score += 25; reasons.push("canvas-blocked");
     }
-    if (fp.ua.toLowerCase().includes("chrome/") && !fp.hasChrome) {
-      score += 40; reasons.push("chrome-spoof");
+    const fpUaLower = fp.ua.toLowerCase();
+    const looksLikeRealBrowser = /chrome\/|crios\/|safari\/|firefox\/|fxios\/|edg\//.test(fpUaLower)
+      && !a.hardBot
+      && !fp.webdriver
+      && fp.languages.length > 0
+      && fp.screen.w >= 200
+      && fp.screen.h >= 200;
+
+    if (fpUaLower.includes("chrome/") && !fp.hasChrome && !/wv\)|; wv|fbav|instagram|line\//i.test(fp.ua)) {
+      score += 20; reasons.push("chrome-spoof");
     }
     if (/mobile|android|iphone/i.test(fp.ua) && fp.touchPoints === 0) {
       score += 30; reasons.push("mobile-no-touch");
@@ -751,7 +760,7 @@ export const verifyHuman = createServerFn({ method: "POST" })
       score += 25; reasons.push("ua-mismatch");
     }
 
-    const isBot = score >= cfg.block_threshold_score;
+    const isBot = a.hardBot || (!looksLikeRealBrowser && score >= cfg.block_threshold_score);
 
     const attr2 = attributionFromReferer();
     await supabaseAdmin.from("clicks").insert({
@@ -761,7 +770,7 @@ export const verifyHuman = createServerFn({ method: "POST" })
       user_agent: a.ua || null,
       referer: getRequestHeader("referer") || null,
       is_bot: isBot,
-      bot_reason: `verify:${reasons.join(",")}|score:${score}`,
+      bot_reason: `verify:${duplicateClick ? "duplicate," : ""}${reasons.join(",")}|score:${score}`,
       device: uaInfo2.device,
       os: uaInfo2.os,
       browser: uaInfo2.browser,
@@ -780,12 +789,14 @@ export const verifyHuman = createServerFn({ method: "POST" })
       return { ok: false as const, reason: "bot-detected" };
     }
 
-    const { data: cur } = await supabaseAdmin
-      .from("links").select("clicks_count").eq("id", link.id).single();
-    if (cur) {
-      await supabaseAdmin.from("links")
-        .update({ clicks_count: cur.clicks_count + 1 })
-        .eq("id", link.id);
+    if (!duplicateClick) {
+      const { data: cur } = await supabaseAdmin
+        .from("links").select("clicks_count").eq("id", link.id).single();
+      if (cur) {
+        await supabaseAdmin.from("links")
+          .update({ clicks_count: cur.clicks_count + 1 })
+          .eq("id", link.id);
+      }
     }
 
     // Record this IP so subsequent quick re-clicks are deduped
