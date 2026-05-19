@@ -85,10 +85,14 @@ function analyzeRequest() {
 
   let score = 0;
   const reasons: string[] = [];
+  // hardBot = strong, near-certain bot signal. Used to decide silent-cloak.
+  // Score-based suspicion alone does NOT silence — we don't want to lose
+  // paid FB traffic on a real mobile user with weird headers.
+  let hardBot = false;
 
-  if (!ua) { score += 50; reasons.push("no-ua"); }
+  if (!ua) { score += 50; reasons.push("no-ua"); hardBot = true; }
   for (const p of BOT_UA_PATTERNS) {
-    if (ua.includes(p)) { score += 60; reasons.push(`ua:${p}`); break; }
+    if (ua.includes(p)) { score += 60; reasons.push(`ua:${p}`); hardBot = true; break; }
   }
 
   if (!accept.includes("text/html")) { score += 25; reasons.push("no-html-accept"); }
@@ -102,10 +106,11 @@ function analyzeRequest() {
   if (looksModern && !secFetchDest) { score += 10; reasons.push("no-sec-fetch-dest"); }
   if (ua.includes("chrome/") && !secChUa) { score += 20; reasons.push("chrome-no-ch-ua"); }
 
-  if (cfVerifiedBot === "true") { score += 100; reasons.push("cf-verified-bot"); }
+  if (cfVerifiedBot === "true") { score += 100; reasons.push("cf-verified-bot"); hardBot = true; }
   if (cfBotMgmt) {
     const s = parseInt(cfBotMgmt, 10);
     if (!isNaN(s) && s < 30) { score += 40; reasons.push(`cf-bot-score:${s}`); }
+    if (!isNaN(s) && s < 5) hardBot = true; // CF extremely confident
   }
   if (cfThreatScore) {
     const s = parseInt(cfThreatScore, 10);
@@ -117,7 +122,7 @@ function analyzeRequest() {
   }
 
   return {
-    ua, isBot: score >= 50, score,
+    ua, isBot: score >= 50, hardBot, score,
     reasons: reasons.join(","),
     acceptLang, secChUaMobile, dnt,
   };
@@ -560,7 +565,12 @@ export const resolveLink = createServerFn({ method: "POST" })
     const timeAction = await checkTimeRule(link.id);
     const refSafe = refAction === "safe" || refAction === "cloak";
     const timeSafe = timeAction === "safe" || timeAction === "cloak";
-    const silentBot = suspicious || Boolean(fbHit) || refSafe || timeSafe;
+    // Only silent-cloak when we have a STRONG bot signal. Soft score-based
+    // suspicion alone keeps the human path open — we'd rather risk one bot
+    // click reaching the offer than burn a real $0.50 FB ad click on the
+    // silent page. The client-side fingerprint check in verifyHuman is the
+    // safety net for borderline cases.
+    const silentBot = a.hardBot || Boolean(fbHit) || refSafe || timeSafe || targetingCheck.blocked;
     const defenseReasons = [
       suspicionReasons,
       fbHit || "",
