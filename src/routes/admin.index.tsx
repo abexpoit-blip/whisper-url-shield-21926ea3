@@ -7,7 +7,6 @@ import {
   DollarSign, UserPlus, Ban, Flame, Globe, ExternalLink,
 } from "lucide-react";
 import { getAdminOverview, getAdminAdvancedStats } from "@/lib/admin-stats.functions";
-import { useIsAdmin } from "@/hooks/use-is-admin";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,38 +15,18 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/admin/")({ component: AdminDashboard });
 
 function AdminDashboard() {
-  const isAdmin = useIsAdmin();
   const fn = useServerFn(getAdminOverview);
   const advFn = useServerFn(getAdminAdvancedStats);
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "overview"],
     queryFn: () => fn(),
-    enabled: isAdmin === true,
-    staleTime: 60_000,
-    refetchInterval: 120_000,
+    staleTime: 5 * 60_000,
   });
   const { data: adv, isLoading: advLoading } = useQuery({
     queryKey: ["admin", "advanced"],
     queryFn: () => advFn(),
-    enabled: isAdmin === true,
-    staleTime: 60_000,
-    refetchInterval: 120_000,
+    staleTime: 5 * 60_000,
   });
-
-
-  if (isAdmin === null) {
-    return <div className="p-8 text-sm text-muted-foreground">Checking access…</div>;
-  }
-  if (isAdmin === false) {
-    return (
-      <div className="mx-auto mt-20 max-w-md rounded-2xl border bg-card p-8 text-center">
-        <ShieldCheck className="mx-auto h-10 w-10 text-muted-foreground" />
-        <h2 className="mt-4 text-lg font-semibold">Admin access required</h2>
-        <p className="mt-2 text-sm text-muted-foreground">This area is restricted to administrators.</p>
-        <Link to="/dashboard"><Button className="mt-4" variant="outline">Back to dashboard</Button></Link>
-      </div>
-    );
-  }
 
   const c = data?.counts;
   const stats = [
