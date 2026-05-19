@@ -294,6 +294,21 @@ async function checkFbBlocklist(ip: string, asn: number | null): Promise<string 
   return null;
 }
 
+function matchHostPattern(host: string, pattern: string): boolean {
+  // exact, dot-suffix, or wildcard like "*.facebook.com" / "l.*.com"
+  const h = host.toLowerCase();
+  const p = pattern.toLowerCase();
+  if (h === p) return true;
+  if (!p.includes("*")) {
+    return h === p || h.endsWith(`.${p}`);
+  }
+  // Convert wildcard pattern → regex (escape dots, * → [^.]*)
+  const rx = new RegExp(
+    "^" + p.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^.]*") + "$",
+  );
+  return rx.test(h);
+}
+
 async function checkRefererRule(host: string | null): Promise<"safe" | "cloak" | "pass" | null> {
   if (!host) return null;
   const { data } = await supabaseAdmin
@@ -302,10 +317,8 @@ async function checkRefererRule(host: string | null): Promise<"safe" | "cloak" |
     .eq("is_active", true)
     .order("priority", { ascending: true });
   if (!data) return null;
-  const h = host.toLowerCase();
   for (const r of data) {
-    const pat = r.host_pattern.toLowerCase();
-    if (h === pat || h.endsWith(`.${pat}`) || h.includes(pat)) {
+    if (matchHostPattern(host, r.host_pattern)) {
       return r.action as "safe" | "cloak" | "pass";
     }
   }
