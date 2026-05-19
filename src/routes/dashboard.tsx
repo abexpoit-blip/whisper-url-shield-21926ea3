@@ -117,7 +117,7 @@ function Dashboard() {
   const load = async () => {
     setLoading(true);
     const { data: userData } = await supabase.auth.getSession();
-    setEmail(userData.user?.email ?? "");
+    setEmail(userData.session?.user.email ?? "");
     const { data, error } = await supabase
       .from("links")
       .select("id, short_code, destination_url, title, clicks_count, bot_clicks_count, created_at")
