@@ -145,8 +145,8 @@ function FunnelPage() {
       <header className="border-b border-border bg-card/40 backdrop-blur sticky top-0 z-10">
         <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Shield className="h-6 w-6 text-primary" />
-            <span className="font-bold tracking-tight text-lg">Cross-Link Funnel</span>
+            <Shield className="h-6 w-6 text-primary" aria-hidden="true" />
+            <h1 className="font-bold tracking-tight text-lg">Cross-Link Funnel</h1>
           </div>
           <div className="flex items-center gap-2">
             <Select
