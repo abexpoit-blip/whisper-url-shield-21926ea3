@@ -3,7 +3,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { ScrollText, RefreshCw, ShieldAlert, CheckCircle2, XCircle } from "lucide-react";
 import { listAuditLogs } from "@/lib/admin-audit.functions";
-import { isAdmin as isAdminFn } from "@/lib/admin-variants.functions";
 
 export const Route = createFileRoute("/admin/audit")({
   head: () => ({
@@ -31,9 +30,7 @@ type Row = {
 };
 
 function AuditPage() {
-  const checkAdmin = useServerFn(isAdminFn);
   const fetchLogs = useServerFn(listAuditLogs);
-  const [admin, setAdmin] = useState<boolean | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,28 +51,14 @@ function AuditPage() {
   };
 
   useEffect(() => {
-    void checkAdmin().then((r) => {
-      setAdmin(r.isAdmin);
-      if (r.isAdmin) void refresh();
-      else setLoading(false);
-    });
+    void refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (admin) void refresh();
+    void refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, limit]);
-
-  if (admin === false) {
-    return (
-      <div className="mx-auto max-w-2xl p-10 text-center">
-        <ShieldAlert className="mx-auto mb-3 h-10 w-10 text-destructive" />
-        <h1 className="font-display text-2xl font-bold">Admin only</h1>
-        <p className="mt-2 text-muted-foreground">You need the admin role to view audit logs.</p>
-      </div>
-    );
-  }
 
   return (
     <div className="container max-w-6xl py-8 space-y-6">
