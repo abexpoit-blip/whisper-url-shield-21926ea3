@@ -29,6 +29,7 @@ import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminAsnBlocklistRouteImport } from './routes/admin.asn-blocklist'
 import { Route as LinksLinkIdTargetingRouteImport } from './routes/links.$linkId.targeting'
 import { Route as LinksLinkIdSettingsRouteImport } from './routes/links.$linkId.settings'
+import { Route as ApiPublicHooksAutopilotRouteImport } from './routes/api/public/hooks/autopilot'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -130,6 +131,11 @@ const LinksLinkIdSettingsRoute = LinksLinkIdSettingsRouteImport.update({
   path: '/links/$linkId/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksAutopilotRoute = ApiPublicHooksAutopilotRouteImport.update({
+  id: '/api/public/hooks/autopilot',
+  path: '/api/public/hooks/autopilot',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -152,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/r/$code': typeof RCodeRoute
   '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
   '/links/$linkId/targeting': typeof LinksLinkIdTargetingRoute
+  '/api/public/hooks/autopilot': typeof ApiPublicHooksAutopilotRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/r/$code': typeof RCodeRoute
   '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
   '/links/$linkId/targeting': typeof LinksLinkIdTargetingRoute
+  '/api/public/hooks/autopilot': typeof ApiPublicHooksAutopilotRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -197,6 +205,7 @@ export interface FileRoutesById {
   '/r/$code': typeof RCodeRoute
   '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
   '/links/$linkId/targeting': typeof LinksLinkIdTargetingRoute
+  '/api/public/hooks/autopilot': typeof ApiPublicHooksAutopilotRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -221,6 +230,7 @@ export interface FileRouteTypes {
     | '/r/$code'
     | '/links/$linkId/settings'
     | '/links/$linkId/targeting'
+    | '/api/public/hooks/autopilot'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -243,6 +253,7 @@ export interface FileRouteTypes {
     | '/r/$code'
     | '/links/$linkId/settings'
     | '/links/$linkId/targeting'
+    | '/api/public/hooks/autopilot'
   id:
     | '__root__'
     | '/'
@@ -265,6 +276,7 @@ export interface FileRouteTypes {
     | '/r/$code'
     | '/links/$linkId/settings'
     | '/links/$linkId/targeting'
+    | '/api/public/hooks/autopilot'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -287,6 +299,7 @@ export interface RootRouteChildren {
   RCodeRoute: typeof RCodeRoute
   LinksLinkIdSettingsRoute: typeof LinksLinkIdSettingsRoute
   LinksLinkIdTargetingRoute: typeof LinksLinkIdTargetingRoute
+  ApiPublicHooksAutopilotRoute: typeof ApiPublicHooksAutopilotRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -431,6 +444,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LinksLinkIdSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/autopilot': {
+      id: '/api/public/hooks/autopilot'
+      path: '/api/public/hooks/autopilot'
+      fullPath: '/api/public/hooks/autopilot'
+      preLoaderRoute: typeof ApiPublicHooksAutopilotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -466,7 +486,18 @@ const rootRouteChildren: RootRouteChildren = {
   RCodeRoute: RCodeRoute,
   LinksLinkIdSettingsRoute: LinksLinkIdSettingsRoute,
   LinksLinkIdTargetingRoute: LinksLinkIdTargetingRoute,
+  ApiPublicHooksAutopilotRoute: ApiPublicHooksAutopilotRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
