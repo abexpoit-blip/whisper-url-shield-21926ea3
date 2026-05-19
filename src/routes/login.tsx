@@ -59,19 +59,7 @@ function LoginPage() {
       setErrorMessage(message);
       return toast.error(message);
     }
-    // Block admin accounts from using the public login.
-    try {
-      const r = await checkAdmin();
-      if (r.isAdmin) {
-        await supabase.auth.signOut();
-        setLoading(false);
-        const msg = "This account cannot sign in here.";
-        setErrorMessage(msg);
-        return toast.error(msg);
-      }
-    } catch {
-      /* if check fails, treat as normal user */
-    }
+    // Admin sign-in is handled at /control-panel only.
     toast.success("Welcome back!");
     navigate({ to: redirect });
   };
