@@ -12,7 +12,16 @@ export const Route = createFileRoute("/login")({
   validateSearch: (search) => ({
     redirect: typeof search.redirect === "string" ? search.redirect : "/dashboard",
   }),
-  head: () => ({ meta: [{ title: "Sign in — LinkShield" }] }),
+  head: () => ({
+    meta: [
+      { title: "Sign in — LinkShield" },
+      { name: "description", content: "Sign in to your LinkShield account to manage bot-filtered short links and ad-campaign analytics." },
+      { property: "og:title", content: "Sign in — LinkShield" },
+      { property: "og:description", content: "Access your LinkShield dashboard to manage short links and ad analytics." },
+      { property: "og:url", content: "https://sleepox.com/login" },
+    ],
+    links: [{ rel: "canonical", href: "https://sleepox.com/login" }],
+  }),
   component: LoginPage,
 });
 
