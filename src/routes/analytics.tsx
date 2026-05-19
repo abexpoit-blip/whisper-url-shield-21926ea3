@@ -387,25 +387,66 @@ function AnalyticsPage() {
               <Smartphone className="h-4 w-4 text-primary" />
               <h2 className="font-semibold">Device breakdown</h2>
             </div>
-            <div className="h-72">
+            <div className="h-80 sm:h-80">
               {data && data.byDevice.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+                  <PieChart margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
                     <Pie
-                      data={data.byDevice}
+                      data={data.byDevice.filter((d) => !hidden[`dev:${d.key}`])}
                       dataKey="total"
                       nameKey="key"
                       cx="50%"
-                      cy="50%"
-                      outerRadius={90}
-                      label
+                      cy="45%"
+                      innerRadius={isMobile ? 38 : 50}
+                      outerRadius={isMobile ? 68 : 90}
+                      paddingAngle={2}
+                      label={
+                        isMobile
+                          ? false
+                          : ({ percent }) => `${Math.round((percent ?? 0) * 100)}%`
+                      }
+                      labelLine={false}
                     >
-                      {data.byDevice.map((_, i) => (
-                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                      ))}
+                      {data.byDevice
+                        .filter((d) => !hidden[`dev:${d.key}`])
+                        .map((d, i) => {
+                          const origIdx = data.byDevice.findIndex((x) => x.key === d.key);
+                          return (
+                            <Cell
+                              key={d.key}
+                              fill={PIE_COLORS[origIdx % PIE_COLORS.length]}
+                              stroke="#ffffff"
+                              strokeWidth={2}
+                            />
+                          );
+                        })}
                     </Pie>
-                    <Tooltip contentStyle={TOOLTIP_STYLE} />
-                    <Legend />
+                    <Tooltip
+                      contentStyle={TOOLTIP_STYLE}
+                      labelStyle={TOOLTIP_LABEL_STYLE}
+                      itemStyle={TOOLTIP_ITEM_STYLE}
+                      formatter={(value: number, name: string) => [`${value} clicks`, name]}
+                    />
+                    <Legend
+                      iconType="circle"
+                      verticalAlign="bottom"
+                      wrapperStyle={LEGEND_WRAPPER}
+                      onClick={(e) => toggleSeries(`dev:${String(e.value)}`)}
+                      payload={data.byDevice.map((d, i) => ({
+                        value: d.key,
+                        type: "circle",
+                        id: d.key,
+                        color: hidden[`dev:${d.key}`] ? "#d1d5db" : PIE_COLORS[i % PIE_COLORS.length],
+                      }))}
+                      formatter={(value) => {
+                        const off = hidden[`dev:${String(value)}`];
+                        return (
+                          <span style={{ color: off ? "#9ca3af" : "#374151", textDecoration: off ? "line-through" : "none" }}>
+                            {value}
+                          </span>
+                        );
+                      }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
