@@ -199,3 +199,90 @@ export function prettyLabel(rawKey: string) {
     .map((w) => (w.length <= 2 ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1).toLowerCase()))
     .join(" ");
 }
+
+/* ====================== Unified badge primitives ====================== */
+// All visual marks (country flag, OS/browser/device icons, referrer favicons)
+// render inside the same 20x20 chip so they share sizing, border, spacing.
+
+const BADGE_CLASS =
+  "inline-flex h-5 w-5 items-center justify-center rounded-md bg-background/70 ring-1 ring-border/60 shadow-sm shrink-0 overflow-hidden";
+
+export const COUNTRY_NAMES: Record<string, string> = {
+  US: "United States", ID: "Indonesia", TH: "Thailand", SG: "Singapore",
+  IN: "India", GB: "United Kingdom", DE: "Germany", FR: "France",
+  BR: "Brazil", JP: "Japan", CN: "China", RU: "Russia", CA: "Canada",
+  AU: "Australia", MX: "Mexico", IT: "Italy", ES: "Spain", NL: "Netherlands",
+  TR: "Turkey", BD: "Bangladesh", PK: "Pakistan", PH: "Philippines",
+  VN: "Vietnam", MY: "Malaysia", KR: "South Korea", AE: "UAE", SA: "Saudi Arabia",
+  EG: "Egypt", ZA: "South Africa", NG: "Nigeria", AR: "Argentina", CL: "Chile",
+  HK: "Hong Kong", TW: "Taiwan", PL: "Poland", SE: "Sweden", CH: "Switzerland",
+  BE: "Belgium", AT: "Austria", DK: "Denmark", FI: "Finland", NO: "Norway",
+  IE: "Ireland", PT: "Portugal", GR: "Greece", CZ: "Czech Republic",
+  RO: "Romania", HU: "Hungary", IL: "Israel", NZ: "New Zealand",
+  CO: "Colombia", PE: "Peru", VE: "Venezuela", UA: "Ukraine",
+};
+
+export function CountryFlag({ cc, className }: { cc: string; className?: string }) {
+  const up = (cc || "").toUpperCase();
+  if (!/^[A-Z]{2}$/.test(up)) {
+    return (
+      <span className={`${BADGE_CLASS} ${className ?? ""}`}>
+        <Globe className="h-3 w-3 text-muted-foreground" />
+      </span>
+    );
+  }
+  const lo = up.toLowerCase();
+  return (
+    <span className={`${BADGE_CLASS} ${className ?? ""}`}>
+      <img
+        src={`https://flagcdn.com/w40/${lo}.png`}
+        srcSet={`https://flagcdn.com/w80/${lo}.png 2x`}
+        alt={up}
+        width={20}
+        height={15}
+        loading="lazy"
+        className="h-full w-full object-cover"
+      />
+    </span>
+  );
+}
+
+export function BrandBadge({ name, className }: { name: string; className?: string }) {
+  const Icon = getBrandIcon(name);
+  return (
+    <span className={`${BADGE_CLASS} ${className ?? ""}`}>
+      <Icon className="h-3.5 w-3.5" />
+    </span>
+  );
+}
+
+export function ReferrerFavicon({ host, className }: { host: string; className?: string }) {
+  const h = (host || "").toLowerCase().trim();
+  if (!h || h === "direct" || h === "unknown") {
+    return (
+      <span className={`${BADGE_CLASS} ${className ?? ""}`}>
+        <Globe className="h-3 w-3 text-primary" />
+      </span>
+    );
+  }
+  const domain = h.replace(/^www\./, "").split("/")[0];
+  return (
+    <span className={`${BADGE_CLASS} ${className ?? ""}`}>
+      <img
+        src={`https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(domain)}`}
+        alt={domain}
+        width={16}
+        height={16}
+        loading="lazy"
+        className="h-4 w-4"
+      />
+    </span>
+  );
+}
+
+export function prettyReferrer(host: string) {
+  const h = (host || "").toLowerCase().trim();
+  if (!h || h === "direct") return "Direct";
+  if (h === "unknown") return "Unknown";
+  return h.replace(/^www\./, "");
+}
