@@ -1031,11 +1031,18 @@ export const verifyHuman = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data }) => {
-    const a = analyzeRequest();
+    const aRaw = analyzeRequest();
     const ip =
       getRequestHeader("cf-connecting-ip") ||
       getRequestHeader("x-forwarded-for") ||
       "";
+
+    logRedirectEvent("verify.start", {
+      code: data.code, ip,
+      ua: aRaw.ua.slice(0, 120),
+      rawScore: aRaw.score,
+      reasons: aRaw.reasons,
+    });
 
     const { data: link, error: linkError } = await supabaseAdmin
       .from("links")
@@ -1054,8 +1061,15 @@ export const verifyHuman = createServerFn({ method: "POST" })
     }
 
     if (!link || link.status !== "active") {
+      logRedirectEvent("verify.decision", { code: data.code, branch: "not-found" });
       return { ok: false as const, reason: "not-found" };
     }
+
+    // Load config + apply tunable weight adjustments (matches resolveLink behaviour).
+    const cfgEarly = await loadProtection();
+    const adj = applyConfigAdjustments(aRaw, cfgEarly);
+    const a = { ...aRaw, score: adj.score, hardBot: adj.hardBot, isBot: adj.score >= 50 };
+
 
     // Parallel: FB blocklist + referer rule + time rule are independent
     const asn = asnFromHeaders();
