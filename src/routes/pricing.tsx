@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FaqSection, PRICING_FAQ, buildFaqSchema } from "@/components/faq-section";
 import { Breadcrumbs, buildBreadcrumbSchema } from "@/components/breadcrumbs";
 
-const PRICING_CRUMBS = [{ label: "Pricing" }];
+const PRICING_CRUMBS = [{ label: "Pricing", to: "/pricing" }];
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({

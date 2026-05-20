@@ -53,7 +53,7 @@ export const Route = createFileRoute("/tiktok-ads")({
     links: [{ rel: "canonical", href: "https://sleepox.com/tiktok-ads" }],
     scripts: [
       { type: "application/ld+json", children: JSON.stringify(buildFaqSchema(FAQ)) },
-      { type: "application/ld+json", children: JSON.stringify(buildBreadcrumbSchema([{ label: "TikTok Ads" }])) },
+      { type: "application/ld+json", children: JSON.stringify(buildBreadcrumbSchema([{ label: "TikTok Ads", to: "/tiktok-ads" }])) },
     ],
   }),
   component: Page,

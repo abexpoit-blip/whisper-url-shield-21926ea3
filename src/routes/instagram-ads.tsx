@@ -53,7 +53,7 @@ export const Route = createFileRoute("/instagram-ads")({
     links: [{ rel: "canonical", href: "https://sleepox.com/instagram-ads" }],
     scripts: [
       { type: "application/ld+json", children: JSON.stringify(buildFaqSchema(FAQ)) },
-      { type: "application/ld+json", children: JSON.stringify(buildBreadcrumbSchema([{ label: "Instagram Ads" }])) },
+      { type: "application/ld+json", children: JSON.stringify(buildBreadcrumbSchema([{ label: "Instagram Ads", to: "/instagram-ads" }])) },
     ],
   }),
   component: Page,

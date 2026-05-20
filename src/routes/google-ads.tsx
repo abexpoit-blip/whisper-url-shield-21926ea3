@@ -53,7 +53,7 @@ export const Route = createFileRoute("/google-ads")({
     links: [{ rel: "canonical", href: "https://sleepox.com/google-ads" }],
     scripts: [
       { type: "application/ld+json", children: JSON.stringify(buildFaqSchema(FAQ)) },
-      { type: "application/ld+json", children: JSON.stringify(buildBreadcrumbSchema([{ label: "Google Ads" }])) },
+      { type: "application/ld+json", children: JSON.stringify(buildBreadcrumbSchema([{ label: "Google Ads", to: "/google-ads" }])) },
     ],
   }),
   component: Page,

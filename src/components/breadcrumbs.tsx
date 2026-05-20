@@ -3,8 +3,8 @@ import { ChevronRight, Home } from "lucide-react";
 
 export type BreadcrumbItem = {
   label: string;
-  /** Absolute path starting with `/`. Omit on the current page (last item). */
-  to?: string;
+  /** Absolute path starting with `/` including the current page. */
+  to: string;
 };
 
 export type BreadcrumbProps = {
@@ -28,7 +28,7 @@ export function Breadcrumbs({ items, className = "" }: BreadcrumbProps) {
           return (
             <li key={`${item.label}-${idx}`} className="flex items-center gap-1.5">
               {idx > 0 && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />}
-              {isLast || !item.to ? (
+              {isLast ? (
                 <span aria-current="page" className="font-medium text-foreground">
                   {idx === 0 ? (
                     <span className="inline-flex items-center gap-1">

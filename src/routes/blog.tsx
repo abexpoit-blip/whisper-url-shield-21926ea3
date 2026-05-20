@@ -43,7 +43,7 @@ export const Route = createFileRoute("/blog")({
       },
       {
         type: "application/ld+json",
-        children: JSON.stringify(buildBreadcrumbSchema([{ label: "Blog" }])),
+        children: JSON.stringify(buildBreadcrumbSchema([{ label: "Blog", to: "/blog" }])),
       },
     ],
   }),
@@ -61,7 +61,7 @@ function BlogIndex() {
       <BlogHeader />
       <section className="border-b border-border/40 bg-hero">
         <div className="mx-auto max-w-5xl px-6 py-20 text-center md:py-28">
-          <Breadcrumbs items={[{ label: "Blog" }]} className="mb-6 justify-center" />
+          <Breadcrumbs items={[{ label: "Blog", to: "/blog" }]} className="mb-6 justify-center" />
           <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-medium text-primary">
             LinkShield Blog
           </div>

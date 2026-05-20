@@ -53,7 +53,7 @@ export const Route = createFileRoute("/facebook-ads")({
     links: [{ rel: "canonical", href: "https://sleepox.com/facebook-ads" }],
     scripts: [
       { type: "application/ld+json", children: JSON.stringify(buildFaqSchema(FAQ)) },
-      { type: "application/ld+json", children: JSON.stringify(buildBreadcrumbSchema([{ label: "Facebook Ads" }])) },
+      { type: "application/ld+json", children: JSON.stringify(buildBreadcrumbSchema([{ label: "Facebook Ads", to: "/facebook-ads" }])) },
     ],
   }),
   component: Page,

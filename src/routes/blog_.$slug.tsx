@@ -111,7 +111,7 @@ function BlogPostPage() {
         <Breadcrumbs
           items={[
             { label: "Blog", to: "/blog" },
-            { label: post.title },
+            { label: post.title, to: `/blog/${post.slug}` },
           ]}
           className="mb-8"
         />
