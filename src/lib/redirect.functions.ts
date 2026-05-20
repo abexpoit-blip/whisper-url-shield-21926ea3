@@ -1107,6 +1107,7 @@ export const verifyHuman = createServerFn({ method: "POST" })
         }),
         challenge_passed: false,
       });
+      logRedirectEvent("verify.decision", { code: data.code, branch: "verify-silent", score: a.score, fbHit, refAction, timeAction });
       return { ok: false as const, reason: "blocklist" };
     }
 
@@ -1120,9 +1121,10 @@ export const verifyHuman = createServerFn({ method: "POST" })
       }
     }
 
-    // Re-check protection + targeting at verification time (parallel)
-    const cfg = await loadProtection();
+    // Re-use config loaded early in handler for adjustments
+    const cfg = cfgEarly;
     const rateHits = await ipExceedsRate(ip, cfg);
+
 
 
     const uaInfo2 = parseUA(a.ua);
