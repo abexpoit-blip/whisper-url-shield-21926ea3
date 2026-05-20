@@ -190,15 +190,28 @@ function Dashboard() {
     toast.success("Refreshing…");
   };
 
+  const loadCountryDrill = (cc: string, filters: { device: string | null; browser: string | null; os: string | null }) => {
+    setCountryDrillLoading(true);
+    void fetchCountry({ data: { country: cc, days: rangeDays, linkId: null, device: filters.device, browser: filters.browser, os: filters.os } })
+      .then((res) => setCountryDrill(res))
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to load country data"))
+      .finally(() => setCountryDrillLoading(false));
+  };
+
   const openCountry = (cc: string) => {
     if (!cc || cc.length !== 2) return;
     setCountryDrillCode(cc);
     setCountryDrill(null);
-    setCountryDrillLoading(true);
-    void fetchCountry({ data: { country: cc, days: rangeDays, linkId: null } })
-      .then((res) => setCountryDrill(res))
-      .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to load country data"))
-      .finally(() => setCountryDrillLoading(false));
+    const fresh = { device: null, browser: null, os: null };
+    setDrillFilters(fresh);
+    loadCountryDrill(cc, fresh);
+  };
+
+  const updateDrillFilter = (key: "device" | "browser" | "os", value: string | null) => {
+    if (!countryDrillCode) return;
+    const next = { ...drillFilters, [key]: value };
+    setDrillFilters(next);
+    loadCountryDrill(countryDrillCode, next);
   };
 
 
