@@ -304,6 +304,15 @@ function Dashboard() {
     [links],
   );
 
+  // Range-windowed per-link stats from the same source the link analytics page uses,
+  // so dashboard rows match /analytics/$linkId exactly (instead of lifetime cached counters).
+  const linkStatsById = useMemo(() => {
+    const m = new Map<string, { humans: number; bots: number }>();
+    for (const b of analytics?.byLink ?? []) m.set(b.id, { humans: b.humans, bots: b.bots });
+    return m;
+  }, [analytics]);
+  const getLinkStats = (id: string) => linkStatsById.get(id) ?? { humans: 0, bots: 0 };
+
   const chartValues = useMemo(
     () => (analytics?.timeseries ?? []).map((p) => p.humans),
     [analytics],
