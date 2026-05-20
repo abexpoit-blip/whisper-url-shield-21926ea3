@@ -69,6 +69,7 @@ export function PlatformLanding(props: PlatformLandingProps) {
       <section className="relative overflow-hidden bg-hero">
         <div className="absolute inset-0 grid-pattern opacity-40" />
         <div className="relative mx-auto max-w-5xl px-6 py-24 text-center md:py-32">
+          <Breadcrumbs items={breadcrumbItems} className="mb-6 justify-center" />
           <div
             className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-medium text-primary"
             style={accent ? { color: accent, borderColor: `${accent}55`, background: `${accent}10` } : undefined}
