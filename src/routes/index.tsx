@@ -219,7 +219,7 @@ function LandingPage() {
             <span
               className="inline-block rounded-full bg-gradient-to-r from-sky-500 via-cyan-500 to-blue-600 px-3 py-1 text-[10px] font-bold tracking-wider text-white shadow-glow"
             >
-              Developed by ExpoIT
+              Developed by Sleepox LLC
             </span>
           </div>
         </div>
