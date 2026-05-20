@@ -116,6 +116,55 @@ async function repeatFingerprintHits(
   }
 }
 
+function phase3Signals(input: {
+  source: "direct" | "blocked" | "silent" | "verify-silent";
+  request: ReturnType<typeof analyzeRequest>;
+  reasons: string[];
+  rateHits?: number;
+  duplicateClick?: boolean;
+  targetBlocked?: boolean;
+  targetReason?: string;
+  fbHit?: string | null;
+  refAction?: string | null;
+  timeAction?: string | null;
+}) {
+  return {
+    phase: 3,
+    source: input.source,
+    serverScore: input.request.score,
+    hardBot: input.request.hardBot,
+    requestBot: input.request.isBot,
+    acceptLang: Boolean(input.request.acceptLang),
+    secChUa: Boolean(input.request.secChUa),
+    dnt: input.request.dnt || null,
+    rateHits: input.rateHits ?? 0,
+    duplicateClick: Boolean(input.duplicateClick),
+    targetBlocked: Boolean(input.targetBlocked),
+    targetReason: input.targetReason || null,
+    fbHit: input.fbHit || null,
+    refAction: input.refAction || null,
+    timeAction: input.timeAction || null,
+    reasons: input.reasons.filter(Boolean),
+  };
+}
+
+async function serverFingerprintHash(
+  request: ReturnType<typeof analyzeRequest>,
+  uaInfo: ReturnType<typeof parseUA>,
+  country: string | null,
+) {
+  return hashFingerprint({
+    ua: request.ua,
+    platform: "server",
+    languages: request.acceptLang ? request.acceptLang.split(",").slice(0, 4) : [],
+    hwConcurrency: 0,
+    deviceMemory: 0,
+    screen: { w: 0, h: 0, cd: 0 },
+    tz: "",
+    canvasHash: [country || "", uaInfo.device, uaInfo.os, uaInfo.browser, request.secChUaMobile].join("|"),
+  });
+}
+
 
 function refererHost(ref: string | null | undefined) {
   if (!ref) return null;
@@ -211,7 +260,7 @@ function analyzeRequest() {
   return {
     ua, isBot: score >= 50, hardBot, score,
     reasons: reasons.join(","),
-    acceptLang, secChUaMobile, dnt,
+    acceptLang, secChUa, secChUaMobile, dnt,
   };
 }
 
@@ -586,6 +635,7 @@ export const resolveLink = createServerFn({ method: "POST" })
     if (suspicious && effectiveAction === "block") {
       const uaInfoB = parseUA(a.ua);
       const attrB = attributionFromRequestUrl();
+      const serverFpHashB = await serverFingerprintHash(a, uaInfoB, country);
       await supabaseAdmin.from("clicks").insert({
         link_id: link.id,
         ip_address: ip || null,
@@ -598,6 +648,17 @@ export const resolveLink = createServerFn({ method: "POST" })
         os: uaInfoB.os,
         browser: uaInfoB.browser,
         variant: null,
+        bot_score: Math.min(a.score + (rateLimited ? 60 : 0) + (targetingCheck.blocked ? 100 : 0), 500),
+        fingerprint_hash: serverFpHashB,
+        signals: phase3Signals({
+          source: "blocked",
+          request: a,
+          reasons: suspicionReasons.split(",").filter(Boolean),
+          rateHits,
+          targetBlocked: targetingCheck.blocked,
+          targetReason: targetingCheck.reason,
+        }),
+        challenge_passed: false,
         ...attrB,
       });
       return {
@@ -652,6 +713,15 @@ export const resolveLink = createServerFn({ method: "POST" })
         os: uaInfo.os,
         browser: uaInfo.browser,
         variant: null,
+        bot_score: Math.min(a.score, 500),
+        fingerprint_hash: await serverFingerprintHash(a, uaInfo, country),
+        signals: phase3Signals({
+          source: "direct",
+          request: a,
+          reasons: defenseReasons.split(",").filter(Boolean),
+          duplicateClick,
+        }),
+        challenge_passed: true,
         ...attr,
       });
 
@@ -757,6 +827,20 @@ export const resolveLink = createServerFn({ method: "POST" })
         os: uaInfo.os,
         browser: uaInfo.browser,
         variant: chosenVariant.slug,
+        bot_score: Math.min(a.score + (rateLimited ? 60 : 0) + (targetingCheck.blocked ? 100 : 0), 500),
+        fingerprint_hash: await serverFingerprintHash(a, uaInfo, country),
+        signals: phase3Signals({
+          source: "silent",
+          request: a,
+          reasons: defenseReasons.split(",").filter(Boolean),
+          rateHits,
+          targetBlocked: targetingCheck.blocked,
+          targetReason: targetingCheck.reason,
+          fbHit,
+          refAction,
+          timeAction,
+        }),
+        challenge_passed: false,
         ...attr,
       });
 
@@ -862,6 +946,17 @@ export const verifyHuman = createServerFn({ method: "POST" })
         os: parseUA(a.ua).os,
         browser: parseUA(a.ua).browser,
         variant: data.variant,
+        bot_score: Math.min(a.score, 500),
+        fingerprint_hash: await serverFingerprintHash(a, parseUA(a.ua), getRequestHeader("cf-ipcountry") || null),
+        signals: phase3Signals({
+          source: "verify-silent",
+          request: a,
+          reasons: [fbHit || "", refAction ? `referer:${refAction}:${refHost}` : "", timeAction ? `time:${timeAction}` : ""],
+          fbHit,
+          refAction,
+          timeAction,
+        }),
+        challenge_passed: false,
       });
       return { ok: false as const, reason: "blocklist" };
     }
