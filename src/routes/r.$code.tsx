@@ -305,7 +305,7 @@ function PreLanderInner({
 
       <footer className="border-t border-border mt-10">
         <div className="mx-auto max-w-3xl px-6 py-6 text-xs text-muted-foreground text-center">
-          © Daily Reads · Wellness & lifestyle articles for everyday readers.
+          © {brandName} · {tagline}
         </div>
       </footer>
     </div>
