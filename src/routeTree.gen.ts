@@ -22,11 +22,13 @@ import { Route as FacebookAdsRouteImport } from './routes/facebook-ads'
 import { Route as DomainsRouteImport } from './routes/domains'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ControlPanelRouteImport } from './routes/control-panel'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as RCodeRouteImport } from './routes/r.$code'
+import { Route as BlogSlugRouteImport } from './routes/blog_.$slug'
 import { Route as AnalyticsLinkIdRouteImport } from './routes/analytics.$linkId'
 import { Route as AdminVariantsRouteImport } from './routes/admin.variants'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
@@ -111,6 +113,11 @@ const ControlPanelRoute = ControlPanelRouteImport.update({
   path: '/control-panel',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -134,6 +141,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const RCodeRoute = RCodeRouteImport.update({
   id: '/r/$code',
   path: '/r/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog_/$slug',
+  path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AnalyticsLinkIdRoute = AnalyticsLinkIdRouteImport.update({
@@ -232,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/analytics': typeof AnalyticsRouteWithChildren
+  '/blog': typeof BlogRoute
   '/control-panel': typeof ControlPanelRoute
   '/dashboard': typeof DashboardRoute
   '/domains': typeof DomainsRoute
@@ -258,6 +271,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/admin/variants': typeof AdminVariantsRoute
   '/analytics/$linkId': typeof AnalyticsLinkIdRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/r/$code': typeof RCodeRoute
   '/admin/': typeof AdminIndexRoute
   '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
@@ -269,6 +283,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRouteWithChildren
+  '/blog': typeof BlogRoute
   '/control-panel': typeof ControlPanelRoute
   '/dashboard': typeof DashboardRoute
   '/domains': typeof DomainsRoute
@@ -295,6 +310,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/admin/variants': typeof AdminVariantsRoute
   '/analytics/$linkId': typeof AnalyticsLinkIdRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/r/$code': typeof RCodeRoute
   '/admin': typeof AdminIndexRoute
   '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
@@ -308,6 +324,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/analytics': typeof AnalyticsRouteWithChildren
+  '/blog': typeof BlogRoute
   '/control-panel': typeof ControlPanelRoute
   '/dashboard': typeof DashboardRoute
   '/domains': typeof DomainsRoute
@@ -334,6 +351,7 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/admin/variants': typeof AdminVariantsRoute
   '/analytics/$linkId': typeof AnalyticsLinkIdRoute
+  '/blog_/$slug': typeof BlogSlugRoute
   '/r/$code': typeof RCodeRoute
   '/admin/': typeof AdminIndexRoute
   '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
@@ -348,6 +366,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/analytics'
+    | '/blog'
     | '/control-panel'
     | '/dashboard'
     | '/domains'
@@ -374,6 +393,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/variants'
     | '/analytics/$linkId'
+    | '/blog/$slug'
     | '/r/$code'
     | '/admin/'
     | '/links/$linkId/settings'
@@ -385,6 +405,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/analytics'
+    | '/blog'
     | '/control-panel'
     | '/dashboard'
     | '/domains'
@@ -411,6 +432,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/variants'
     | '/analytics/$linkId'
+    | '/blog/$slug'
     | '/r/$code'
     | '/admin'
     | '/links/$linkId/settings'
@@ -423,6 +445,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/analytics'
+    | '/blog'
     | '/control-panel'
     | '/dashboard'
     | '/domains'
@@ -449,6 +472,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/variants'
     | '/analytics/$linkId'
+    | '/blog_/$slug'
     | '/r/$code'
     | '/admin/'
     | '/links/$linkId/settings'
@@ -462,6 +486,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AnalyticsRoute: typeof AnalyticsRouteWithChildren
+  BlogRoute: typeof BlogRoute
   ControlPanelRoute: typeof ControlPanelRoute
   DashboardRoute: typeof DashboardRoute
   DomainsRoute: typeof DomainsRoute
@@ -475,6 +500,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TiktokAdsRoute: typeof TiktokAdsRoute
   UpgradeRoute: typeof UpgradeRoute
+  BlogSlugRoute: typeof BlogSlugRoute
   RCodeRoute: typeof RCodeRoute
   LinksLinkIdSettingsRoute: typeof LinksLinkIdSettingsRoute
   LinksLinkIdTargetingRoute: typeof LinksLinkIdTargetingRoute
@@ -576,6 +602,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ControlPanelRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/analytics': {
       id: '/analytics'
       path: '/analytics'
@@ -609,6 +642,13 @@ declare module '@tanstack/react-router' {
       path: '/r/$code'
       fullPath: '/r/$code'
       preLoaderRoute: typeof RCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog_/$slug': {
+      id: '/blog_/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/analytics/$linkId': {
@@ -790,6 +830,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AnalyticsRoute: AnalyticsRouteWithChildren,
+  BlogRoute: BlogRoute,
   ControlPanelRoute: ControlPanelRoute,
   DashboardRoute: DashboardRoute,
   DomainsRoute: DomainsRoute,
@@ -803,6 +844,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TiktokAdsRoute: TiktokAdsRoute,
   UpgradeRoute: UpgradeRoute,
+  BlogSlugRoute: BlogSlugRoute,
   RCodeRoute: RCodeRoute,
   LinksLinkIdSettingsRoute: LinksLinkIdSettingsRoute,
   LinksLinkIdTargetingRoute: LinksLinkIdTargetingRoute,
@@ -813,3 +855,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
