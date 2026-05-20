@@ -247,7 +247,6 @@ function CachedImage({
   width,
   height,
   className,
-  fallback,
 }: {
   src: string;
   srcSet?: string;
@@ -255,7 +254,6 @@ function CachedImage({
   width: number;
   height: number;
   className?: string;
-  fallback: React.ReactNode;
 }) {
   // Skip remote calls we already know are broken in this session.
   const initiallyFailed = isKnownFailed(src);
@@ -275,10 +273,8 @@ function CachedImage({
     };
   }, [src, state]);
 
-  if (state === "failed") return <>{fallback}</>;
-  // Only render the <img> after the throttled loader resolves; the browser
-  // HTTP cache then serves the bytes from memory/disk.
-  if (state !== "loaded") return <>{fallback}</>;
+  if (state === "failed") return <BadgeUnknown className={className} />;
+  if (state !== "loaded") return <BadgeSkeleton className={className} />;
   return (
     <img
       src={src}
@@ -296,11 +292,7 @@ function CachedImage({
 export function CountryFlag({ cc, className }: { cc: string; className?: string }) {
   const up = (cc || "").toUpperCase();
   if (!/^[A-Z]{2}$/.test(up)) {
-    return (
-      <span className={`${BADGE_CLASS} ${className ?? ""}`}>
-        <Globe className="h-3 w-3 text-muted-foreground" />
-      </span>
-    );
+    return <BadgeUnknown className={className} />;
   }
   const lo = up.toLowerCase();
   const src = `https://flagcdn.com/w40/${lo}.png`;
@@ -314,7 +306,6 @@ export function CountryFlag({ cc, className }: { cc: string; className?: string 
         width={20}
         height={15}
         className="h-full w-full object-cover"
-        fallback={<Globe className="h-3 w-3 text-muted-foreground" />}
       />
     </span>
   );
