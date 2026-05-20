@@ -755,7 +755,7 @@ function BreakdownTable({
   keyLabel: string;
   showConversion?: boolean;
   hideSplit?: boolean;
-  kind?: "country" | "os" | "browser" | "generic";
+  kind?: "country" | "os" | "browser" | "referrer" | "generic";
 }) {
   if (!rows.length) return <EmptyState />;
   const max = Math.max(...rows.map((r) => r.total), 1);
