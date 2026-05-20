@@ -29,6 +29,12 @@ export const Route = createFileRoute("/")({
       { name: "twitter:description", content: "Short links built for Facebook, Instagram, TikTok & Google Ads — block bots, boost CTR." },
     ],
     links: [{ rel: "canonical", href: "https://sleepox.com/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify(buildFaqSchema(HOMEPAGE_FAQ)),
+      },
+    ],
   }),
 
   component: LandingPage,
