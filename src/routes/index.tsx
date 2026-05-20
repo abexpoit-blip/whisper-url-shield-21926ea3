@@ -50,10 +50,13 @@ function LandingPage() {
             <Logo glow glowSize="sm" className="h-8 w-8" />
             <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent tracking-tight">LinkShield</span>
           </Link>
-          <nav className="hidden items-center gap-8 text-sm md:flex">
+          <nav className="hidden items-center gap-6 text-sm md:flex">
             <a href="#features" className="text-muted-foreground hover:text-foreground">Features</a>
+            <Link to="/facebook-ads" className="text-muted-foreground hover:text-foreground">Facebook</Link>
+            <Link to="/instagram-ads" className="text-muted-foreground hover:text-foreground">Instagram</Link>
+            <Link to="/tiktok-ads" className="text-muted-foreground hover:text-foreground">TikTok</Link>
+            <Link to="/google-ads" className="text-muted-foreground hover:text-foreground">Google Ads</Link>
             <Link to="/pricing" className="text-muted-foreground hover:text-foreground">Pricing</Link>
-            <a href="#how" className="text-muted-foreground hover:text-foreground">How it works</a>
           </nav>
           <div className="flex items-center gap-2">
             <Link to="/login">
@@ -205,10 +208,13 @@ function LandingPage() {
             <Logo glow glowSize="sm" className="h-6 w-6" />
             <span>© 2026 LinkShield. All rights reserved.</span>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            <Link to="/facebook-ads">Facebook Ads</Link>
+            <Link to="/instagram-ads">Instagram Ads</Link>
+            <Link to="/tiktok-ads">TikTok Ads</Link>
+            <Link to="/google-ads">Google Ads</Link>
             <Link to="/pricing">Pricing</Link>
             <Link to="/login">Sign in</Link>
-            <Link to="/signup">Sign up</Link>
             <span
               className="inline-block rounded-full bg-gradient-to-r from-sky-500 via-cyan-500 to-blue-600 px-3 py-1 text-[10px] font-bold tracking-wider text-white shadow-glow"
             >

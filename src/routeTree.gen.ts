@@ -10,11 +10,15 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UpgradeRouteImport } from './routes/upgrade'
+import { Route as TiktokAdsRouteImport } from './routes/tiktok-ads'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as InstagramAdsRouteImport } from './routes/instagram-ads'
+import { Route as GoogleAdsRouteImport } from './routes/google-ads'
 import { Route as FunnelRouteImport } from './routes/funnel'
+import { Route as FacebookAdsRouteImport } from './routes/facebook-ads'
 import { Route as DomainsRouteImport } from './routes/domains'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ControlPanelRouteImport } from './routes/control-panel'
@@ -47,6 +51,11 @@ const UpgradeRoute = UpgradeRouteImport.update({
   path: '/upgrade',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TiktokAdsRoute = TiktokAdsRouteImport.update({
+  id: '/tiktok-ads',
+  path: '/tiktok-ads',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -67,9 +76,24 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InstagramAdsRoute = InstagramAdsRouteImport.update({
+  id: '/instagram-ads',
+  path: '/instagram-ads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GoogleAdsRoute = GoogleAdsRouteImport.update({
+  id: '/google-ads',
+  path: '/google-ads',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FunnelRoute = FunnelRouteImport.update({
   id: '/funnel',
   path: '/funnel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FacebookAdsRoute = FacebookAdsRouteImport.update({
+  id: '/facebook-ads',
+  path: '/facebook-ads',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DomainsRoute = DomainsRouteImport.update({
@@ -211,11 +235,15 @@ export interface FileRoutesByFullPath {
   '/control-panel': typeof ControlPanelRoute
   '/dashboard': typeof DashboardRoute
   '/domains': typeof DomainsRoute
+  '/facebook-ads': typeof FacebookAdsRoute
   '/funnel': typeof FunnelRoute
+  '/google-ads': typeof GoogleAdsRoute
+  '/instagram-ads': typeof InstagramAdsRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/tiktok-ads': typeof TiktokAdsRoute
   '/upgrade': typeof UpgradeRoute
   '/admin/asn-blocklist': typeof AdminAsnBlocklistRoute
   '/admin/audit': typeof AdminAuditRoute
@@ -244,11 +272,15 @@ export interface FileRoutesByTo {
   '/control-panel': typeof ControlPanelRoute
   '/dashboard': typeof DashboardRoute
   '/domains': typeof DomainsRoute
+  '/facebook-ads': typeof FacebookAdsRoute
   '/funnel': typeof FunnelRoute
+  '/google-ads': typeof GoogleAdsRoute
+  '/instagram-ads': typeof InstagramAdsRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/tiktok-ads': typeof TiktokAdsRoute
   '/upgrade': typeof UpgradeRoute
   '/admin/asn-blocklist': typeof AdminAsnBlocklistRoute
   '/admin/audit': typeof AdminAuditRoute
@@ -279,11 +311,15 @@ export interface FileRoutesById {
   '/control-panel': typeof ControlPanelRoute
   '/dashboard': typeof DashboardRoute
   '/domains': typeof DomainsRoute
+  '/facebook-ads': typeof FacebookAdsRoute
   '/funnel': typeof FunnelRoute
+  '/google-ads': typeof GoogleAdsRoute
+  '/instagram-ads': typeof InstagramAdsRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/tiktok-ads': typeof TiktokAdsRoute
   '/upgrade': typeof UpgradeRoute
   '/admin/asn-blocklist': typeof AdminAsnBlocklistRoute
   '/admin/audit': typeof AdminAuditRoute
@@ -315,11 +351,15 @@ export interface FileRouteTypes {
     | '/control-panel'
     | '/dashboard'
     | '/domains'
+    | '/facebook-ads'
     | '/funnel'
+    | '/google-ads'
+    | '/instagram-ads'
     | '/login'
     | '/pricing'
     | '/signup'
     | '/sitemap.xml'
+    | '/tiktok-ads'
     | '/upgrade'
     | '/admin/asn-blocklist'
     | '/admin/audit'
@@ -348,11 +388,15 @@ export interface FileRouteTypes {
     | '/control-panel'
     | '/dashboard'
     | '/domains'
+    | '/facebook-ads'
     | '/funnel'
+    | '/google-ads'
+    | '/instagram-ads'
     | '/login'
     | '/pricing'
     | '/signup'
     | '/sitemap.xml'
+    | '/tiktok-ads'
     | '/upgrade'
     | '/admin/asn-blocklist'
     | '/admin/audit'
@@ -382,11 +426,15 @@ export interface FileRouteTypes {
     | '/control-panel'
     | '/dashboard'
     | '/domains'
+    | '/facebook-ads'
     | '/funnel'
+    | '/google-ads'
+    | '/instagram-ads'
     | '/login'
     | '/pricing'
     | '/signup'
     | '/sitemap.xml'
+    | '/tiktok-ads'
     | '/upgrade'
     | '/admin/asn-blocklist'
     | '/admin/audit'
@@ -417,11 +465,15 @@ export interface RootRouteChildren {
   ControlPanelRoute: typeof ControlPanelRoute
   DashboardRoute: typeof DashboardRoute
   DomainsRoute: typeof DomainsRoute
+  FacebookAdsRoute: typeof FacebookAdsRoute
   FunnelRoute: typeof FunnelRoute
+  GoogleAdsRoute: typeof GoogleAdsRoute
+  InstagramAdsRoute: typeof InstagramAdsRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TiktokAdsRoute: typeof TiktokAdsRoute
   UpgradeRoute: typeof UpgradeRoute
   RCodeRoute: typeof RCodeRoute
   LinksLinkIdSettingsRoute: typeof LinksLinkIdSettingsRoute
@@ -438,6 +490,13 @@ declare module '@tanstack/react-router' {
       path: '/upgrade'
       fullPath: '/upgrade'
       preLoaderRoute: typeof UpgradeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tiktok-ads': {
+      id: '/tiktok-ads'
+      path: '/tiktok-ads'
+      fullPath: '/tiktok-ads'
+      preLoaderRoute: typeof TiktokAdsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -468,11 +527,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/instagram-ads': {
+      id: '/instagram-ads'
+      path: '/instagram-ads'
+      fullPath: '/instagram-ads'
+      preLoaderRoute: typeof InstagramAdsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/google-ads': {
+      id: '/google-ads'
+      path: '/google-ads'
+      fullPath: '/google-ads'
+      preLoaderRoute: typeof GoogleAdsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/funnel': {
       id: '/funnel'
       path: '/funnel'
       fullPath: '/funnel'
       preLoaderRoute: typeof FunnelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/facebook-ads': {
+      id: '/facebook-ads'
+      path: '/facebook-ads'
+      fullPath: '/facebook-ads'
+      preLoaderRoute: typeof FacebookAdsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/domains': {
@@ -713,11 +793,15 @@ const rootRouteChildren: RootRouteChildren = {
   ControlPanelRoute: ControlPanelRoute,
   DashboardRoute: DashboardRoute,
   DomainsRoute: DomainsRoute,
+  FacebookAdsRoute: FacebookAdsRoute,
   FunnelRoute: FunnelRoute,
+  GoogleAdsRoute: GoogleAdsRoute,
+  InstagramAdsRoute: InstagramAdsRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TiktokAdsRoute: TiktokAdsRoute,
   UpgradeRoute: UpgradeRoute,
   RCodeRoute: RCodeRoute,
   LinksLinkIdSettingsRoute: LinksLinkIdSettingsRoute,
