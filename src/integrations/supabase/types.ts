@@ -912,6 +912,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_link_bot_clicks: {
+        Args: { p_link_id: string }
+        Returns: undefined
+      }
+      increment_link_clicks: { Args: { p_link_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"
