@@ -73,8 +73,13 @@ export function AppSidebar({ email, isAdmin = false }: { email?: string; isAdmin
         <Link to="/" className="flex items-center gap-2.5 font-display font-bold">
           <Logo glow glowSize="sm" className="h-8 w-8 drop-shadow-sm" />
           {!collapsed && (
-            <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent text-lg tracking-tight">
-              LinkShield
+            <span className="flex flex-col leading-none">
+              <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent text-lg tracking-tight">
+                LinkShield
+              </span>
+              <span className="mt-1 font-mono text-[10px] font-medium tracking-wider text-muted-foreground/80">
+                sleepox.com
+              </span>
             </span>
           )}
         </Link>
