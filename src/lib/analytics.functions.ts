@@ -158,6 +158,9 @@ const CountrySchema = z.object({
   country: z.string().min(2).max(2),
   days: z.number().int().min(1).max(90).default(7),
   linkId: z.string().uuid().optional().nullable(),
+  device: z.string().min(1).max(40).optional().nullable(),
+  browser: z.string().min(1).max(60).optional().nullable(),
+  os: z.string().min(1).max(60).optional().nullable(),
 });
 
 export const getCountryDrilldown = createServerFn({ method: "POST" })
@@ -176,6 +179,8 @@ export const getCountryDrilldown = createServerFn({ method: "POST" })
         country: data.country,
         totals: { total: 0, humans: 0, bots: 0, ctr: 0 },
         byDevice: [], byBrowser: [], byOS: [], byLink: [], timeseries: [],
+        options: { devices: [], browsers: [], os: [] },
+        appliedFilters: { device: data.device ?? null, browser: data.browser ?? null, os: data.os ?? null },
       };
     }
 
@@ -187,7 +192,26 @@ export const getCountryDrilldown = createServerFn({ method: "POST" })
       .gte("created_at", since)
       .limit(10000);
 
-    const clicks = (clicksRaw ?? []) as Click[];
+    const allClicks = (clicksRaw ?? []) as Click[];
+
+    // Build filter option lists from unfiltered set (for dropdowns)
+    const options = {
+      devices: bucket(allClicks, (c) => c.device).map((r) => ({ key: r.key, total: r.total })),
+      browsers: bucket(allClicks, (c) => c.browser).map((r) => ({ key: r.key, total: r.total })),
+      os: bucket(allClicks, (c) => c.os).map((r) => ({ key: r.key, total: r.total })),
+    };
+
+    const norm = (v: string | null | undefined) => (v ?? "unknown").toLowerCase();
+    const fDevice = data.device ? data.device.toLowerCase() : null;
+    const fBrowser = data.browser ? data.browser.toLowerCase() : null;
+    const fOs = data.os ? data.os.toLowerCase() : null;
+
+    const clicks = allClicks.filter((c) =>
+      (!fDevice || norm(c.device) === fDevice) &&
+      (!fBrowser || norm(c.browser) === fBrowser) &&
+      (!fOs || norm(c.os) === fOs)
+    );
+
     const total = clicks.length;
     const bots = clicks.filter((c) => c.is_bot).length;
     const humans = total - bots;
@@ -226,6 +250,8 @@ export const getCountryDrilldown = createServerFn({ method: "POST" })
       byOS: bucket(clicks, (c) => c.os).slice(0, 8),
       byLink,
       timeseries: [...tsMap.values()],
+      options,
+      appliedFilters: { device: data.device ?? null, browser: data.browser ?? null, os: data.os ?? null },
     };
   });
 

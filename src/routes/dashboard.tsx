@@ -31,6 +31,7 @@ import {
   Clock,
   Stethoscope,
   CheckCircle,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { getAnalytics, getCountryDrilldown, getAdRejectDiagnostics } from "@/lib/analytics.functions";
@@ -123,6 +125,7 @@ function Dashboard() {
   const [countryDrill, setCountryDrill] = useState<Awaited<ReturnType<typeof getCountryDrilldown>> | null>(null);
   const [countryDrillCode, setCountryDrillCode] = useState<string | null>(null);
   const [countryDrillLoading, setCountryDrillLoading] = useState(false);
+  const [drillFilters, setDrillFilters] = useState<{ device: string | null; browser: string | null; os: string | null }>({ device: null, browser: null, os: null });
   const fetchDiag = useServerFn(getAdRejectDiagnostics);
   const [diag, setDiag] = useState<Awaited<ReturnType<typeof getAdRejectDiagnostics>> | null>(null);
   const [diagLoading, setDiagLoading] = useState(true);
@@ -189,15 +192,28 @@ function Dashboard() {
     toast.success("Refreshing…");
   };
 
+  const loadCountryDrill = (cc: string, filters: { device: string | null; browser: string | null; os: string | null }) => {
+    setCountryDrillLoading(true);
+    void fetchCountry({ data: { country: cc, days: rangeDays, linkId: null, device: filters.device, browser: filters.browser, os: filters.os } })
+      .then((res) => setCountryDrill(res))
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to load country data"))
+      .finally(() => setCountryDrillLoading(false));
+  };
+
   const openCountry = (cc: string) => {
     if (!cc || cc.length !== 2) return;
     setCountryDrillCode(cc);
     setCountryDrill(null);
-    setCountryDrillLoading(true);
-    void fetchCountry({ data: { country: cc, days: rangeDays, linkId: null } })
-      .then((res) => setCountryDrill(res))
-      .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to load country data"))
-      .finally(() => setCountryDrillLoading(false));
+    const fresh = { device: null, browser: null, os: null };
+    setDrillFilters(fresh);
+    loadCountryDrill(cc, fresh);
+  };
+
+  const updateDrillFilter = (key: "device" | "browser" | "os", value: string | null) => {
+    if (!countryDrillCode) return;
+    const next = { ...drillFilters, [key]: value };
+    setDrillFilters(next);
+    loadCountryDrill(countryDrillCode, next);
   };
 
 
@@ -1285,7 +1301,7 @@ function Dashboard() {
       </Dialog>
 
       {/* Country drilldown dialog */}
-      <Dialog open={!!countryDrillCode} onOpenChange={(o) => { if (!o) { setCountryDrillCode(null); setCountryDrill(null); } }}>
+      <Dialog open={!!countryDrillCode} onOpenChange={(o) => { if (!o) { setCountryDrillCode(null); setCountryDrill(null); setDrillFilters({ device: null, browser: null, os: null }); } }}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="font-display flex items-center gap-2">
@@ -1329,6 +1345,53 @@ function Dashboard() {
                 <div className="rounded-lg border border-border bg-card-gradient px-3 py-2.5">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground">CTR</div>
                   <div className="mt-0.5 font-display text-lg font-bold text-primary">{(countryDrill.totals.ctr * 100).toFixed(1)}%</div>
+                </div>
+              </div>
+
+              {/* Filter combination */}
+              <div className="rounded-xl border border-border bg-card-gradient p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mr-1">Filter</span>
+                  {([
+                    { key: "device" as const, label: "Device", opts: countryDrill.options.devices },
+                    { key: "browser" as const, label: "Browser", opts: countryDrill.options.browsers },
+                    { key: "os" as const, label: "OS", opts: countryDrill.options.os },
+                  ]).map((f) => (
+                    <Select
+                      key={f.key}
+                      value={drillFilters[f.key] ?? "__all__"}
+                      onValueChange={(v) => updateDrillFilter(f.key, v === "__all__" ? null : v)}
+                    >
+                      <SelectTrigger className="h-8 w-[140px] text-xs">
+                        <SelectValue placeholder={`All ${f.label}s`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__all__">All {f.label}s</SelectItem>
+                        {f.opts.map((o) => (
+                          <SelectItem key={o.key} value={o.key}>
+                            {prettyLabel(o.key)} <span className="text-muted-foreground">({o.total})</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ))}
+                  {(drillFilters.device || drillFilters.browser || drillFilters.os) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 text-xs"
+                      onClick={() => {
+                        const fresh = { device: null, browser: null, os: null };
+                        setDrillFilters(fresh);
+                        if (countryDrillCode) loadCountryDrill(countryDrillCode, fresh);
+                      }}
+                    >
+                      <X className="h-3 w-3 mr-1" /> Clear
+                    </Button>
+                  )}
+                  <span className="ml-auto text-[11px] text-muted-foreground">
+                    {countryDrill.totals.total.toLocaleString()} clicks · CTR {(countryDrill.totals.ctr * 100).toFixed(1)}% · {countryDrill.totals.humans.toLocaleString()} conv.
+                  </span>
                 </div>
               </div>
 
