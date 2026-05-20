@@ -26,6 +26,11 @@ import {
   ShieldCheck,
   Shield,
   Gauge,
+  AlertTriangle,
+  MapPin,
+  Clock,
+  Stethoscope,
+  CheckCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
