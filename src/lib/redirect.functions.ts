@@ -7,7 +7,7 @@ import { parseUA } from "@/lib/ua";
 import { pickVariant, type Variant, type VariantSection } from "@/lib/variants";
 
 function createRedirectAdminClient() {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "http://127.0.0.1:8000";
+  const url = process.env.REDIRECT_SUPABASE_URL || process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "http://127.0.0.1:8000";
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
   if (!key) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY/SUPABASE_SERVICE_KEY for redirect lookup");
   return createClient<Database>(url, key, {
