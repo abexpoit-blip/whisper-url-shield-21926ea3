@@ -524,7 +524,13 @@ export const resolveLink = createServerFn({ method: "POST" })
       timeAction ? `time:${timeAction}` : "",
     ].filter(Boolean).join(",");
 
-    if (!silentBot) {
+    // requireVerify: traffic looks plausibly human but has at least one
+    // suspicion signal (mid-score). Route through the prelander so the client
+    // fingerprint layer (canvas / webdriver / screen / interaction) can run.
+    // Clean signal (score === 0) keeps the zero-friction direct redirect.
+    const requireVerify = !silentBot && a.score > 0;
+
+    if (!silentBot && !requireVerify) {
       let duplicateClick = false;
       if (link.duplicate_protection) {
         const dup = await isDuplicateClick(ip, link.id, link.duplicate_window_minutes ?? 30);
