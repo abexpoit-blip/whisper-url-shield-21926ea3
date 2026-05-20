@@ -242,12 +242,35 @@ export const getCountryDrilldown = createServerFn({ method: "POST" })
       .sort((a, b) => b.total - a.total)
       .slice(0, 8);
 
+    // Referrer hosts within this country
+    const refMap = new Map<string, { total: number; humans: number; bots: number }>();
+    const incRef = (host: string, isBot: boolean) => {
+      const e = refMap.get(host) ?? { total: 0, humans: 0, bots: 0 };
+      e.total += 1;
+      if (isBot) e.bots += 1; else e.humans += 1;
+      refMap.set(host, e);
+    };
+    for (const c of clicks) {
+      if (!c.referer) { incRef("direct", c.is_bot); continue; }
+      try {
+        const host = new URL(c.referer).hostname.replace(/^www\./, "");
+        incRef(host, c.is_bot);
+      } catch {
+        incRef("unknown", c.is_bot);
+      }
+    }
+    const byReferrer = [...refMap.entries()]
+      .map(([key, v]) => ({ key, total: v.total, humans: v.humans, bots: v.bots }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 10);
+
     return {
       country: data.country.toUpperCase(),
       totals: { total, humans, bots, ctr },
       byDevice: bucket(clicks, (c) => c.device),
       byBrowser: bucket(clicks, (c) => c.browser).slice(0, 8),
       byOS: bucket(clicks, (c) => c.os).slice(0, 8),
+      byReferrer,
       byLink,
       timeseries: [...tsMap.values()],
       options,
