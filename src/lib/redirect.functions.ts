@@ -635,6 +635,7 @@ export const resolveLink = createServerFn({ method: "POST" })
     if (suspicious && effectiveAction === "block") {
       const uaInfoB = parseUA(a.ua);
       const attrB = attributionFromRequestUrl();
+      const serverFpHashB = await serverFingerprintHash(a, uaInfoB, country);
       await supabaseAdmin.from("clicks").insert({
         link_id: link.id,
         ip_address: ip || null,
@@ -648,6 +649,7 @@ export const resolveLink = createServerFn({ method: "POST" })
         browser: uaInfoB.browser,
         variant: null,
         bot_score: Math.min(a.score + (rateLimited ? 60 : 0) + (targetingCheck.blocked ? 100 : 0), 500),
+        fingerprint_hash: serverFpHashB,
         signals: phase3Signals({
           source: "blocked",
           request: a,
@@ -712,6 +714,7 @@ export const resolveLink = createServerFn({ method: "POST" })
         browser: uaInfo.browser,
         variant: null,
         bot_score: Math.min(a.score, 500),
+        fingerprint_hash: await serverFingerprintHash(a, uaInfo, country),
         signals: phase3Signals({
           source: "direct",
           request: a,
