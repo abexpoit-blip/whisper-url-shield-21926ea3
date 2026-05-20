@@ -870,6 +870,162 @@ function Dashboard() {
                 );
               })()}
 
+              {/* Ad Reject Diagnostic Report */}
+              {(() => {
+                const score = diag?.score ?? 100;
+                const findings = diag?.findings ?? [];
+                const band =
+                  score >= 85 ? { label: "Healthy", tone: "oklch(0.72 0.18 155)", bg: "oklch(0.72 0.18 155 / 0.12)" }
+                  : score >= 65 ? { label: "Needs attention", tone: "oklch(0.78 0.16 80)", bg: "oklch(0.78 0.16 80 / 0.12)" }
+                  : { label: "At risk", tone: "oklch(0.62 0.22 25)", bg: "oklch(0.62 0.22 25 / 0.12)" };
+                const sevMeta: Record<string, { color: string; bg: string; label: string }> = {
+                  high: { color: "oklch(0.62 0.22 25)", bg: "oklch(0.62 0.22 25 / 0.10)", label: "High" },
+                  medium: { color: "oklch(0.72 0.16 70)", bg: "oklch(0.72 0.16 70 / 0.10)", label: "Medium" },
+                  low: { color: "oklch(0.62 0.18 235)", bg: "oklch(0.62 0.18 235 / 0.10)", label: "Low" },
+                  ok: { color: "oklch(0.72 0.18 155)", bg: "oklch(0.72 0.18 155 / 0.10)", label: "OK" },
+                };
+                const catIcon: Record<string, typeof AlertTriangle> = {
+                  click_pattern: AlertTriangle,
+                  geo_mismatch: MapPin,
+                  session: Clock,
+                  quality: Activity,
+                };
+                const counts = { high: 0, medium: 0, low: 0 };
+                for (const f of findings) {
+                  if (f.severity === "high" || f.severity === "medium" || f.severity === "low") counts[f.severity]++;
+                }
+                return (
+                  <div className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient shadow-card">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="flex h-10 w-10 items-center justify-center rounded-xl"
+                          style={{ background: band.bg, color: band.tone }}
+                        >
+                          <Stethoscope className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-display text-sm font-semibold leading-none">
+                            Ad Reject Diagnostic Report
+                          </h3>
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            Click patterns · Geography · Session quality · {rangeLabel}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="flex items-baseline gap-1">
+                            <span className="font-display text-3xl font-bold tracking-tight" style={{ color: band.tone }}>
+                              {score}
+                            </span>
+                            <span className="text-xs font-medium text-muted-foreground">/100</span>
+                          </div>
+                          <span
+                            className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest"
+                            style={{ color: band.tone, background: band.bg }}
+                          >
+                            {band.label}
+                          </span>
+                        </div>
+                        <div className="hidden sm:flex flex-col gap-1 text-[11px]">
+                          {(["high", "medium", "low"] as const).map((s) => (
+                            <div key={s} className="flex items-center gap-2">
+                              <span
+                                className="inline-block h-2 w-2 rounded-full"
+                                style={{ background: sevMeta[s].color }}
+                              />
+                              <span className="font-mono w-3 text-right">{counts[s]}</span>
+                              <span className="text-muted-foreground capitalize">{s}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-5">
+                      {diagLoading ? (
+                        <div className="space-y-2">
+                          {[1, 2, 3].map((i) => (
+                            <div key={i} className="h-20 animate-pulse rounded-xl bg-secondary/60" />
+                          ))}
+                        </div>
+                      ) : findings.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-10 text-center">
+                          <div
+                            className="flex h-12 w-12 items-center justify-center rounded-2xl"
+                            style={{ background: "oklch(0.72 0.18 155 / 0.12)", color: "oklch(0.72 0.18 155)" }}
+                          >
+                            <CheckCircle className="h-6 w-6" />
+                          </div>
+                          <p className="mt-3 text-sm font-semibold">No issues detected</p>
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            Traffic looks clean across click pattern, geography, and engagement checks.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="grid gap-3 md:grid-cols-2">
+                          {findings.map((f) => {
+                            const Icon = catIcon[f.category] ?? AlertTriangle;
+                            const sev = sevMeta[f.severity] ?? sevMeta.low;
+                            return (
+                              <div
+                                key={f.id}
+                                className="group relative overflow-hidden rounded-xl border border-border bg-background/40 p-4 transition-all hover:border-primary/40 hover:shadow-card"
+                              >
+                                <div
+                                  className="absolute left-0 top-0 h-full w-1"
+                                  style={{ background: sev.color }}
+                                />
+                                <div className="flex items-start gap-3">
+                                  <div
+                                    className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                                    style={{ background: sev.bg, color: sev.color }}
+                                  >
+                                    <Icon className="h-4 w-4" />
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <h4 className="text-sm font-semibold leading-tight">{f.title}</h4>
+                                      <span
+                                        className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest"
+                                        style={{ background: sev.bg, color: sev.color }}
+                                      >
+                                        {sev.label}
+                                      </span>
+                                    </div>
+                                    <p className="mt-1 text-xs text-muted-foreground leading-snug">
+                                      {f.description}
+                                    </p>
+                                    <div className="mt-2 flex items-center gap-2 text-[10px] font-mono">
+                                      <span className="rounded bg-secondary px-1.5 py-0.5 text-muted-foreground">
+                                        {f.metric}
+                                      </span>
+                                      <span className="text-[9px] uppercase tracking-widest text-muted-foreground/70 capitalize">
+                                        {f.category.replace("_", " ")}
+                                      </span>
+                                    </div>
+                                    <div className="mt-2 flex items-start gap-1.5 rounded-md border border-primary/20 bg-primary/5 px-2 py-1.5">
+                                      <Sparkles className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
+                                      <p className="text-[11px] text-foreground leading-snug">
+                                        {f.suggestion}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
+
+
               {/* Create link */}
               <div className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient shadow-card">
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
