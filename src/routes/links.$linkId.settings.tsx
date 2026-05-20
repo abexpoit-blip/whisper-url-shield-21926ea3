@@ -273,6 +273,156 @@ function LinkSettingsPage() {
         {/* Adsterra Direct Link section removed — destination URL above IS the Adsterra link.
             Bots automatically see the prelander; real users go straight to the destination. */}
 
+        {/* Branding — per-link logo, name, color, tagline */}
+        <section className="rounded-2xl border border-border bg-card-gradient p-6 space-y-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="font-display text-lg font-semibold flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-sky" /> Prelander branding
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                What bots and ad-review crawlers see on this link. Custom logo + name makes the prelander look like a real publisher site instead of a generic redirect.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-[160px_1fr]">
+            {/* Logo upload */}
+            <div className="space-y-2">
+              <Label>Brand logo</Label>
+              <div
+                className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-border bg-background"
+                style={brandLogoUrl ? undefined : { borderColor: brandColor + "60" }}
+              >
+                {brandLogoUrl ? (
+                  <img src={brandLogoUrl} alt="Brand logo" className="h-full w-full object-cover" />
+                ) : (
+                  <ImageIcon className="h-10 w-10 text-muted-foreground/40" aria-hidden="true" />
+                )}
+              </div>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={(e) => void onLogoFileChosen(e.target.files?.[0] ?? null)}
+              />
+              <div className="flex flex-col gap-1.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="w-full gap-1.5"
+                  disabled={uploadingLogo}
+                  onClick={() => logoInputRef.current?.click()}
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  {uploadingLogo ? "Uploading…" : brandLogoUrl ? "Replace" : "Upload"}
+                </Button>
+                {brandLogoUrl && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="w-full text-xs text-destructive"
+                    onClick={removeLogo}
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground">PNG, JPG, WebP, SVG · max 2 MB</p>
+            </div>
+
+            {/* Fields */}
+            <div className="grid gap-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Label htmlFor="brand-name">Brand name</Label>
+                  <Input
+                    id="brand-name"
+                    placeholder="Daily Reads"
+                    maxLength={80}
+                    value={brandName}
+                    onChange={(e) => setBrandName(e.target.value)}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">Shown in header & footer. Blank = default.</p>
+                </div>
+                <div>
+                  <Label htmlFor="brand-color">Accent color</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="brand-color"
+                      type="color"
+                      value={brandColor}
+                      onChange={(e) => setBrandColor(e.target.value)}
+                      className="h-9 w-12 cursor-pointer rounded border border-border bg-background"
+                    />
+                    <Input
+                      value={brandColor}
+                      onChange={(e) => setBrandColor(e.target.value)}
+                      placeholder="#0ea5e9"
+                      maxLength={9}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="brand-tagline">Tagline</Label>
+                <Input
+                  id="brand-tagline"
+                  placeholder="Wellness & lifestyle articles for everyday readers."
+                  maxLength={160}
+                  value={brandTagline}
+                  onChange={(e) => setBrandTagline(e.target.value)}
+                />
+              </div>
+
+              {/* Live preview chip */}
+              <div className="rounded-xl border border-border bg-background p-4">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Live preview
+                </p>
+                <div className="flex items-center gap-3">
+                  {brandLogoUrl ? (
+                    <img src={brandLogoUrl} alt="" className="h-10 w-10 rounded-lg border border-border object-cover" />
+                  ) : (
+                    <div
+                      className="flex h-10 w-10 items-center justify-center rounded-lg text-white text-sm font-bold"
+                      style={{ background: brandColor }}
+                    >
+                      {(brandName || "DR").slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="leading-tight">
+                    <div className="text-base font-bold" style={{ color: brandColor }}>
+                      {brandName || "Daily Reads"}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground line-clamp-1">
+                      {brandTagline || "Wellness & lifestyle articles for everyday readers."}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Button onClick={saveBrand} disabled={savingBrand} className="gap-2 self-start">
+                <Save className="h-4 w-4" /> {savingBrand ? "Saving…" : "Save branding"}
+              </Button>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-sky/20 bg-sky-soft/40 p-3 text-xs text-primary/80">
+            <p className="font-semibold">Country / device-aware templates</p>
+            <p className="mt-1">
+              Prelander article templates auto-match the visitor's country and device when admin creates targeted variants. No setup needed per link — your branding wraps every template.
+            </p>
+          </div>
+        </section>
+
+
+
+
 
 
 
