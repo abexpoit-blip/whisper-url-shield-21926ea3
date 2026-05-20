@@ -644,13 +644,7 @@ export const resolveLink = createServerFn({ method: "POST" })
         ...attr,
       });
 
-      const { data: cur } = await supabaseAdmin
-        .from("links").select("bot_clicks_count").eq("id", link.id).single();
-      if (cur) {
-        await supabaseAdmin.from("links")
-          .update({ bot_clicks_count: cur.bot_clicks_count + 1 })
-          .eq("id", link.id);
-      }
+      await supabaseAdmin.rpc("increment_link_bot_clicks", { p_link_id: link.id });
     }
 
     return {
