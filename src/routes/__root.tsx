@@ -74,30 +74,42 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "apple-mobile-web-app-title", content: "LinkShield" },
       { name: "google-site-verification", content: "dBmj6auZVrnDJBXhq6BuCQvyj0EMnH94zmy6Shz2V90" },
-      { title: "LinkShield — Smart URL Shortener for Ad Boosting" },
+      { title: "LinkShield — Bot-Filtered URL Shortener for Facebook & Instagram Ads" },
       {
         name: "description",
         content:
-          "Bot-filtered short links built for Facebook & Instagram ad campaigns. Cut wasted spend, boost real CTR, protect your ad accounts.",
+          "LinkShield is a smart URL shortener and click fraud protection tool for Facebook, Instagram, TikTok, and Google Ads. Block bot clicks, geo-filter traffic, boost real CTR, and protect your ad spend with branded short links and live click analytics.",
       },
+      {
+        name: "keywords",
+        content:
+          "url shortener, link shortener, bot filter, click fraud protection, facebook ads link cloaker, instagram ads short link, tiktok ads tracker, google ads click protection, short url for ads, branded short links, link tracking, geo targeting links, anti bot clicks, ad click analytics, meta ads optimization, media buyer tools, ppc click fraud, ad spend protection, smart links, deep link, qr code generator, link rotator, ctr booster, conversion tracking links, sleepox, linkshield",
+      },
+      { name: "author", content: "LinkShield" },
+      { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
+      { name: "googlebot", content: "index, follow" },
       { property: "og:site_name", content: "LinkShield" },
-      { property: "og:title", content: "LinkShield — Smart URL Shortener for Ad Boosting" },
+      { property: "og:title", content: "LinkShield — Bot-Filtered URL Shortener for Facebook & Instagram Ads" },
       {
         property: "og:description",
         content:
-          "Bot-filtered short links built for Facebook & Instagram ad campaigns. Cut wasted spend, boost real CTR, protect your ad accounts.",
+          "Block bot clicks, geo-filter traffic, and boost real CTR with smart short links built for Facebook, Instagram, TikTok & Google Ads campaigns.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:locale", content: "en_US" },
+      { property: "og:url", content: "https://sleepox.com" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "LinkShield — Smart URL Shortener for Ad Boosting" },
+      { name: "twitter:site", content: "@linkshield" },
+      { name: "twitter:title", content: "LinkShield — Bot-Filtered URL Shortener for Facebook & Instagram Ads" },
       {
         name: "twitter:description",
         content:
-          "Bot-filtered short links built for Facebook & Instagram ad campaigns. Cut wasted spend, boost real CTR, protect your ad accounts.",
+          "Block bot clicks, geo-filter traffic, and boost real CTR with smart short links for Meta, TikTok & Google Ads.",
       },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/60ce39b9-ef4c-44c7-9266-6c4831b3f9e4/id-preview-35a3a1ec--a5ab0c94-43e0-46fe-a916-25eab8563989.lovable.app-1779208529876.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/60ce39b9-ef4c-44c7-9266-6c4831b3f9e4/id-preview-35a3a1ec--a5ab0c94-43e0-46fe-a916-25eab8563989.lovable.app-1779208529876.png" },
     ],
+
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
