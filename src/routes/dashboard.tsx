@@ -39,6 +39,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { getAnalytics } from "@/lib/analytics.functions";
+import { getBrandIcon, prettyLabel } from "@/components/brand-icons";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
