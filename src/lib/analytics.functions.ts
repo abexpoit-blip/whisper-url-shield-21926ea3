@@ -186,13 +186,13 @@ export const getCountryDrilldown = createServerFn({ method: "POST" })
 
     const { data: clicksRaw } = await supabase
       .from("clicks")
-      .select("link_id,is_bot,device,os,browser,created_at")
+      .select("link_id,is_bot,device,os,browser,referer,created_at")
       .in("link_id", linkIds)
       .eq("country", data.country.toUpperCase())
       .gte("created_at", since)
       .limit(10000);
 
-    const allClicks = (clicksRaw ?? []) as Click[];
+    const allClicks = (clicksRaw ?? []) as (Click & { referer?: string | null })[];
 
     // Build filter option lists from unfiltered set (for dropdowns)
     const options = {
