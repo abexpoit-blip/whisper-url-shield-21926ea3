@@ -209,6 +209,22 @@ export function prettyLabel(rawKey: string) {
 const BADGE_CLASS =
   "inline-flex h-5 w-5 items-center justify-center rounded-md bg-background/70 ring-1 ring-border/60 shadow-sm shrink-0 overflow-hidden";
 
+function BadgeSkeleton({ className }: { className?: string }) {
+  return (
+    <span className={`${BADGE_CLASS} ${className ?? ""}`}>
+      <span className="inline-block h-3 w-3 animate-pulse rounded-sm bg-muted/60" />
+    </span>
+  );
+}
+
+function BadgeUnknown({ className }: { className?: string }) {
+  return (
+    <span className={`${BADGE_CLASS} ${className ?? ""}`}>
+      <Globe className="h-3 w-3 text-muted-foreground/40" />
+    </span>
+  );
+}
+
 export const COUNTRY_NAMES: Record<string, string> = {
   US: "United States", ID: "Indonesia", TH: "Thailand", SG: "Singapore",
   IN: "India", GB: "United Kingdom", DE: "Germany", FR: "France",
