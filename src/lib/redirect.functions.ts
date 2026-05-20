@@ -48,6 +48,75 @@ function extractAttribution(urlLike: string | null | undefined) {
   return out;
 }
 
+// ---------- Phase 3: Fingerprint hashing + repeat detection ----------
+
+/**
+ * Stable SHA-256 hash of stable fingerprint parts (no volatile behavior counters).
+ * Same device returning later → same hash.
+ */
+async function hashFingerprint(fp: {
+  ua: string;
+  platform: string;
+  languages: string[];
+  hwConcurrency: number;
+  deviceMemory: number;
+  screen: { w: number; h: number; cd: number };
+  tz: string;
+  canvasHash: string;
+}): Promise<string> {
+  const payload = [
+    fp.ua,
+    fp.platform,
+    fp.languages.join(","),
+    String(fp.hwConcurrency),
+    String(fp.deviceMemory),
+    `${fp.screen.w}x${fp.screen.h}x${fp.screen.cd}`,
+    fp.tz,
+    fp.canvasHash,
+  ].join("|");
+  try {
+    const buf = new TextEncoder().encode(payload);
+    const digest = await crypto.subtle.digest("SHA-256", buf);
+    return Array.from(new Uint8Array(digest))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("")
+      .slice(0, 32);
+  } catch {
+    let h = 5381;
+    for (let i = 0; i < payload.length; i++) h = ((h << 5) + h + payload.charCodeAt(i)) | 0;
+    return Math.abs(h).toString(16).padStart(8, "0");
+  }
+}
+
+/**
+ * Count recent clicks sharing this fingerprint hash from DIFFERENT IPs in last N minutes.
+ * High count → same browser identity spraying from proxy pool → strong bot signal.
+ */
+async function repeatFingerprintHits(
+  fpHash: string,
+  currentIp: string,
+  windowMinutes = 10,
+): Promise<number> {
+  if (!fpHash) return 0;
+  try {
+    const since = new Date(Date.now() - windowMinutes * 60 * 1000).toISOString();
+    const { data } = await supabaseAdmin
+      .from("clicks")
+      .select("ip_address")
+      .eq("fingerprint_hash", fpHash)
+      .gte("created_at", since)
+      .limit(50);
+    if (!data) return 0;
+    const distinctIps = new Set(
+      data.map((r) => r.ip_address).filter((ip): ip is string => !!ip && ip !== currentIp),
+    );
+    return distinctIps.size;
+  } catch {
+    return 0;
+  }
+}
+
+
 function refererHost(ref: string | null | undefined) {
   if (!ref) return null;
   try { return new URL(ref).hostname.replace(/^www\./, "").slice(0, 120); }
