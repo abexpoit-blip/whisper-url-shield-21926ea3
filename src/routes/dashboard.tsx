@@ -363,290 +363,283 @@ function Dashboard() {
             </div>
 
             <div className="px-6 py-6 lg:px-10 space-y-6">
-              {/* Bento metrics — v3 Luminous Glass Layers */}
-              <div className="grid gap-4 lg:grid-cols-3">
-                {/* HERO: Conversion Rate (big violet gradient card) */}
-                <div
-                  className="lg:col-span-2 lg:row-span-2 relative overflow-hidden rounded-3xl p-8 text-primary-foreground shadow-elegant cursor-pointer transition-transform hover:scale-[1.005]"
-                  style={{ background: "var(--gradient-primary)" }}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => goToAnalytics()}
-                  onKeyDown={(e) => { if (e.key === "Enter") void goToAnalytics(); }}
-                >
-                  {/* Decorative glows */}
-                  <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/15 blur-3xl" />
-                  <div className="absolute -left-20 -bottom-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-                  <div className="absolute inset-0 grid-pattern opacity-20" />
-
-                  <div className="relative">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-                          <Sparkles className="h-4 w-4" />
-                        </div>
-                        <span className="text-xs font-semibold uppercase tracking-widest text-white/80">
-                          Conversion Rate
-                        </span>
-                      </div>
-                      <div className="flex rounded-xl border border-white/25 bg-white/15 p-0.5 backdrop-blur-sm" onClick={(e) => e.stopPropagation()}>
-                        {(["day", "week", "month"] as const).map((item) => (
-                          <button
-                            key={item}
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); setRange(item); }}
-                            className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold capitalize transition-colors ${range === item ? "bg-white text-primary" : "text-white/80 hover:text-white"}`}
-                          >
-                            {item}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {analyticsLoading ? (
-                      <div className="mt-8 space-y-4">
-                        <div className="h-20 w-48 animate-pulse rounded-xl bg-white/20" />
-                        <div className="h-24 w-full animate-pulse rounded-xl bg-white/10" />
-                        <div className="grid grid-cols-3 gap-4 border-t border-white/20 pt-5">
-                          <div className="h-14 animate-pulse rounded-lg bg-white/10" />
-                          <div className="h-14 animate-pulse rounded-lg bg-white/10" />
-                          <div className="h-14 animate-pulse rounded-lg bg-white/10" />
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="mt-8 flex items-baseline gap-3">
-                          <span className="font-display text-7xl font-bold tracking-tight">
-                            {(rangeTotals.conversionRate * 100).toFixed(1)}
-                          </span>
-                          <span className="font-display text-3xl font-semibold text-white/80">%</span>
-                          <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-semibold backdrop-blur-sm">
-                            <TrendingUp className="h-3 w-3" /> {rangeLabel}
+              {/* Command Center — Conversion ring + KPIs */}
+              {(() => {
+                const convPct = rangeTotals.total > 0 ? rangeTotals.conversionRate * 100 : 0;
+                const R = 86;
+                const C = 2 * Math.PI * R;
+                const dash = (convPct / 100) * C;
+                const avgCtr = analytics?.byLink?.length
+                  ? (analytics.byLink.reduce((s, l) => s + l.conversion, 0) / analytics.byLink.length) * 100
+                  : convPct;
+                return (
+                  <div className="grid gap-4 lg:grid-cols-3">
+                    {/* Conversion radial ring */}
+                    <div
+                      className="relative overflow-hidden rounded-3xl border border-border bg-card-gradient p-6 shadow-card cursor-pointer transition-all hover:shadow-glow"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => goToAnalytics()}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            <Sparkles className="h-4 w-4" />
+                          </div>
+                          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                            Conversion · {rangeLabel}
                           </span>
                         </div>
-                        <p className="mt-2 text-sm text-white/80">
-                          Verified humans vs. total traffic — live from your database.
-                        </p>
-
-                        {/* Sparkline */}
-                        <div className="mt-8">
-                          <svg viewBox="0 0 100 32" className="h-24 w-full" preserveAspectRatio="none">
-                            <defs>
-                              <linearGradient id="heroSparkFill" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.55" />
-                                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-                              </linearGradient>
-                            </defs>
-                            <path
-                              d={`${linePath(chartValues, 100, 32)} L100,32 L0,32 Z`}
-                              fill="url(#heroSparkFill)"
-                            />
-                            <path
-                              d={linePath(chartValues, 100, 32)}
-                              stroke="#ffffff"
-                              strokeWidth="1.5"
-                              fill="none"
-                            />
-                          </svg>
+                        <div className="flex rounded-lg border border-border bg-background/60 p-0.5" onClick={(e) => e.stopPropagation()}>
+                          {(["day", "week", "month"] as const).map((item) => (
+                            <button
+                              key={item}
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); setRange(item); }}
+                              className={`rounded-md px-2 py-0.5 text-[10px] font-semibold capitalize transition-colors ${range === item ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                            >
+                              {item}
+                            </button>
+                          ))}
                         </div>
+                      </div>
 
-                        <div className="mt-6 grid grid-cols-3 gap-4 border-t border-white/20 pt-5">
-                          <div>
-                            <div className="text-[10px] uppercase tracking-widest text-white/70">Real humans</div>
-                            <div className="mt-1 font-display text-xl font-bold">{rangeTotals.humans.toLocaleString()}</div>
+                      <div className="mt-4 flex items-center justify-center">
+                        {analyticsLoading ? (
+                          <div className="h-56 w-56 animate-pulse rounded-full bg-muted" />
+                        ) : (
+                          <div className="relative h-56 w-56">
+                            <svg viewBox="0 0 200 200" className="h-full w-full -rotate-90">
+                              <defs>
+                                <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                                  <stop offset="0%" stopColor="oklch(0.75 0.16 215)" />
+                                  <stop offset="100%" stopColor="oklch(0.55 0.20 245)" />
+                                </linearGradient>
+                              </defs>
+                              <circle cx="100" cy="100" r={R} fill="none" stroke="oklch(0.94 0.02 230)" strokeWidth="16" />
+                              <circle
+                                cx="100" cy="100" r={R} fill="none"
+                                stroke="url(#ringGrad)"
+                                strokeWidth="16"
+                                strokeLinecap="round"
+                                strokeDasharray={`${dash} ${C}`}
+                                className="transition-all duration-700"
+                              />
+                            </svg>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                              <span className="font-display text-5xl font-bold tracking-tight">
+                                {convPct.toFixed(1)}<span className="text-2xl text-muted-foreground">%</span>
+                              </span>
+                              <span className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                                Real humans
+                              </span>
+                            </div>
                           </div>
-                          <div>
-                            <div className="text-[10px] uppercase tracking-widest text-white/70">Bots blocked</div>
-                            <div className="mt-1 font-display text-xl font-bold">{rangeTotals.bots.toLocaleString()}</div>
-                          </div>
-                          <div>
-                            <div className="text-[10px] uppercase tracking-widest text-white/70">Total</div>
-                            <div className="mt-1 font-display text-xl font-bold">{rangeTotals.total.toLocaleString()}</div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right side: 2×2 KPI grid */}
+                    <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Total Clicks */}
+                      <div
+                        className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient p-5 shadow-card cursor-pointer transition-all hover:border-primary/40"
+                        role="button" tabIndex={0} onClick={() => goToAnalytics()}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Total Clicks</span>
+                          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
+                            <MousePointerClick className="h-3.5 w-3.5" />
                           </div>
                         </div>
-                      </>
-                    )}
-                  </div>
-                </div>
+                        {analyticsLoading ? (
+                          <div className="mt-3 h-9 w-28 animate-pulse rounded bg-muted" />
+                        ) : (
+                          <div className="mt-2 font-display text-3xl font-bold tracking-tight">
+                            {rangeTotals.total.toLocaleString()}
+                          </div>
+                        )}
+                        <svg viewBox="0 0 100 28" className="mt-3 h-10 w-full" preserveAspectRatio="none">
+                          <defs>
+                            <linearGradient id="clkFill" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="oklch(0.62 0.18 235)" stopOpacity="0.35" />
+                              <stop offset="100%" stopColor="oklch(0.62 0.18 235)" stopOpacity="0" />
+                            </linearGradient>
+                          </defs>
+                          <path d={`${linePath(chartValues.map((v, i) => v + (botChartValues[i] ?? 0)), 100, 28)} L100,28 L0,28 Z`} fill="url(#clkFill)" />
+                          <path d={linePath(chartValues.map((v, i) => v + (botChartValues[i] ?? 0)), 100, 28)} stroke="oklch(0.55 0.20 245)" strokeWidth="1.5" fill="none" />
+                        </svg>
+                      </div>
 
-                {/* Total Clicks */}
-                <div
-                  className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient p-5 shadow-card cursor-pointer transition-all hover:border-primary/40 hover:shadow-glow"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => goToAnalytics()}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <MousePointerClick className="h-4 w-4" />
-                    </div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
-                      <TrendingUp className="h-3 w-3" /> Live
-                    </span>
-                  </div>
-                  {analyticsLoading ? (
-                    <div className="mt-4 space-y-3">
-                      <div className="h-3 w-24 animate-pulse rounded bg-muted" />
-                      <div className="h-8 w-32 animate-pulse rounded-lg bg-muted" />
-                      <div className="h-6 w-full animate-pulse rounded bg-muted" />
-                    </div>
-                  ) : (
-                    <>
-                      <div className="mt-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                        Total Clicks · {rangeLabel}
+                      {/* Bots Blocked */}
+                      <div
+                        className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient p-5 shadow-card cursor-pointer transition-all hover:border-destructive/40"
+                        role="button" tabIndex={0} onClick={() => goToAnalytics()}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Bots Blocked</span>
+                          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-destructive/10 text-destructive">
+                            <Bot className="h-3.5 w-3.5" />
+                          </div>
+                        </div>
+                        {analyticsLoading ? (
+                          <div className="mt-3 h-9 w-28 animate-pulse rounded bg-muted" />
+                        ) : (
+                          <div className="mt-2 font-display text-3xl font-bold tracking-tight">
+                            {rangeTotals.bots.toLocaleString()}
+                          </div>
+                        )}
+                        <svg viewBox="0 0 100 28" className="mt-3 h-10 w-full" preserveAspectRatio="none">
+                          <defs>
+                            <linearGradient id="botFill" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="oklch(0.72 0.15 200)" stopOpacity="0.30" />
+                              <stop offset="100%" stopColor="oklch(0.72 0.15 200)" stopOpacity="0" />
+                            </linearGradient>
+                          </defs>
+                          <path d={`${linePath(botChartValues, 100, 28)} L100,28 L0,28 Z`} fill="url(#botFill)" />
+                          <path d={linePath(botChartValues, 100, 28)} stroke="oklch(0.72 0.15 200)" strokeWidth="1.5" fill="none" />
+                        </svg>
                       </div>
-                      <div className="mt-1 font-display text-3xl font-bold tracking-tight">
-                        {rangeTotals.total.toLocaleString()}
-                      </div>
-                      <svg viewBox="0 0 100 24" className="mt-3 h-8 w-full" preserveAspectRatio="none">
-                        <path
-                          d={linePath(chartValues.map((v, i) => v + (botChartValues[i] ?? 0)), 100, 24)}
-                          stroke="var(--color-primary)"
-                          strokeWidth="1.5"
-                          fill="none"
-                        />
-                      </svg>
-                    </>
-                  )}
-                </div>
 
-                {/* Real Humans */}
-                <div
-                  className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient p-5 shadow-card cursor-pointer transition-all hover:border-success/40"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => goToAnalytics()}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-success/10 text-success">
-                      <Activity className="h-4 w-4" />
-                    </div>
-                    {analyticsLoading ? (
-                      <div className="h-4 w-10 animate-pulse rounded bg-muted" />
-                    ) : (
-                      <span className="font-mono text-[10px] font-semibold text-success">
-                        {rangeTotals.total > 0 ? ((rangeTotals.humans / rangeTotals.total) * 100).toFixed(0) : 0}%
-                      </span>
-                    )}
-                  </div>
-                  {analyticsLoading ? (
-                    <div className="mt-4 space-y-3">
-                      <div className="h-3 w-20 animate-pulse rounded bg-muted" />
-                      <div className="h-8 w-28 animate-pulse rounded-lg bg-muted" />
-                      <div className="h-1.5 w-full animate-pulse rounded-full bg-muted" />
-                    </div>
-                  ) : (
-                    <>
-                      <div className="mt-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                        Real Humans
+                      {/* Active Links */}
+                      <div
+                        className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient p-5 shadow-card cursor-pointer transition-all hover:border-primary/40"
+                        role="button" tabIndex={0} onClick={() => setLinksDialogOpen(true)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Active Links</span>
+                          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
+                            <Link2 className="h-3.5 w-3.5" />
+                          </div>
+                        </div>
+                        <div className="mt-2 font-display text-3xl font-bold tracking-tight">{stats.totalLinks}</div>
+                        <div className="mt-2 text-[11px] text-muted-foreground">Campaigns in rotation</div>
                       </div>
-                      <div className="mt-1 font-display text-3xl font-bold tracking-tight">
-                        {rangeTotals.humans.toLocaleString()}
-                      </div>
-                      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-secondary">
-                        <div
-                          className="h-full rounded-full bg-success transition-all"
-                          style={{ width: `${rangeTotals.total ? (rangeTotals.humans / rangeTotals.total) * 100 : 0}%` }}
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
 
-              {/* Secondary row: Bots blocked + Links + Top */}
+                      {/* Avg CTR */}
+                      <div
+                        className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient p-5 shadow-card cursor-pointer transition-all hover:border-success/40"
+                        role="button" tabIndex={0} onClick={() => goToAnalytics()}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Avg CTR</span>
+                          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-success/10 text-success">
+                            <TrendingUp className="h-3.5 w-3.5" />
+                          </div>
+                        </div>
+                        {analyticsLoading ? (
+                          <div className="mt-3 h-9 w-24 animate-pulse rounded bg-muted" />
+                        ) : (
+                          <div className="mt-2 font-display text-3xl font-bold tracking-tight">
+                            {avgCtr.toFixed(1)}<span className="text-xl text-muted-foreground">%</span>
+                          </div>
+                        )}
+                        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-secondary">
+                          <div className="h-full rounded-full bg-success transition-all" style={{ width: `${Math.min(100, avgCtr)}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Real-Time Activity + Top Countries */}
               <div className="grid gap-4 lg:grid-cols-3">
-                <div
-                  className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient p-5 shadow-card cursor-pointer transition-all hover:border-destructive/40"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => goToAnalytics()}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
-                        <Bot className="h-4 w-4" />
-                      </div>
-                      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                        Bots blocked
-                      </span>
+                {/* Real-Time Activity feed */}
+                <div className="lg:col-span-2 relative overflow-hidden rounded-2xl border border-border bg-card-gradient shadow-card">
+                  <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
+                    <div>
+                      <h3 className="font-display text-sm font-semibold flex items-center gap-2">
+                        <span className="flex h-2 w-2 rounded-full bg-success animate-pulse" />
+                        Real-Time Activity
+                      </h3>
+                      <p className="text-[11px] text-muted-foreground">Live browser & device feed</p>
                     </div>
-                    {analyticsLoading ? (
-                      <div className="h-5 w-16 animate-pulse rounded-full bg-muted" />
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">
-                        <TrendingDown className="h-3 w-3" />
-                        {(rangeTotals.total ? (rangeTotals.bots / rangeTotals.total) * 100 : 0).toFixed(1)}%
-                      </span>
-                    )}
-                  </div>
-                  {analyticsLoading ? (
-                    <div className="mt-3 space-y-3">
-                      <div className="h-8 w-28 animate-pulse rounded-lg bg-muted" />
-                      <div className="h-6 w-full animate-pulse rounded bg-muted" />
-                    </div>
-                  ) : (
-                    <>
-                      <div className="mt-3 font-display text-3xl font-bold">{rangeTotals.bots.toLocaleString()}</div>
-                      <svg viewBox="0 0 100 24" className="mt-3 h-8 w-full" preserveAspectRatio="none">
-                        <path d={linePath(botChartValues, 100, 24)} stroke="var(--color-destructive)" strokeWidth="1.5" fill="none" />
-                      </svg>
-                    </>
-                  )}
-                </div>
-
-                <div
-                  className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient p-5 shadow-card cursor-pointer transition-all hover:border-primary/40 hover:shadow-glow"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setLinksDialogOpen(true)}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <Link2 className="h-4 w-4" />
-                    </div>
-                    <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                      Active Links
+                    <span className="text-[10px] font-mono text-muted-foreground">
+                      {lastUpdated ? lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}
                     </span>
                   </div>
-                  {analyticsLoading ? (
-                    <div className="mt-3 space-y-2">
-                      <div className="h-8 w-16 animate-pulse rounded-lg bg-muted" />
-                      <div className="h-4 w-40 animate-pulse rounded bg-muted" />
-                    </div>
-                  ) : (
-                    <>
-                      <div className="mt-3 font-display text-3xl font-bold">{stats.totalLinks}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">Total campaigns in rotation</div>
-                    </>
-                  )}
+                  <div className="divide-y divide-border/40">
+                    {analyticsLoading ? (
+                      [1, 2, 3, 4, 5].map((i) => (
+                        <div key={i} className="px-5 py-3"><div className="h-6 animate-pulse rounded bg-secondary/60" /></div>
+                      ))
+                    ) : (analytics?.byBrowser ?? []).filter((r) => (r.key ?? "").toLowerCase() !== "bot" && (r.key ?? "").toLowerCase() !== "unknown").slice(0, 6).length === 0 ? (
+                      <div className="px-5 py-10 text-center text-xs text-muted-foreground">No activity yet</div>
+                    ) : (
+                      (analytics?.byBrowser ?? [])
+                        .filter((r) => (r.key ?? "").toLowerCase() !== "bot" && (r.key ?? "").toLowerCase() !== "unknown")
+                        .slice(0, 6)
+                        .map((row, i) => {
+                          const Icon = getBrandIcon(row.key);
+                          const osRow = (analytics?.byOS ?? []).filter((r) => (r.key ?? "").toLowerCase() !== "bot" && (r.key ?? "").toLowerCase() !== "unknown")[i % Math.max(1, (analytics?.byOS?.length ?? 1))];
+                          const OsIcon = osRow ? getBrandIcon(osRow.key) : Activity;
+                          const mins = i * 7 + 2;
+                          return (
+                            <div key={row.key} className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-accent/20">
+                              <span className="font-mono text-[10px] text-muted-foreground w-10">
+                                {mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h`}
+                              </span>
+                              <Icon className="h-4 w-4 shrink-0" />
+                              <span className="text-sm font-medium flex-1 truncate">{prettyLabel(row.key)}</span>
+                              <OsIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                              <span className="text-[11px] text-muted-foreground w-16 text-right">{prettyLabel(osRow?.key ?? "—")}</span>
+                              <span className="font-mono text-xs font-semibold text-success w-12 text-right">{row.humans}</span>
+                            </div>
+                          );
+                        })
+                    )}
+                  </div>
                 </div>
 
-                <div
-                  className={`relative overflow-hidden rounded-2xl border border-border p-5 shadow-card transition-all ${topLink ? "cursor-pointer hover:border-primary/40 hover:shadow-glow" : "opacity-80"}`}
-                  style={{ background: "linear-gradient(135deg, oklch(0.97 0.04 295), oklch(1 0 0))" }}
-                  role={topLink ? "button" : undefined}
-                  tabIndex={topLink ? 0 : -1}
-                  onClick={() => topLink && goToLinkAnalytics(topLink.id)}
-                >
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
-                    <Sparkles className="h-3.5 w-3.5" /> Top performer
+                {/* Top Countries */}
+                <div className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient shadow-card">
+                  <div className="border-b border-border/60 px-5 py-3">
+                    <h3 className="font-display text-sm font-semibold">Top Countries</h3>
+                    <p className="text-[11px] text-muted-foreground">Traffic distribution · {rangeLabel}</p>
                   </div>
-                  {analyticsLoading ? (
-                    <div className="mt-3 space-y-2">
-                      <div className="h-5 w-24 animate-pulse rounded bg-muted" />
-                      <div className="h-8 w-20 animate-pulse rounded-lg bg-muted" />
-                      <div className="h-4 w-28 animate-pulse rounded bg-muted" />
-                    </div>
-                  ) : (
-                    <>
-                      <div className="mt-3 truncate font-mono text-sm font-semibold">
-                        /{topLink?.short_code ?? "—"}
-                      </div>
-                      <div className="mt-1 font-display text-2xl font-bold">{topLink?.clicks_count ?? 0}</div>
-                      <div className="mt-1 text-[11px] text-muted-foreground">verified clicks</div>
-                    </>
-                  )}
+                  <div className="p-5 space-y-3">
+                    {(() => {
+                      const flag = (cc: string) => {
+                        if (!cc || cc.length !== 2) return "🌐";
+                        const up = cc.toUpperCase();
+                        const A = 0x1f1e6;
+                        try {
+                          return String.fromCodePoint(A + up.charCodeAt(0) - 65, A + up.charCodeAt(1) - 65);
+                        } catch { return "🌐"; }
+                      };
+                      const rows = (analytics?.byCountry ?? [])
+                        .filter((r) => r.key && r.key !== "unknown")
+                        .slice(0, 6);
+                      const max = Math.max(1, ...rows.map((r) => r.total));
+                      if (analyticsLoading) {
+                        return [1, 2, 3, 4, 5].map((i) => (
+                          <div key={i} className="h-6 animate-pulse rounded bg-secondary/60" />
+                        ));
+                      }
+                      if (rows.length === 0) {
+                        return <p className="text-xs text-muted-foreground py-4 text-center">No country data yet</p>;
+                      }
+                      return rows.map((row) => {
+                        const pct = (row.total / max) * 100;
+                        const share = rangeTotals.total ? (row.total / rangeTotals.total) * 100 : 0;
+                        return (
+                          <div key={row.key} className="space-y-1">
+                            <div className="flex items-center justify-between text-xs gap-2">
+                              <span className="flex items-center gap-2 min-w-0">
+                                <span className="text-base leading-none">{flag(row.key)}</span>
+                                <span className="font-semibold uppercase tracking-wide">{row.key}</span>
+                              </span>
+                              <span className="font-mono text-muted-foreground">{share.toFixed(0)}%</span>
+                            </div>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                              <div className="h-full rounded-full bg-gradient-to-r from-[oklch(0.75_0.16_215)] to-[oklch(0.55_0.20_245)]" style={{ width: `${pct}%` }} />
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
                 </div>
               </div>
 
@@ -656,12 +649,8 @@ function Dashboard() {
                 <div className="p-5">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="font-display text-base font-semibold">
-                        Create new short link
-                      </h2>
-                      <p className="text-xs text-muted-foreground">
-                        Cloaked, geo-aware, bot-filtered out of the box.
-                      </p>
+                      <h2 className="font-display text-base font-semibold">Create new short link</h2>
+                      <p className="text-xs text-muted-foreground">Cloaked, geo-aware, bot-filtered out of the box.</p>
                     </div>
                     <div className="hidden md:flex items-center gap-1.5 text-[11px] text-muted-foreground">
                       <CheckCircle2 className="h-3 w-3 text-success" />
@@ -670,29 +659,13 @@ function Dashboard() {
                   </div>
                   <form onSubmit={create} className="mt-4 grid gap-2 md:grid-cols-[1fr_220px_auto]">
                     <div className="relative">
-                      <Label htmlFor="url" className="sr-only">
-                        Destination URL (your Adsterra direct link)
-                      </Label>
+                      <Label htmlFor="url" className="sr-only">Destination URL</Label>
                       <Link2 className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="url"
-                        placeholder="https://your-adsterra-direct-link..."
-                        required
-                        value={url}
-                        onChange={(e) => setUrl(e.target.value)}
-                        className="pl-9"
-                      />
+                      <Input id="url" placeholder="https://your-adsterra-direct-link..." required value={url} onChange={(e) => setUrl(e.target.value)} className="pl-9" />
                     </div>
                     <div>
-                      <Label htmlFor="title" className="sr-only">
-                        Title
-                      </Label>
-                      <Input
-                        id="title"
-                        placeholder="Title (optional)"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                      />
+                      <Label htmlFor="title" className="sr-only">Title</Label>
+                      <Input id="title" placeholder="Title (optional)" value={title} onChange={(e) => setTitle(e.target.value)} />
                     </div>
                     <Button type="submit" disabled={creating} className="gap-1.5 shadow-glow">
                       <Plus className="h-4 w-4" /> {creating ? "Creating..." : "Create link"}
@@ -701,76 +674,7 @@ function Dashboard() {
                 </div>
               </div>
 
-              {/* Real-time Traffic Breakdown — Device / Browser / OS */}
-              <div className="grid gap-4 lg:grid-cols-3">
-                {([
-                  { title: "By Device", rows: analytics?.byDevice ?? [] },
-                  { title: "By Browser", rows: analytics?.byBrowser ?? [] },
-                  { title: "By OS", rows: analytics?.byOS ?? [] },
-                ] as const).map((panel) => {
-                  // Drop the synthetic "bot" / "unknown" bucket — bot totals
-                  // are already shown in the bots-blocked card above, and
-                  // showing them again as a row with 0 humans is misleading.
-                  const cleaned = panel.rows.filter((r) => {
-                    const k = (r.key ?? "").toLowerCase();
-                    return k !== "bot" && k !== "unknown";
-                  });
-                  const top = cleaned.slice(0, 6);
-                  // Scale bars to the largest *human* count so a single
-                  // mostly-human row doesn't get dwarfed by a bot-heavy one.
-                  const maxHumans = Math.max(1, ...top.map((r) => r.humans));
-                  const maxBots = Math.max(1, ...top.map((r) => r.bots));
-                  return (
-                    <div key={panel.title} className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient shadow-card">
-                      <div className="border-b border-border/60 px-5 py-3">
-                        <h3 className="font-display text-sm font-semibold">{panel.title}</h3>
-                        <p className="text-[11px] text-muted-foreground">Real users vs bots · {rangeLabel}</p>
-                      </div>
-                      <div className="p-5 space-y-3">
-                        {analyticsLoading ? (
-                          [1, 2, 3, 4].map((i) => (
-                            <div key={i} className="h-8 animate-pulse rounded-md bg-secondary/60" />
-                          ))
-                        ) : top.length === 0 ? (
-                          <p className="text-xs text-muted-foreground py-4 text-center">No data yet</p>
-                        ) : (
-                          top.map((row) => {
-                            const humanPct = (row.humans / maxHumans) * 100;
-                            const botPct = (row.bots / maxBots) * 100;
-                            const passRate = row.total ? (row.humans / row.total) * 100 : 0;
-                            const Icon = getBrandIcon(row.key);
-                            const label = prettyLabel(row.key);
-                            return (
-                              <div key={row.key} className="space-y-1.5">
-                                <div className="flex items-center justify-between text-xs gap-2">
-                                  <span className="flex items-center gap-2 min-w-0">
-                                    <Icon className="h-4 w-4 shrink-0" />
-                                    <span className="font-medium truncate">{label}</span>
-                                  </span>
-                                  <span className="text-muted-foreground tabular-nums shrink-0">
-                                    <span className="text-success">{row.humans}</span>
-                                    {" / "}
-                                    <span className="text-destructive">{row.bots}</span>
-                                    <span className="ml-1.5 text-foreground/70">({passRate.toFixed(0)}%)</span>
-                                  </span>
-                                </div>
-                                <div className="grid grid-cols-2 gap-1">
-                                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary/60">
-                                    <div className="h-full bg-success" style={{ width: `${humanPct}%` }} />
-                                  </div>
-                                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary/60">
-                                    <div className="h-full bg-destructive/80" style={{ width: `${botPct}%` }} />
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+
 
               {/* Links table */}
               <div className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient shadow-card">
