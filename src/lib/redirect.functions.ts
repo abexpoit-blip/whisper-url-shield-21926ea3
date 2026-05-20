@@ -1,9 +1,27 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader, getRequestUrl } from "@tanstack/react-start/server";
+import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Database } from "@/integrations/supabase/types";
 import { parseUA } from "@/lib/ua";
 import { pickVariant, type Variant, type VariantSection } from "@/lib/variants";
+
+function createRedirectAdminClient() {
+  const url = process.env.REDIRECT_SUPABASE_URL || process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "http://127.0.0.1:8000";
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+  if (!key) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY/SUPABASE_SERVICE_KEY for redirect lookup");
+  return createClient<Database>(url, key, {
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+  });
+}
+
+let redirectAdminClient: ReturnType<typeof createRedirectAdminClient> | undefined;
+const supabaseAdmin = new Proxy({} as ReturnType<typeof createRedirectAdminClient>, {
+  get(_, prop, receiver) {
+    if (!redirectAdminClient) redirectAdminClient = createRedirectAdminClient();
+    return Reflect.get(redirectAdminClient, prop, receiver);
+  },
+});
 
 function extractAttribution(urlLike: string | null | undefined) {
   const out = {
@@ -450,6 +468,15 @@ export const resolveLink = createServerFn({ method: "POST" })
         .eq("short_code", data.code)
         .maybeSingle(),
     ]);
+    if (linkRes.error) {
+      console.error("[redirect] link lookup failed", {
+        code: data.code,
+        message: linkRes.error.message,
+        details: linkRes.error.details,
+        hint: linkRes.error.hint,
+      });
+      throw new Error(`Redirect lookup failed: ${linkRes.error.message}`);
+    }
     const link = linkRes.data;
 
     if (!link || link.status !== "active") return { found: false as const };
@@ -722,11 +749,21 @@ export const verifyHuman = createServerFn({ method: "POST" })
       getRequestHeader("x-forwarded-for") ||
       "";
 
-    const { data: link } = await supabaseAdmin
+    const { data: link, error: linkError } = await supabaseAdmin
       .from("links")
       .select("id, destination_url, status, targeting, duplicate_protection, duplicate_window_minutes")
       .eq("short_code", data.code)
       .maybeSingle();
+
+    if (linkError) {
+      console.error("[redirect] verify lookup failed", {
+        code: data.code,
+        message: linkError.message,
+        details: linkError.details,
+        hint: linkError.hint,
+      });
+      throw new Error(`Redirect verify lookup failed: ${linkError.message}`);
+    }
 
     if (!link || link.status !== "active") {
       return { ok: false as const, reason: "not-found" };
