@@ -111,6 +111,13 @@ function PricingPage() {
           ))}
         </div>
       </section>
+
+      {/* FAQ */}
+      <FaqSection
+        title="Pricing FAQ"
+        subtitle="Common questions about plans, billing, and upgrades."
+        items={PRICING_FAQ}
+      />
     </div>
   );
 }
