@@ -643,18 +643,27 @@ function Dashboard() {
                         const pct = (row.total / max) * 100;
                         const share = rangeTotals.total ? (row.total / rangeTotals.total) * 100 : 0;
                         return (
-                          <div key={row.key} className="space-y-1">
+                          <button
+                            key={row.key}
+                            type="button"
+                            onClick={() => openCountry(row.key)}
+                            className="group w-full space-y-1 rounded-lg p-1.5 -m-1.5 text-left transition-colors hover:bg-accent/30 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                            title={`View ${row.key} drilldown`}
+                          >
                             <div className="flex items-center justify-between text-xs gap-2">
                               <span className="flex items-center gap-2 min-w-0">
                                 <span className="text-base leading-none">{flag(row.key)}</span>
                                 <span className="font-semibold uppercase tracking-wide">{row.key}</span>
                               </span>
-                              <span className="font-mono text-muted-foreground">{share.toFixed(0)}%</span>
+                              <span className="flex items-center gap-1.5 font-mono text-muted-foreground">
+                                {share.toFixed(0)}%
+                                <ArrowUpRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
+                              </span>
                             </div>
                             <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                              <div className="h-full rounded-full bg-gradient-to-r from-[oklch(0.75_0.16_215)] to-[oklch(0.55_0.20_245)]" style={{ width: `${pct}%` }} />
+                              <div className="h-full rounded-full bg-gradient-to-r from-[oklch(0.75_0.16_215)] to-[oklch(0.55_0.20_245)] transition-all group-hover:from-[oklch(0.70_0.18_215)] group-hover:to-[oklch(0.50_0.22_245)]" style={{ width: `${pct}%` }} />
                             </div>
-                          </div>
+                          </button>
                         );
                       });
                     })()}
