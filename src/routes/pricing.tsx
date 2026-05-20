@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shield, Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FaqSection, PRICING_FAQ, buildFaqSchema } from "@/components/faq-section";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
