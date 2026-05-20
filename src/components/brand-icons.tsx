@@ -11,6 +11,8 @@ import {
   HelpCircle,
   Globe,
 } from "lucide-react";
+import { loadImage, isKnownFailed, isKnownLoaded } from "@/lib/image-cache";
+
 
 type IconProps = { className?: string };
 
