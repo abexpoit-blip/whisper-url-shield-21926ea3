@@ -48,6 +48,7 @@ import { Route as LinksLinkIdTimeRulesRouteImport } from './routes/links.$linkId
 import { Route as LinksLinkIdTargetingRouteImport } from './routes/links.$linkId.targeting'
 import { Route as LinksLinkIdSettingsRouteImport } from './routes/links.$linkId.settings'
 import { Route as ApiPublicPlisioWebhookRouteImport } from './routes/api/public/plisio-webhook'
+import { Route as ApiPublicHooksPlisioRetryQueueRouteImport } from './routes/api/public/hooks/plisio-retry-queue'
 import { Route as ApiPublicHooksDomainHealthRouteImport } from './routes/api/public/hooks/domain-health'
 import { Route as ApiPublicHooksBackfillClicksRouteImport } from './routes/api/public/hooks/backfill-clicks'
 import { Route as ApiPublicHooksAutopilotRouteImport } from './routes/api/public/hooks/autopilot'
@@ -247,6 +248,12 @@ const ApiPublicPlisioWebhookRoute = ApiPublicPlisioWebhookRouteImport.update({
   path: '/api/public/plisio-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksPlisioRetryQueueRoute =
+  ApiPublicHooksPlisioRetryQueueRouteImport.update({
+    id: '/api/public/hooks/plisio-retry-queue',
+    path: '/api/public/hooks/plisio-retry-queue',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksDomainHealthRoute =
   ApiPublicHooksDomainHealthRouteImport.update({
     id: '/api/public/hooks/domain-health',
@@ -308,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/autopilot': typeof ApiPublicHooksAutopilotRoute
   '/api/public/hooks/backfill-clicks': typeof ApiPublicHooksBackfillClicksRoute
   '/api/public/hooks/domain-health': typeof ApiPublicHooksDomainHealthRoute
+  '/api/public/hooks/plisio-retry-queue': typeof ApiPublicHooksPlisioRetryQueueRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -351,6 +359,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/autopilot': typeof ApiPublicHooksAutopilotRoute
   '/api/public/hooks/backfill-clicks': typeof ApiPublicHooksBackfillClicksRoute
   '/api/public/hooks/domain-health': typeof ApiPublicHooksDomainHealthRoute
+  '/api/public/hooks/plisio-retry-queue': typeof ApiPublicHooksPlisioRetryQueueRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -396,6 +405,7 @@ export interface FileRoutesById {
   '/api/public/hooks/autopilot': typeof ApiPublicHooksAutopilotRoute
   '/api/public/hooks/backfill-clicks': typeof ApiPublicHooksBackfillClicksRoute
   '/api/public/hooks/domain-health': typeof ApiPublicHooksDomainHealthRoute
+  '/api/public/hooks/plisio-retry-queue': typeof ApiPublicHooksPlisioRetryQueueRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -442,6 +452,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/autopilot'
     | '/api/public/hooks/backfill-clicks'
     | '/api/public/hooks/domain-health'
+    | '/api/public/hooks/plisio-retry-queue'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -485,6 +496,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/autopilot'
     | '/api/public/hooks/backfill-clicks'
     | '/api/public/hooks/domain-health'
+    | '/api/public/hooks/plisio-retry-queue'
   id:
     | '__root__'
     | '/'
@@ -529,6 +541,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/autopilot'
     | '/api/public/hooks/backfill-clicks'
     | '/api/public/hooks/domain-health'
+    | '/api/public/hooks/plisio-retry-queue'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -558,6 +571,7 @@ export interface RootRouteChildren {
   ApiPublicHooksAutopilotRoute: typeof ApiPublicHooksAutopilotRoute
   ApiPublicHooksBackfillClicksRoute: typeof ApiPublicHooksBackfillClicksRoute
   ApiPublicHooksDomainHealthRoute: typeof ApiPublicHooksDomainHealthRoute
+  ApiPublicHooksPlisioRetryQueueRoute: typeof ApiPublicHooksPlisioRetryQueueRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -835,6 +849,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPlisioWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/plisio-retry-queue': {
+      id: '/api/public/hooks/plisio-retry-queue'
+      path: '/api/public/hooks/plisio-retry-queue'
+      fullPath: '/api/public/hooks/plisio-retry-queue'
+      preLoaderRoute: typeof ApiPublicHooksPlisioRetryQueueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/domain-health': {
       id: '/api/public/hooks/domain-health'
       path: '/api/public/hooks/domain-health'
@@ -936,6 +957,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksAutopilotRoute: ApiPublicHooksAutopilotRoute,
   ApiPublicHooksBackfillClicksRoute: ApiPublicHooksBackfillClicksRoute,
   ApiPublicHooksDomainHealthRoute: ApiPublicHooksDomainHealthRoute,
+  ApiPublicHooksPlisioRetryQueueRoute: ApiPublicHooksPlisioRetryQueueRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

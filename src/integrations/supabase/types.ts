@@ -795,6 +795,54 @@ export type Database = {
         }
         Relationships: []
       }
+      plisio_webhook_retry_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          last_attempt_at: string | null
+          last_error: string | null
+          max_attempts: number
+          next_attempt_at: string
+          order_number: string | null
+          payload: Json
+          source: string
+          status: string
+          txn_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          max_attempts?: number
+          next_attempt_at?: string
+          order_number?: string | null
+          payload?: Json
+          source?: string
+          status?: string
+          txn_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          max_attempts?: number
+          next_attempt_at?: string
+          order_number?: string | null
+          payload?: Json
+          source?: string
+          status?: string
+          txn_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       prelander_variants: {
         Row: {
           category: string

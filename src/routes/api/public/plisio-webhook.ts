@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHash, createHmac, randomUUID, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { enqueueRetry, processPlisioPayload } from "@/lib/plisio-process.server";
+
 
 async function logActivity(entry: {
   request_id: string;
@@ -102,103 +104,41 @@ export const Route = createFileRoute("/api/public/plisio-webhook")({
           return new Response("invalid signature", { status: 401 });
         }
 
-        const { data: req, error: reqErr } = await (supabaseAdmin as any)
-          .from("upgrade_requests")
-          .select("id,user_id,package_slug,status,plisio_status")
-          .or(`plisio_invoice_id.eq.${txnId},transaction_ref.eq.${orderNumber}`)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        const result = await processPlisioPayload(payload);
 
-        if (reqErr || !req) {
-          console.warn("Plisio webhook: request not found", { txnId, orderNumber });
-          await (supabaseAdmin as any).from("plisio_webhook_logs").insert({
-            txn_id: txnId, order_number: orderNumber, status,
-            signature_valid: true, payload, note: "No matching upgrade_request",
+        // Transient failure → enqueue for retry, still return 200 so Plisio doesn't hammer us.
+        if (!result.ok && result.retryable) {
+          await enqueueRetry({
+            payload,
+            txn_id: txnId,
+            order_number: orderNumber,
+            source: "webhook",
+            last_error: result.message,
           });
           await logActivity({
-            request_id: requestId, correlation_id: orderNumber, status_code: 200,
-            outcome: "not_found", txn_id: txnId, order_number: orderNumber,
-            plisio_status: status, message: "No matching upgrade_request",
-            metadata: { duration_ms: Date.now() - startedAt, payload },
+            request_id: requestId, correlation_id: orderNumber, status_code: 202,
+            outcome: "queued_for_retry", txn_id: txnId, order_number: orderNumber,
+            plisio_status: status, message: `Enqueued for retry: ${result.message}`,
+            metadata: { duration_ms: Date.now() - startedAt, error: result.message },
           });
-          return new Response("ok", { status: 200 });
+          return new Response("queued", { status: 202 });
         }
-
-        const terminal = req.status === "approved" || req.status === "rejected";
-        if (terminal && req.plisio_status === status) {
-          console.log(`Plisio webhook ignored (already ${req.status}/${status}) txn=${txnId}`);
-          await (supabaseAdmin as any).from("plisio_webhook_logs").insert({
-            upgrade_request_id: req.id, txn_id: txnId, order_number: orderNumber, status,
-            signature_valid: true, payload, note: `Duplicate — already ${req.status}`,
-          });
-          await logActivity({
-            request_id: requestId, correlation_id: orderNumber, status_code: 200,
-            outcome: "duplicate", upgrade_request_id: req.id, user_id: req.user_id,
-            txn_id: txnId, order_number: orderNumber, plisio_status: status,
-            message: `Duplicate — already ${req.status}`,
-            metadata: { duration_ms: Date.now() - startedAt },
-          });
-          return new Response("ok (dup)", { status: 200 });
-        }
-
-        await (supabaseAdmin as any).from("upgrade_requests")
-          .update({ plisio_status: status, plisio_invoice_id: txnId })
-          .eq("id", req.id);
-
-        let outcomeNote = `status=${status}`;
-        let activityOutcome = "received";
-        const success = status === "completed" || status === "mismatch";
-        if (success && req.status !== "approved") {
-          const { data: flipped } = await (supabaseAdmin as any)
-            .from("upgrade_requests")
-            .update({
-              status: "approved",
-              reviewed_at: new Date().toISOString(),
-              note: `Auto-approved by Plisio (${status})`,
-            })
-            .eq("id", req.id)
-            .neq("status", "approved")
-            .select("id")
-            .maybeSingle();
-
-          if (flipped) {
-            await (supabaseAdmin as any).from("profiles")
-              .update({ plan_slug: req.package_slug })
-              .eq("id", req.user_id);
-            outcomeNote = `Approved & plan=${req.package_slug}`;
-            activityOutcome = "approved";
-          } else {
-            outcomeNote = `Already approved (race)`;
-            activityOutcome = "duplicate";
-          }
-        } else if ((status === "cancelled" || status === "error" || status === "expired") &&
-                   req.status === "pending") {
-          await (supabaseAdmin as any).from("upgrade_requests")
-            .update({ status: "rejected", note: `Plisio: ${status}` })
-            .eq("id", req.id)
-            .eq("status", "pending");
-          outcomeNote = `Rejected: ${status}`;
-          activityOutcome = "rejected";
-        }
-
-        await (supabaseAdmin as any).from("plisio_webhook_logs").insert({
-          upgrade_request_id: req.id, txn_id: txnId, order_number: orderNumber, status,
-          signature_valid: true, payload, note: outcomeNote,
-        });
 
         const sanity = createHash("sha1").update(txnId).digest("hex").slice(0, 8);
-        console.log(`Plisio webhook handled txn=${txnId} status=${status} sig=${sanity}`);
+        console.log(`Plisio webhook handled txn=${txnId} status=${status} outcome=${result.outcome} sig=${sanity}`);
 
         await logActivity({
-          request_id: requestId, correlation_id: orderNumber, status_code: 200,
-          outcome: activityOutcome, upgrade_request_id: req.id, user_id: req.user_id,
+          request_id: requestId, correlation_id: orderNumber, status_code: result.status_code,
+          outcome: result.outcome,
+          upgrade_request_id: result.upgrade_request_id ?? null,
+          user_id: result.user_id ?? null,
           txn_id: txnId, order_number: orderNumber, plisio_status: status,
-          message: outcomeNote,
-          metadata: { duration_ms: Date.now() - startedAt, package_slug: req.package_slug },
+          message: result.message,
+          metadata: { duration_ms: Date.now() - startedAt, package_slug: result.package_slug ?? null },
         });
 
         return new Response("ok", { status: 200 });
+
       },
       GET: async () => new Response("plisio webhook alive", { status: 200 }),
     },

@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Activity, Copy, RefreshCw, Search } from "lucide-react";
+import { Activity, Copy, RefreshCw, Search, RotateCw } from "lucide-react";
 import { listPlisioActivity } from "@/lib/plisio-activity.functions";
+import { listPlisioRetryQueue, retryPlisioQueueItem } from "@/lib/plisio-retry.functions";
 import { Button } from "@/components/ui/button";
+
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -227,6 +229,154 @@ function AdminActivityPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <RetryQueueSection />
     </div>
   );
 }
+
+type RetryRow = {
+  id: string;
+  payload: Record<string, any>;
+  txn_id: string | null;
+  order_number: string | null;
+  status: "queued" | "processing" | "done" | "failed";
+  attempts: number;
+  max_attempts: number;
+  next_attempt_at: string;
+  last_attempt_at: string | null;
+  last_error: string | null;
+  source: string;
+  created_at: string;
+};
+
+function retryStatusBadge(s: RetryRow["status"]) {
+  if (s === "done") return <Badge className="bg-emerald-600 hover:bg-emerald-600">done</Badge>;
+  if (s === "failed") return <Badge variant="destructive">failed</Badge>;
+  if (s === "processing") return <Badge className="bg-sky-600 hover:bg-sky-600">processing</Badge>;
+  return <Badge className="bg-amber-600 hover:bg-amber-600">queued</Badge>;
+}
+
+function RetryQueueSection() {
+  const listFn = useServerFn(listPlisioRetryQueue);
+  const retryFn = useServerFn(retryPlisioQueueItem);
+  const qc = useQueryClient();
+  const [status, setStatus] = useState<"all" | "queued" | "processing" | "done" | "failed">("all");
+
+  const q = useQuery({
+    queryKey: ["plisio-retry-queue", { status }],
+    queryFn: () => listFn({ data: { status, limit: 100 } }),
+    refetchInterval: 15000,
+  });
+
+  const rows: RetryRow[] = useMemo(() => (q.data?.rows ?? []) as RetryRow[], [q.data]);
+
+  const counts = useMemo(() => {
+    const c = { queued: 0, processing: 0, done: 0, failed: 0 };
+    rows.forEach((r) => { c[r.status] = (c[r.status] ?? 0) + 1; });
+    return c;
+  }, [rows]);
+
+  const onRetry = async (id: string) => {
+    try {
+      await retryFn({ data: { id } });
+      toast.success("Re-queued for immediate retry");
+      qc.invalidateQueries({ queryKey: ["plisio-retry-queue"] });
+    } catch (e: any) {
+      toast.error(e?.message || "Retry failed");
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-start justify-between gap-3">
+        <div>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <RotateCw className="h-4 w-4 text-amber-600" /> Webhook Retry Queue
+          </CardTitle>
+          <CardDescription>
+            Failed webhook processing is automatically retried every 2 minutes with exponential backoff
+            (2m → 10m → 30m → 2h → 6h → 24h). Up to {6} attempts.
+          </CardDescription>
+        </div>
+        <div className="flex items-center gap-2">
+          <Select value={status} onValueChange={(v) => setStatus(v as any)}>
+            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="queued">Queued</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="done">Done</SelectItem>
+              <SelectItem value="failed">Failed</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button size="sm" variant="outline" onClick={() => q.refetch()} disabled={q.isFetching}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${q.isFetching ? "animate-spin" : ""}`} /> Refresh
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid grid-cols-4 gap-2 text-xs">
+          <div className="rounded border bg-amber-50 dark:bg-amber-950/30 p-2">
+            <p className="text-muted-foreground">Queued</p>
+            <p className="text-lg font-semibold text-amber-600">{counts.queued}</p>
+          </div>
+          <div className="rounded border bg-sky-50 dark:bg-sky-950/30 p-2">
+            <p className="text-muted-foreground">Processing</p>
+            <p className="text-lg font-semibold text-sky-600">{counts.processing}</p>
+          </div>
+          <div className="rounded border bg-emerald-50 dark:bg-emerald-950/30 p-2">
+            <p className="text-muted-foreground">Done</p>
+            <p className="text-lg font-semibold text-emerald-600">{counts.done}</p>
+          </div>
+          <div className="rounded border bg-destructive/10 p-2">
+            <p className="text-muted-foreground">Failed</p>
+            <p className="text-lg font-semibold text-destructive">{counts.failed}</p>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Created</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Attempts</TableHead>
+                <TableHead>Next attempt</TableHead>
+                <TableHead>Txn ID</TableHead>
+                <TableHead>Order #</TableHead>
+                <TableHead>Last error</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {q.isLoading && (
+                <TableRow><TableCell colSpan={8} className="py-6 text-center text-muted-foreground">Loading…</TableCell></TableRow>
+              )}
+              {!q.isLoading && rows.length === 0 && (
+                <TableRow><TableCell colSpan={8} className="py-6 text-center text-muted-foreground">Queue is empty — no failed webhooks pending retry.</TableCell></TableRow>
+              )}
+              {rows.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</TableCell>
+                  <TableCell>{retryStatusBadge(r.status)}</TableCell>
+                  <TableCell className="font-mono text-xs">{r.attempts}/{r.max_attempts}</TableCell>
+                  <TableCell className="whitespace-nowrap text-xs">{new Date(r.next_attempt_at).toLocaleString()}</TableCell>
+                  <TableCell className="font-mono text-xs">{r.txn_id ? `${r.txn_id.slice(0, 10)}…` : "—"}</TableCell>
+                  <TableCell className="font-mono text-xs">{r.order_number ?? "—"}</TableCell>
+                  <TableCell className="max-w-[260px] truncate text-xs text-destructive">{r.last_error ?? "—"}</TableCell>
+                  <TableCell>
+                    {(r.status === "queued" || r.status === "failed") && (
+                      <Button size="sm" variant="outline" onClick={() => onRetry(r.id)}>Retry now</Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
