@@ -1,4 +1,5 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { ArrowLeft, RefreshCw, CheckCircle2, AlertTriangle, Globe } from "lucide-react";
 import { toast } from "sonner";
@@ -26,6 +27,8 @@ type Row = {
 };
 
 function AdminDomainHealthPage() {
+  const fetchHealth = useServerFn(listDomainHealth);
+  const runHealthCheck = useServerFn(runDomainHealthCheck);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [rows, setRows] = useState<Row[]>([]);
@@ -33,7 +36,7 @@ function AdminDomainHealthPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await listDomainHealth();
+      const res = await fetchHealth();
       setRows(res.rows as Row[]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
@@ -46,7 +49,7 @@ function AdminDomainHealthPage() {
   const handleRun = async (domainId?: string) => {
     setRunning(true);
     try {
-      const res = await runDomainHealthCheck({ data: { domainId } });
+      const res = await runHealthCheck({ data: { domainId } });
       toast.success(`Checked ${res.checked} domain(s)`);
       await load();
     } catch (e) {
