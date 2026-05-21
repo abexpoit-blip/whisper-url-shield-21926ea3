@@ -62,6 +62,7 @@ const adminNav = [
   { title: "Payments", url: "/admin/payments", icon: CreditCard },
   { title: "Plisio Activity", url: "/admin/activity", icon: Activity },
   { title: "Rotation", url: "/admin/rotation", icon: Trophy },
+  { title: "Ads & Rotation", url: "/admin/ads", icon: Megaphone },
   { title: "Protection", url: "/admin/protection", icon: ShieldCheck },
   { title: "Variants", url: "/admin/variants", icon: Settings },
   { title: "Domain Pool", url: "/admin/domains", icon: Globe2 },
