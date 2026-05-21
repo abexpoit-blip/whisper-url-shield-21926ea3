@@ -9,7 +9,6 @@ import {
   listMyUpgradeRequests,
   listAvailablePackages,
 } from "@/lib/billing.functions";
-import { createPlisioInvoice } from "@/lib/plisio.functions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,7 +50,6 @@ function UpgradePage() {
   const mine = useServerFn(getMyPlan);
   const myReqs = useServerFn(listMyUpgradeRequests);
   const packages = useServerFn(listAvailablePackages);
-  const payWithPlisio = useServerFn(createPlisioInvoice);
 
   const { data: pkgs = [], isLoading: packagesLoading, error: packagesError } = useQuery({
     queryKey: ["packages-active"],
@@ -92,10 +90,17 @@ function UpgradePage() {
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Please login again before payment.");
 
-      return payWithPlisio({
-        data: { package_slug: picked.slug },
-        headers: { Authorization: `Bearer ${accessToken}` },
+      const response = await fetch("/api/public/plisio-create-invoice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ package_slug: picked.slug }),
       });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result?.error || "Could not create invoice");
+      return result;
     },
     onSuccess: (res: any) => {
       if (res?.invoice_url) {
