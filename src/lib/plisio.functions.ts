@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { randomUUID } from "crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const SlugRe = /^[a-z0-9_-]{2,40}$/;
@@ -7,6 +8,33 @@ const SlugRe = /^[a-z0-9_-]{2,40}$/;
 const CreateInvoiceSchema = z.object({
   package_slug: z.string().trim().regex(SlugRe),
 });
+
+async function logActivity(
+  supabaseAdmin: any,
+  entry: {
+    event_type: "invoice_create" | "webhook_received";
+    request_id: string;
+    correlation_id?: string | null;
+    status_code?: number | null;
+    outcome: string;
+    upgrade_request_id?: string | null;
+    user_id?: string | null;
+    txn_id?: string | null;
+    order_number?: string | null;
+    plisio_status?: string | null;
+    message?: string | null;
+    metadata?: Record<string, any>;
+  },
+) {
+  try {
+    await supabaseAdmin.from("plisio_activity_log").insert({
+      ...entry,
+      metadata: entry.metadata ?? {},
+    });
+  } catch (e) {
+    console.warn("[plisio-activity] insert failed", e);
+  }
+}
 
 // Create a Plisio invoice for the chosen package, persist an upgrade_request,
 // and return the hosted checkout URL.
@@ -17,8 +45,18 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
     const { userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const requestId = randomUUID();
+    const startedAt = Date.now();
+
     const apiKey = process.env.PLISIO_API_KEY;
-    if (!apiKey) throw new Error("Plisio is not configured. Admin must add PLISIO_API_KEY.");
+    if (!apiKey) {
+      await logActivity(supabaseAdmin, {
+        event_type: "invoice_create", request_id: requestId, outcome: "error",
+        user_id: userId, message: "PLISIO_API_KEY missing",
+        metadata: { package_slug: data.package_slug },
+      });
+      throw new Error("Plisio is not configured. Admin must add PLISIO_API_KEY.");
+    }
 
     // 1) Load the package
     const { data: pkg, error: pkgErr } = await (supabaseAdmin as any)
@@ -26,21 +64,32 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
       .select("slug,name,price_monthly,price_onetime,billing_period,is_active")
       .eq("slug", data.package_slug)
       .single();
-    if (pkgErr || !pkg || !pkg.is_active) throw new Error("Package not available");
+    if (pkgErr || !pkg || !pkg.is_active) {
+      await logActivity(supabaseAdmin, {
+        event_type: "invoice_create", request_id: requestId, outcome: "error",
+        user_id: userId, message: "Package not available",
+        metadata: { package_slug: data.package_slug, pkgErr: pkgErr?.message },
+      });
+      throw new Error("Package not available");
+    }
 
     const isLifetime = pkg.billing_period === "lifetime" || Number(pkg.price_onetime) > 0;
     const baseAmount = Number(isLifetime ? pkg.price_onetime : pkg.price_monthly);
-    if (!baseAmount || baseAmount <= 0) throw new Error("This plan is free — no payment required.");
+    if (!baseAmount || baseAmount <= 0) {
+      await logActivity(supabaseAdmin, {
+        event_type: "invoice_create", request_id: requestId, outcome: "error",
+        user_id: userId, message: "Free plan — no payment required",
+        metadata: { package_slug: data.package_slug },
+      });
+      throw new Error("This plan is free — no payment required.");
+    }
 
-    // Plisio "Client pays commission" = ~2% network/processing fee added on top.
     const FEE_PCT = 0.02;
     const totalAmount = Math.round(baseAmount * (1 + FEE_PCT) * 100) / 100;
 
-    // 2) Load buyer email
     const { data: profile } = await (supabaseAdmin as any)
       .from("profiles").select("email").eq("id", userId).single();
 
-    // 3) Insert pending upgrade_request first (so webhook can find it)
     const orderNumber = `up_${userId.slice(0, 8)}_${Date.now()}`;
     const { data: reqRow, error: insErr } = await (supabaseAdmin as any)
       .from("upgrade_requests")
@@ -55,15 +104,21 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
       })
       .select("id")
       .single();
-    if (insErr) throw new Error(insErr.message);
+    if (insErr) {
+      await logActivity(supabaseAdmin, {
+        event_type: "invoice_create", request_id: requestId, correlation_id: orderNumber,
+        outcome: "error", user_id: userId, order_number: orderNumber,
+        message: `DB insert failed: ${insErr.message}`,
+        metadata: { package_slug: data.package_slug },
+      });
+      throw new Error(insErr.message);
+    }
 
-    // 4) Build callback URLs (production stable host)
     const origin = process.env.PUBLIC_SITE_URL || "https://sleepox.com";
     const callbackUrl = `${origin}/api/public/plisio-webhook?json=true`;
     const successUrl = `${origin}/upgrade?payment=success`;
     const failUrl = `${origin}/upgrade?payment=failed`;
 
-    // 5) Create Plisio invoice (30-minute expiration to match dashboard)
     const params = new URLSearchParams({
       api_key: apiKey,
       source_amount: totalAmount.toFixed(2),
@@ -80,19 +135,30 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
 
     const res = await fetch(`https://api.plisio.net/api/v1/invoices/new?${params.toString()}`);
     const payload: any = await res.json().catch(() => ({}));
+    const durationMs = Date.now() - startedAt;
 
     if (!res.ok || payload?.status !== "success" || !payload?.data?.invoice_url) {
       const msg = payload?.data?.message || payload?.message || `Plisio error (${res.status})`;
-      console.warn("Plisio invoice create failed", {
-        status: res.status,
-        message: msg,
-        orderNumber,
-        apiKeyLength: apiKey.length,
-        apiKeyPrefix: apiKey.slice(0, 4),
-      });
-      // Mark the request failed so admin can see it
+      console.warn("Plisio invoice create failed", { status: res.status, message: msg, orderNumber });
       await (supabaseAdmin as any).from("upgrade_requests")
         .update({ plisio_status: "error", note: msg }).eq("id", reqRow.id);
+
+      await logActivity(supabaseAdmin, {
+        event_type: "invoice_create",
+        request_id: requestId,
+        correlation_id: orderNumber,
+        status_code: res.status,
+        outcome: "error",
+        upgrade_request_id: reqRow.id,
+        user_id: userId,
+        order_number: orderNumber,
+        plisio_status: "error",
+        message: msg,
+        metadata: {
+          package_slug: data.package_slug, base_amount: baseAmount, total_amount: totalAmount,
+          duration_ms: durationMs, plisio_response: payload,
+        },
+      });
       throw new Error(msg);
     }
 
@@ -102,6 +168,24 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
     await (supabaseAdmin as any).from("upgrade_requests")
       .update({ plisio_invoice_id: txnId, plisio_invoice_url: invoiceUrl })
       .eq("id", reqRow.id);
+
+    await logActivity(supabaseAdmin, {
+      event_type: "invoice_create",
+      request_id: requestId,
+      correlation_id: orderNumber,
+      status_code: res.status,
+      outcome: "success",
+      upgrade_request_id: reqRow.id,
+      user_id: userId,
+      txn_id: txnId,
+      order_number: orderNumber,
+      plisio_status: "pending",
+      message: `Invoice created (${pkg.name})`,
+      metadata: {
+        package_slug: data.package_slug, base_amount: baseAmount, total_amount: totalAmount,
+        fee_pct: FEE_PCT, duration_ms: durationMs, invoice_url: invoiceUrl,
+      },
+    });
 
     return {
       invoice_url: invoiceUrl,

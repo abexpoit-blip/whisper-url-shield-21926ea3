@@ -45,6 +45,7 @@ const adminNav = [
   { title: "Admin Dashboard", url: "/admin", icon: LayoutGrid },
   { title: "Packages", url: "/admin/packages", icon: Package },
   { title: "Payments", url: "/admin/payments", icon: CreditCard },
+  { title: "Plisio Activity", url: "/admin/activity", icon: Activity },
   { title: "Rotation", url: "/admin/rotation", icon: Trophy },
   { title: "Protection", url: "/admin/protection", icon: ShieldCheck },
   { title: "Variants", url: "/admin/variants", icon: Settings },

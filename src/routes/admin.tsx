@@ -22,6 +22,7 @@ const ADMIN_SECTIONS = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/packages", label: "Packages" },
   { href: "/admin/payments", label: "Payments" },
+  { href: "/admin/activity", label: "Plisio Activity" },
   { href: "/admin/rotation", label: "Rotation" },
   { href: "/admin/protection", label: "Protection" },
   { href: "/admin/variants", label: "Variants" },
