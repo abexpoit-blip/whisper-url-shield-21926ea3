@@ -35,9 +35,12 @@ function inspectKey(name, value) {
     const header = decodeJwtPart(parts[0]);
     const payload = decodeJwtPart(parts[1]);
     if (header.alg !== "HS256") return `${name} alg must be HS256, got ${header.alg ?? "unknown"}`;
-    if (payload.iss !== "supabase") return `${name} issuer must be "supabase", got ${payload.iss ?? "unknown"}`;
-    if (payload.ref !== REQUIRED_REF) return `${name} project ref must be ${REQUIRED_REF}, got ${payload.ref ?? "unknown"}`;
-    if (payload.role !== "anon") return `${name} role must be anon, got ${payload.role ?? "unknown"}`;
+    if (payload.iss !== "supabase")
+      return `${name} issuer must be "supabase", got ${payload.iss ?? "unknown"}`;
+    if (payload.ref !== REQUIRED_REF)
+      return `${name} project ref must be ${REQUIRED_REF}, got ${payload.ref ?? "unknown"}`;
+    if (payload.role !== "anon")
+      return `${name} role must be anon, got ${payload.role ?? "unknown"}`;
   } catch (error) {
     return `${name} could not be decoded: ${error instanceof Error ? error.message : String(error)}`;
   }
@@ -50,7 +53,8 @@ const env = { ...dotEnv, ...process.env };
 const errors = [];
 
 for (const name of ["SUPABASE_URL", "VITE_SUPABASE_URL"]) {
-  if (env[name] !== REQUIRED_URL) errors.push(`${name} must be ${REQUIRED_URL}, got ${env[name] || "missing"}`);
+  if (env[name] !== REQUIRED_URL)
+    errors.push(`${name} must be ${REQUIRED_URL}, got ${env[name] || "missing"}`);
 }
 
 for (const name of ["SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_PUBLISHABLE_KEY"]) {
@@ -63,7 +67,9 @@ if (env.SUPABASE_PUBLISHABLE_KEY !== env.VITE_SUPABASE_PUBLISHABLE_KEY) {
 }
 
 if (env.VITE_SUPABASE_PROJECT_ID !== REQUIRED_REF) {
-  errors.push(`VITE_SUPABASE_PROJECT_ID must be ${REQUIRED_REF}, got ${env.VITE_SUPABASE_PROJECT_ID || "missing"}`);
+  errors.push(
+    `VITE_SUPABASE_PROJECT_ID must be ${REQUIRED_REF}, got ${env.VITE_SUPABASE_PROJECT_ID || "missing"}`,
+  );
 }
 
 if (errors.length) {

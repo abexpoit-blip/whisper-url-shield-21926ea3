@@ -1,6 +1,32 @@
 import { redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 
+const EXPECTED_PROJECT_REF = "qnzwncleajzzwpauifnp";
+const EXPECTED_ISSUER_PREFIX = `https://${EXPECTED_PROJECT_REF}.supabase.co/auth/v1`;
+
+function decodeJwtPart(part: string) {
+  const base64 = part.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+  return JSON.parse(atob(padded)) as Record<string, unknown>;
+}
+
+function tokenMatchesCurrentProject(token: string) {
+  try {
+    const [headerPart, payloadPart] = token.split(".");
+    if (!headerPart || !payloadPart) return false;
+    const header = decodeJwtPart(headerPart);
+    const payload = decodeJwtPart(payloadPart);
+    const issuer = typeof payload.iss === "string" ? payload.iss : "";
+    const ref = typeof payload.ref === "string" ? payload.ref : "";
+    return (
+      header.alg === "HS256" &&
+      (issuer.startsWith(EXPECTED_ISSUER_PREFIX) || ref === EXPECTED_PROJECT_REF)
+    );
+  } catch {
+    return false;
+  }
+}
+
 function safeRedirectPath(locationHref: string) {
   try {
     const url = new URL(locationHref, window.location.origin);
@@ -17,6 +43,10 @@ export async function getVerifiedClientSession() {
 
   let { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData.session?.access_token) return null;
+  if (!tokenMatchesCurrentProject(sessionData.session.access_token)) {
+    await supabase.auth.signOut();
+    return null;
+  }
 
   let { data, error } = await supabase.auth.getUser();
   if (!error && data.user) return { session: sessionData.session, user: data.user };
