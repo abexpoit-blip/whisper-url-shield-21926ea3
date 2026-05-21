@@ -5,6 +5,85 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const SlugRe = /^[a-z0-9_-]{2,40}$/;
 
+const CURRENT_PACKAGE_SLUGS = ["free", "pro_monthly", "lifetime"] as const;
+const CURRENT_PACKAGE_SET = new Set<string>(CURRENT_PACKAGE_SLUGS);
+
+const CURRENT_PACKAGE_CATALOG = [
+  {
+    id: "free",
+    slug: "free",
+    name: "Free",
+    price_monthly: 0,
+    price_onetime: 0,
+    billing_period: "free",
+    link_limit: 1,
+    click_limit: 10000,
+    features: ["1 short link", "10K tracked clicks", "Bot & fraud filtering", "Basic analytics"],
+    sort_order: 0,
+    is_active: true,
+    created_at: null,
+  },
+  {
+    id: "pro_monthly",
+    slug: "pro_monthly",
+    name: "Pro Monthly",
+    price_monthly: 5,
+    price_onetime: 0,
+    billing_period: "monthly",
+    link_limit: 50,
+    click_limit: 1000000,
+    features: [
+      "50 short links",
+      "1M tracked clicks per month",
+      "Bot & fraud filtering",
+      "Custom domains",
+      "Advanced analytics",
+      "Geo, device, OS, time & referer targeting",
+      "Prelander variants",
+      "Priority support",
+    ],
+    sort_order: 1,
+    is_active: true,
+    created_at: null,
+  },
+  {
+    id: "lifetime",
+    slug: "lifetime",
+    name: "Lifetime",
+    price_monthly: 0,
+    price_onetime: 50,
+    billing_period: "lifetime",
+    link_limit: null,
+    click_limit: null,
+    features: [
+      "Unlimited short links",
+      "Unlimited clicks — forever",
+      "Everything in Pro Monthly",
+      "All current & future features",
+      "Unlimited custom domains",
+      "Unlimited prelander variants",
+      "Full targeting suite",
+      "Auto-tuning variant autopilot",
+      "Advanced analytics + exports",
+      "API access",
+      "Priority support — lifetime",
+      "One-time payment — no renewals ever",
+    ],
+    sort_order: 2,
+    is_active: true,
+    created_at: null,
+  },
+] as const;
+
+function currentPackages(rows: any[] | null | undefined) {
+  const bySlug = new Map((rows ?? []).map((row: any) => [row.slug, row]));
+  return CURRENT_PACKAGE_CATALOG.map((pkg) => ({
+    ...pkg,
+    id: bySlug.get(pkg.slug)?.id ?? pkg.id,
+    created_at: bySlug.get(pkg.slug)?.created_at ?? pkg.created_at,
+  }));
+}
+
 const PackageCreateSchema = z.object({
   slug: z.string().trim().toLowerCase().regex(SlugRe),
   name: z.string().trim().min(1).max(60),
@@ -93,7 +172,7 @@ export const listAvailablePackages = createServerFn({ method: "GET" }).handler(a
     .eq("is_active", true)
     .order("sort_order", { ascending: true });
   if (error) throw new Error(error.message);
-  return data ?? [];
+  return currentPackages(data);
 });
 
 export const createPackage = createServerFn({ method: "POST" })
