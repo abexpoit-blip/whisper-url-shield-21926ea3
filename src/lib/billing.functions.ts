@@ -169,7 +169,7 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { getPlisioApiKey } = await import("@/lib/plisio-config.server");
-    const requestId = randomUUID();
+    const requestId = crypto.randomUUID();
     const startedAt = Date.now();
 
     try {
