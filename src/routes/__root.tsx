@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { supabase } from "@/integrations/supabase/client";
+import { APP_BUILD_VERSION, versionedAssetUrl } from "@/lib/build-version";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -86,10 +87,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "url shortener, link shortener, bot filter, click fraud protection, facebook ads link cloaker, instagram ads short link, tiktok ads tracker, google ads click protection, short url for ads, branded short links, link tracking, geo targeting links, anti bot clicks, ad click analytics, meta ads optimization, media buyer tools, ppc click fraud, ad spend protection, smart links, deep link, qr code generator, link rotator, ctr booster, conversion tracking links, sleepox, linkshield",
       },
       { name: "author", content: "LinkShield" },
-      { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
+      {
+        name: "robots",
+        content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+      },
       { name: "googlebot", content: "index, follow" },
       { property: "og:site_name", content: "LinkShield" },
-      { property: "og:title", content: "LinkShield — Bot-Filtered URL Shortener for Facebook & Instagram Ads" },
+      {
+        property: "og:title",
+        content: "LinkShield — Bot-Filtered URL Shortener for Facebook & Instagram Ads",
+      },
       {
         property: "og:description",
         content:
@@ -98,36 +105,112 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { property: "og:locale", content: "en_US" },
       { property: "og:url", content: "https://sleepox.com" },
+      { name: "app-build-version", content: APP_BUILD_VERSION },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@linkshield" },
-      { name: "twitter:title", content: "LinkShield — Bot-Filtered URL Shortener for Facebook & Instagram Ads" },
+      {
+        name: "twitter:title",
+        content: "LinkShield — Bot-Filtered URL Shortener for Facebook & Instagram Ads",
+      },
       {
         name: "twitter:description",
         content:
           "Block bot clicks, geo-filter traffic, and boost real CTR with smart short links for Meta, TikTok & Google Ads.",
       },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/60ce39b9-ef4c-44c7-9266-6c4831b3f9e4/id-preview-35a3a1ec--a5ab0c94-43e0-46fe-a916-25eab8563989.lovable.app-1779208529876.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/60ce39b9-ef4c-44c7-9266-6c4831b3f9e4/id-preview-35a3a1ec--a5ab0c94-43e0-46fe-a916-25eab8563989.lovable.app-1779208529876.png" },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/60ce39b9-ef4c-44c7-9266-6c4831b3f9e4/id-preview-35a3a1ec--a5ab0c94-43e0-46fe-a916-25eab8563989.lovable.app-1779208529876.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/60ce39b9-ef4c-44c7-9266-6c4831b3f9e4/id-preview-35a3a1ec--a5ab0c94-43e0-46fe-a916-25eab8563989.lovable.app-1779208529876.png",
+      },
     ],
 
     links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
-      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
-      { rel: "manifest", href: "/manifest.json" },
+      { rel: "stylesheet", href: versionedAssetUrl(appCss) },
+      { rel: "icon", type: "image/svg+xml", href: versionedAssetUrl("/favicon.svg") },
+      {
+        rel: "apple-touch-icon",
+        sizes: "180x180",
+        href: versionedAssetUrl("/apple-touch-icon.png"),
+      },
+      { rel: "manifest", href: versionedAssetUrl("/manifest.json") },
       // iOS launch / startup splash screens
-      { rel: "apple-touch-startup-image", href: "/splash/apple-splash-1290x2796.png", media: "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/splash/apple-splash-1179x2556.png", media: "(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/splash/apple-splash-1284x2778.png", media: "(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/splash/apple-splash-1170x2532.png", media: "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/splash/apple-splash-1125x2436.png", media: "(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/splash/apple-splash-828x1792.png", media: "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/splash/apple-splash-750x1334.png", media: "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/splash/apple-splash-2048x2732.png", media: "(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/splash/apple-splash-1668x2388.png", media: "(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/splash/apple-splash-1640x2360.png", media: "(device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/splash/apple-splash-1620x2160.png", media: "(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
-      { rel: "apple-touch-startup-image", href: "/splash/apple-splash-1488x2266.png", media: "(device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/splash/apple-splash-1290x2796.png",
+        media:
+          "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/splash/apple-splash-1179x2556.png",
+        media:
+          "(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/splash/apple-splash-1284x2778.png",
+        media:
+          "(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/splash/apple-splash-1170x2532.png",
+        media:
+          "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/splash/apple-splash-1125x2436.png",
+        media:
+          "(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/splash/apple-splash-828x1792.png",
+        media:
+          "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/splash/apple-splash-750x1334.png",
+        media:
+          "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/splash/apple-splash-2048x2732.png",
+        media:
+          "(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/splash/apple-splash-1668x2388.png",
+        media:
+          "(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/splash/apple-splash-1640x2360.png",
+        media:
+          "(device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/splash/apple-splash-1620x2160.png",
+        media:
+          "(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+      },
+      {
+        rel: "apple-touch-startup-image",
+        href: "/splash/apple-splash-1488x2266.png",
+        media:
+          "(device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+      },
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
@@ -183,7 +266,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         }),
       },
     ],
-
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -227,7 +309,9 @@ function AuthSync() {
       }
     })();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
       if (event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") return;
       router.invalidate();
       if (event === "SIGNED_OUT") queryClient.clear();
