@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -35,7 +34,6 @@ function SignupPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -60,20 +58,6 @@ function SignupPage() {
     navigate({ to: "/dashboard" });
   };
 
-  const onGoogle = async () => {
-    setGoogleLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      setGoogleLoading(false);
-      toast.error(result.error.message ?? "Google sign-up failed");
-      return;
-    }
-    if (result.redirected) return;
-    navigate({ to: "/dashboard" });
-  };
-
   return (
     <div className="min-h-screen bg-background text-foreground grid lg:grid-cols-2">
       <aside className="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden bg-hero">
@@ -88,7 +72,7 @@ function SignupPage() {
 
         <div className="relative z-10 space-y-8 max-w-md">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-            <Sparkles className="h-3.5 w-3.5" /> Free forever for your first 50 links
+            <Sparkles className="h-3.5 w-3.5" /> Free forever: 1 link + 10K clicks/month
           </div>
           <h2 className="text-4xl font-display font-bold leading-tight">
             Launch links that <span className="text-gradient">protect your ad spend</span> in under 60 seconds.
@@ -122,22 +106,7 @@ function SignupPage() {
             Start protecting your traffic today. No credit card required.
           </p>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onGoogle}
-            disabled={googleLoading || loading}
-            className="mt-8 w-full h-11 gap-3 font-medium"
-          >
-            <GoogleIcon />
-            {googleLoading ? "Redirecting…" : "Sign up with Google"}
-          </Button>
-
-          <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" />
-            OR
-            <span className="h-px flex-1 bg-border" />
-          </div>
+          <div className="mt-8" />
 
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-1.5">
@@ -152,7 +121,7 @@ function SignupPage() {
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" minLength={6} required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Minimum 6 characters" className="h-11" />
             </div>
-            <Button type="submit" disabled={loading || googleLoading} className="w-full h-11 shadow-glow group">
+            <Button type="submit" disabled={loading} className="w-full h-11 shadow-glow group">
               {loading ? "Creating…" : (<>Create account <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" /></>)}
             </Button>
           </form>
