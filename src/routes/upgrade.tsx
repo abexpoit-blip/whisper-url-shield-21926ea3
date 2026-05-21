@@ -196,12 +196,6 @@ function UpgradePage() {
                 const periodLabel = isLifetime ? "one-time · forever" : "per month";
                 const unlimitedClicks = p.click_limit == null;
                 const unlimitedLinks = p.link_limit == null || p.link_limit >= 999999;
-                const clickLabel = unlimitedClicks
-                  ? "Unlimited clicks"
-                  : `${Number(p.click_limit).toLocaleString()} clicks${isLifetime ? " — lifetime" : " / month"}`;
-                const linkLabel = unlimitedLinks
-                  ? "Unlimited links"
-                  : `${p.link_limit} link${p.link_limit > 1 ? "s" : ""} included`;
                 const isFree = price === 0 && !isLifetime;
                 const tagline = isLifetime
                   ? "All premium features unlocked forever. One payment, zero renewals."
