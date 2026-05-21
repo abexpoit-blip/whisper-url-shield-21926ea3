@@ -26,8 +26,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { requireClientUser } from "@/lib/auth-guard";
-import { supabase } from "@/integrations/supabase/client";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { getVerifiedClientSession, requireClientUser } from "@/lib/auth-guard";
 
 const FEE_PCT = 0.02;
 const EXPIRY_MS = 30 * 60 * 1000;
@@ -77,6 +78,17 @@ function UpgradePage() {
   const mine = useServerFn(getMyPlan);
   const myReqs = useServerFn(listMyUpgradeRequests);
   const packages = useServerFn(listAvailablePackages);
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    void getVerifiedClientSession().then((verified) => {
+      if (active) setEmail(verified?.user.email ?? "");
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const {
     data: pkgs = [],
@@ -108,22 +120,8 @@ function UpgradePage() {
   const plisioM = useMutation({
     mutationFn: async () => {
       if (!picked) throw new Error("Choose a package first");
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError || !userData.user) throw new Error("Please login again before payment.");
-
-      let { data: sessionData } = await supabase.auth.getSession();
-      if (
-        !sessionData.session?.access_token ||
-        (sessionData.session.expires_at &&
-          sessionData.session.expires_at * 1000 - Date.now() < 5 * 60_000)
-      ) {
-        const refreshed = await supabase.auth.refreshSession();
-        if (refreshed.error || !refreshed.data.session?.access_token)
-          throw new Error("Please login again before payment.");
-        sessionData = refreshed.data;
-      }
-
-      const accessToken = sessionData.session?.access_token;
+      const verified = await getVerifiedClientSession();
+      const accessToken = verified?.session.access_token;
       if (!accessToken) throw new Error("Please login again before payment.");
 
       const response = await fetch("/api/public/plisio-create-invoice", {
