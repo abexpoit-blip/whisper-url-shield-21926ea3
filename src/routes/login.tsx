@@ -163,22 +163,8 @@ function LoginPage() {
             </div>
           )}
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onGoogle}
-            disabled={googleLoading || loading}
-            className="mt-8 w-full h-11 gap-3 font-medium"
-          >
-            <GoogleIcon />
-            {googleLoading ? "Redirecting…" : "Continue with Google"}
-          </Button>
+          <div className="mt-8" />
 
-          <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" />
-            OR
-            <span className="h-px flex-1 bg-border" />
-          </div>
 
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-1.5">
