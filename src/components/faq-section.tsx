@@ -58,12 +58,12 @@ export const HOMEPAGE_FAQ: FaqItem[] = [
   {
     question: "Can I use my own custom domain?",
     answer:
-      "Absolutely. All Pro and Agency plans support custom domains. You can also rotate multiple domains so one flagged domain doesn't kill your entire campaign.",
+      "Yes. Pro Monthly and Lifetime include custom domains, so you can run branded short links and rotate domains when a campaign needs extra protection.",
   },
   {
-    question: "Do you offer a free trial?",
+    question: "Is there a free plan?",
     answer:
-      "Yes — every plan includes a 14-day free trial. No credit card required to start.",
+      "Yes. Free includes 1 short link and 10,000 clicks per month, so you can test bot filtering, targeting, prelander variants, and analytics before upgrading.",
   },
   {
     question: "Which ad platforms are supported?",
@@ -74,14 +74,14 @@ export const HOMEPAGE_FAQ: FaqItem[] = [
 
 export const PRICING_FAQ: FaqItem[] = [
   {
-    question: "Can I upgrade or downgrade at any time?",
+    question: "What plans are available?",
     answer:
-      "Yes. You can change your plan anytime from your account dashboard. Upgrades take effect immediately; downgrades apply at the start of your next billing cycle.",
+      "Free gives 1 link and 10,000 monthly clicks. Pro Monthly is $5/month with 50 links and 1,000,000 monthly clicks. Lifetime is $50 one-time with unlimited links and unlimited clicks forever.",
   },
   {
     question: "Is there a free plan?",
     answer:
-      "We offer a 14-day free trial on every paid plan so you can test all features. After the trial, choose the plan that fits your volume.",
+      "Yes. The Free plan is free forever and includes 1 short link, 10,000 monthly clicks, bot filtering, targeting, prelander variants, duplicate-click protection, and basic analytics.",
   },
   {
     question: "What happens if I exceed my monthly link limit?",
@@ -89,14 +89,14 @@ export const PRICING_FAQ: FaqItem[] = [
       "You can still view and manage existing links, but creating new ones will pause until your next billing cycle or until you upgrade your plan.",
   },
   {
-    question: "Do Agency plans include sub-accounts or white-labeling?",
+    question: "What does Lifetime include?",
     answer:
-      "Agency plans include team accounts and custom domains. White-labeling is available on request for larger agencies — contact our sales team.",
+      "Lifetime includes unlimited short links, unlimited clicks forever, all current and future features, custom domains, API access, advanced analytics, and lifetime priority support.",
   },
   {
     question: "What payment methods do you accept?",
     answer:
-      "We accept all major credit cards (Visa, Mastercard, Amex) and PayPal. Enterprise customers can also pay via wire transfer.",
+      "Paid plans use crypto checkout. A 2% network fee is added at deposit time, so $5 becomes $5.10 and $50 becomes $51.00 at checkout.",
   },
 ];
 

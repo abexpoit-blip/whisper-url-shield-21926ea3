@@ -18,7 +18,7 @@ const FAQ: FaqItem[] = [
   {
     question: "Will my Instagram links look branded?",
     answer:
-      "Yes. Pro and Agency plans support custom branded domains, so your Instagram links look like yourbrand.link/offer instead of a generic shortener.",
+      "Yes. Pro Monthly and Lifetime plans support custom branded domains, so your Instagram links look like yourbrand.link/offer instead of a generic shortener.",
   },
   {
     question: "Does LinkShield track Instagram Stories and Reels clicks separately?",
