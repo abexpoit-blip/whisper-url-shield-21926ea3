@@ -24,7 +24,10 @@ import {
   getMyPlan,
   listMyUpgradeRequests,
   listAvailablePackages,
+  expireStalePlisioRequests,
 } from "@/lib/billing.functions";
+import { useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +48,9 @@ const EXPIRY_MS = 30 * 60 * 1000;
 
 export const Route = createFileRoute("/upgrade")({
   beforeLoad: ({ location }) => requireClientUser(location.href),
+  validateSearch: (s: Record<string, unknown>) => ({
+    payment: (s.payment as "success" | "failed" | undefined) ?? undefined,
+  }),
   component: UpgradePage,
 });
 
