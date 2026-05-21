@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Shield, Zap, BarChart3, Bot, Globe, Lock, ArrowRight, Check, ShieldCheck, Activity, TrendingUp, MousePointerClick, Users, Gauge, Sparkles } from "lucide-react";
+import { Shield, Zap, BarChart3, Bot, Globe, Lock, ArrowRight, Check, ShieldCheck, Activity, TrendingUp, MousePointerClick, Users, Gauge, Sparkles, Rocket, Crown, Infinity as InfinityIcon, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
 import { FaqSection, HOMEPAGE_FAQ, buildFaqSchema } from "@/components/faq-section";
@@ -322,12 +322,210 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* Pricing preview */}
+      <section id="pricing" className="border-t border-border/40 bg-card/20">
+        <div className="mx-auto max-w-6xl px-6 py-24">
+          <div className="mx-auto max-w-2xl text-center">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
+              <Sparkles className="h-3 w-3" /> Simple, transparent pricing
+            </div>
+            <h2 className="mt-4 text-3xl font-bold md:text-4xl">Pay once. Cloak forever.</h2>
+            <p className="mt-3 text-muted-foreground">
+              Start free. Scale on Pro at $5/mo. Or grab Lifetime at $50 — one payment, no renewals.
+              All paid plans charged in crypto with a 2% network fee.
+            </p>
+          </div>
+
+          <div className="mt-14 grid gap-6 md:grid-cols-3">
+            {[
+              {
+                slug: "free",
+                name: "Free",
+                price: 0,
+                period: "forever",
+                icon: Zap,
+                tagline: "Test cloaking and explore every core feature.",
+                links: "1",
+                clicks: "10K",
+                clicksLabel: "clicks/mo",
+                features: [
+                  "1 short link",
+                  "10,000 clicks / month",
+                  "Smart bot & fraud detection",
+                  "In-app browser relief (FB/IG/TikTok)",
+                  "Geo / device / OS / time targeting",
+                  "Rotating prelander variants",
+                  "Duplicate click protection",
+                  "Basic analytics",
+                  "Shared safe domains",
+                ],
+                cta: "Start free",
+                ctaTo: "/signup",
+                highlight: false,
+              },
+              {
+                slug: "pro_monthly",
+                name: "Pro Monthly",
+                price: 5,
+                period: "mo",
+                icon: Rocket,
+                tagline: "For active media buyers running Meta, TikTok & Google ads at scale.",
+                links: "50",
+                clicks: "1M",
+                clicksLabel: "clicks/mo",
+                features: [
+                  "50 short links",
+                  "1,000,000 clicks / month",
+                  "Advanced bot & fraud detection",
+                  "Unlimited prelander variants",
+                  "Auto-rotating A/B variants",
+                  "Unlimited custom domains",
+                  "Domain health monitoring",
+                  "Multi-destination weighted rotation",
+                  "Custom branding (logo, color, tagline)",
+                  "Advanced analytics (UTM, referer)",
+                  "ASN / IP / referer blocklists",
+                  "Priority support",
+                ],
+                cta: "Upgrade now",
+                ctaTo: "/upgrade",
+                highlight: false,
+              },
+              {
+                slug: "lifetime",
+                name: "Lifetime",
+                price: 50,
+                period: "lifetime",
+                icon: Crown,
+                tagline: "Every premium feature unlocked forever. One payment, zero renewals.",
+                links: "∞",
+                clicks: "∞",
+                clicksLabel: "clicks · ever",
+                features: [
+                  "Unlimited short links",
+                  "Unlimited clicks — forever",
+                  "Everything in Pro Monthly",
+                  "All current & future features",
+                  "Unlimited custom domains",
+                  "Full targeting suite",
+                  "Auto-tuning variant autopilot",
+                  "Multi-destination rotation",
+                  "Custom branding per link",
+                  "Advanced analytics + exports",
+                  "API access",
+                  "Priority support — lifetime",
+                  "One-time payment — no renewals",
+                ],
+                cta: "Get lifetime",
+                ctaTo: "/upgrade",
+                highlight: true,
+              },
+            ].map((p) => {
+              const Icon = p.icon;
+              const total = (p.price * 1.02).toFixed(2);
+              return (
+                <div
+                  key={p.slug}
+                  className={`relative flex flex-col rounded-2xl border bg-card-gradient p-7 transition-all hover:-translate-y-1 hover:shadow-xl ${
+                    p.highlight
+                      ? "border-primary/60 shadow-glow shadow-primary/20"
+                      : "border-border/60"
+                  }`}
+                >
+                  {p.highlight && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
+                      <Crown className="mr-1 inline h-3 w-3" /> Best value
+                    </div>
+                  )}
+                  <div
+                    className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl ${
+                      p.highlight
+                        ? "bg-gradient-to-br from-primary to-primary/60 text-primary-foreground"
+                        : p.price === 0
+                          ? "bg-muted text-muted-foreground"
+                          : "bg-primary/10 text-primary"
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-display text-xl font-bold">{p.name}</h3>
+                  <p className="mt-1 min-h-[2.75rem] text-xs text-muted-foreground">{p.tagline}</p>
+                  <div className="mt-4 flex items-baseline gap-1">
+                    <span className="text-4xl font-bold tracking-tight">${p.price}</span>
+                    <span className="text-sm text-muted-foreground">/{p.period}</span>
+                  </div>
+                  {p.price > 0 && (
+                    <div className="mt-1 text-[11px] text-muted-foreground">
+                      ≈ <span className="font-medium text-foreground">${total}</span> total (incl. 2% network fee)
+                    </div>
+                  )}
+
+                  <div className="mt-5 grid grid-cols-2 gap-2 rounded-xl border bg-muted/40 p-3 text-xs">
+                    <div className="flex items-center gap-2">
+                      <Link2 className="h-4 w-4 text-primary" />
+                      <div>
+                        <div className="font-semibold text-foreground">{p.links}</div>
+                        <div className="text-muted-foreground">links</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MousePointerClick className="h-4 w-4 text-primary" />
+                      <div>
+                        <div className="font-semibold text-foreground">{p.clicks}</div>
+                        <div className="text-muted-foreground">{p.clicksLabel}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Link to={p.ctaTo} className="mt-5 block">
+                    <Button
+                      className={`w-full gap-2 ${
+                        p.highlight
+                          ? "bg-gradient-to-r from-primary to-primary/80 shadow-lg hover:opacity-95"
+                          : ""
+                      }`}
+                      variant={p.highlight || p.price > 0 ? "default" : "outline"}
+                    >
+                      {p.cta} <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+
+                  <div className="mt-6 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    What's included
+                  </div>
+                  <ul className="mt-3 space-y-2 text-xs">
+                    {p.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2">
+                        <div
+                          className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
+                            p.highlight ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"
+                          }`}
+                        >
+                          <Check className="h-2.5 w-2.5" />
+                        </div>
+                        <span className="text-foreground/90">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="mx-auto mt-8 max-w-2xl text-center text-[11px] text-muted-foreground">
+            Crypto payments only (BTC, LTC, USDT, USDT-TRC20) via Plisio. 2% network fee added at checkout.
+            Plans activate automatically once the transaction is confirmed on-chain.
+          </p>
+        </div>
+      </section>
+
       {/* FAQ */}
       <FaqSection
         title="Frequently asked questions"
         subtitle="Everything you need to know about LinkShield and how it protects your ads."
         items={HOMEPAGE_FAQ}
       />
+
 
       {/* CTA */}
       <section className="mx-auto max-w-5xl px-6 py-24">
@@ -347,7 +545,7 @@ function LandingPage() {
               </Link>
             </div>
             <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
-              {["No credit card", "14-day free trial", "Cancel anytime"].map((t) => (
+              {["Free plan forever", "Crypto payments", "Instant activation"].map((t) => (
                 <span key={t} className="inline-flex items-center gap-1.5">
                   <Check className="h-3.5 w-3.5 text-success" /> {t}
                 </span>
