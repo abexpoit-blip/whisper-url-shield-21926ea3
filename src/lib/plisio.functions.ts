@@ -149,7 +149,7 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
       })
       .select("id")
       .single()) as { data: UpgradeRequestRow | null; error: { message: string } | null };
-    if (insErr) {
+    if (insErr || !reqRow) {
       await logActivity(supabaseAdmin, {
         event_type: "invoice_create",
         request_id: requestId,
@@ -157,10 +157,10 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
         outcome: "error",
         user_id: userId,
         order_number: orderNumber,
-        message: `DB insert failed: ${insErr.message}`,
+        message: `DB insert failed: ${insErr?.message ?? "No request row returned"}`,
         metadata: { package_slug: data.package_slug },
       });
-      throw new Error(insErr.message);
+      throw new Error(insErr?.message ?? "Could not create upgrade request");
     }
 
     const origin = process.env.PUBLIC_SITE_URL || "https://sleepox.com";
