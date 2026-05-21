@@ -46,6 +46,7 @@ import { Route as AdminAsnBlocklistRouteImport } from './routes/admin.asn-blockl
 import { Route as LinksLinkIdTimeRulesRouteImport } from './routes/links.$linkId.time-rules'
 import { Route as LinksLinkIdTargetingRouteImport } from './routes/links.$linkId.targeting'
 import { Route as LinksLinkIdSettingsRouteImport } from './routes/links.$linkId.settings'
+import { Route as ApiPublicPlisioWebhookRouteImport } from './routes/api/public/plisio-webhook'
 import { Route as ApiPublicHooksDomainHealthRouteImport } from './routes/api/public/hooks/domain-health'
 import { Route as ApiPublicHooksBackfillClicksRouteImport } from './routes/api/public/hooks/backfill-clicks'
 import { Route as ApiPublicHooksAutopilotRouteImport } from './routes/api/public/hooks/autopilot'
@@ -235,6 +236,11 @@ const LinksLinkIdSettingsRoute = LinksLinkIdSettingsRouteImport.update({
   path: '/links/$linkId/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPlisioWebhookRoute = ApiPublicPlisioWebhookRouteImport.update({
+  id: '/api/public/plisio-webhook',
+  path: '/api/public/plisio-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksDomainHealthRoute =
   ApiPublicHooksDomainHealthRouteImport.update({
     id: '/api/public/hooks/domain-health',
@@ -288,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/r/$code': typeof RCodeRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/public/plisio-webhook': typeof ApiPublicPlisioWebhookRoute
   '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
   '/links/$linkId/targeting': typeof LinksLinkIdTargetingRoute
   '/links/$linkId/time-rules': typeof LinksLinkIdTimeRulesRoute
@@ -329,6 +336,7 @@ export interface FileRoutesByTo {
   '/blog/$slug': typeof BlogSlugRoute
   '/r/$code': typeof RCodeRoute
   '/admin': typeof AdminIndexRoute
+  '/api/public/plisio-webhook': typeof ApiPublicPlisioWebhookRoute
   '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
   '/links/$linkId/targeting': typeof LinksLinkIdTargetingRoute
   '/links/$linkId/time-rules': typeof LinksLinkIdTimeRulesRoute
@@ -372,6 +380,7 @@ export interface FileRoutesById {
   '/blog_/$slug': typeof BlogSlugRoute
   '/r/$code': typeof RCodeRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/public/plisio-webhook': typeof ApiPublicPlisioWebhookRoute
   '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
   '/links/$linkId/targeting': typeof LinksLinkIdTargetingRoute
   '/links/$linkId/time-rules': typeof LinksLinkIdTimeRulesRoute
@@ -416,6 +425,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/r/$code'
     | '/admin/'
+    | '/api/public/plisio-webhook'
     | '/links/$linkId/settings'
     | '/links/$linkId/targeting'
     | '/links/$linkId/time-rules'
@@ -457,6 +467,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/r/$code'
     | '/admin'
+    | '/api/public/plisio-webhook'
     | '/links/$linkId/settings'
     | '/links/$linkId/targeting'
     | '/links/$linkId/time-rules'
@@ -499,6 +510,7 @@ export interface FileRouteTypes {
     | '/blog_/$slug'
     | '/r/$code'
     | '/admin/'
+    | '/api/public/plisio-webhook'
     | '/links/$linkId/settings'
     | '/links/$linkId/targeting'
     | '/links/$linkId/time-rules'
@@ -527,6 +539,7 @@ export interface RootRouteChildren {
   UpgradeRoute: typeof UpgradeRoute
   BlogSlugRoute: typeof BlogSlugRoute
   RCodeRoute: typeof RCodeRoute
+  ApiPublicPlisioWebhookRoute: typeof ApiPublicPlisioWebhookRoute
   LinksLinkIdSettingsRoute: typeof LinksLinkIdSettingsRoute
   LinksLinkIdTargetingRoute: typeof LinksLinkIdTargetingRoute
   LinksLinkIdTimeRulesRoute: typeof LinksLinkIdTimeRulesRoute
@@ -796,6 +809,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LinksLinkIdSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/plisio-webhook': {
+      id: '/api/public/plisio-webhook'
+      path: '/api/public/plisio-webhook'
+      fullPath: '/api/public/plisio-webhook'
+      preLoaderRoute: typeof ApiPublicPlisioWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/domain-health': {
       id: '/api/public/hooks/domain-health'
       path: '/api/public/hooks/domain-health'
@@ -888,6 +908,7 @@ const rootRouteChildren: RootRouteChildren = {
   UpgradeRoute: UpgradeRoute,
   BlogSlugRoute: BlogSlugRoute,
   RCodeRoute: RCodeRoute,
+  ApiPublicPlisioWebhookRoute: ApiPublicPlisioWebhookRoute,
   LinksLinkIdSettingsRoute: LinksLinkIdSettingsRoute,
   LinksLinkIdTargetingRoute: LinksLinkIdTargetingRoute,
   LinksLinkIdTimeRulesRoute: LinksLinkIdTimeRulesRoute,
