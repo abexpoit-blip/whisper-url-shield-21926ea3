@@ -379,13 +379,26 @@ function UpgradePage() {
                   <div className="space-y-2">
                     {requests.map((r: any) => {
                       const isPlisio = r.payment_method === "plisio";
-                      const isPending = r.status === "pending" && r.plisio_status !== "completed";
+                      const isCompleted =
+                        r.status === "approved" || r.plisio_status === "completed";
+                      const isFailed =
+                        r.status === "rejected" ||
+                        r.plisio_status === "expired" ||
+                        r.plisio_status === "cancelled" ||
+                        r.plisio_status === "error";
+                      const isPending = !isCompleted && !isFailed;
                       const ageMs = Date.now() - new Date(r.created_at).getTime();
                       const expired = isPlisio && isPending && ageMs > EXPIRY_MS;
                       return (
                         <div
                           key={r.id}
-                          className="flex flex-col gap-2 rounded-lg border p-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+                          className={`flex flex-col gap-2 rounded-lg border p-3 text-sm sm:flex-row sm:items-center sm:justify-between ${
+                            isCompleted
+                              ? "border-green-500/40 bg-green-500/5"
+                              : isFailed || expired
+                                ? "border-destructive/40 bg-destructive/5"
+                                : ""
+                          }`}
                         >
                           <div className="space-y-0.5">
                             <div className="flex items-center gap-2 font-medium">
@@ -414,15 +427,18 @@ function UpgradePage() {
                                 </>
                               )}
                             </div>
+                            {isCompleted && (
+                              <div className="mt-1 text-xs text-green-600 dark:text-green-400">
+                                Plan activated · {r.plisio_invoice_id ? `txn ${r.plisio_invoice_id}` : "confirmed on-chain"}
+                              </div>
+                            )}
+                            {(isFailed || expired) && r.note && (
+                              <div className="mt-1 text-xs text-destructive/80">{r.note}</div>
+                            )}
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
                             {isPlisio && isPending && !expired && (
                               <Countdown createdAt={r.created_at} />
-                            )}
-                            {expired && (
-                              <Badge variant="destructive" className="gap-1">
-                                <Clock className="h-3 w-3" /> Expired
-                              </Badge>
                             )}
                             {r.plisio_invoice_url && isPending && !expired && (
                               <Button size="sm" variant="outline" asChild>
@@ -436,17 +452,18 @@ function UpgradePage() {
                                 </a>
                               </Button>
                             )}
-                            <Badge
-                              variant={
-                                r.status === "approved"
-                                  ? "default"
-                                  : r.status === "rejected"
-                                    ? "destructive"
-                                    : "outline"
-                              }
-                            >
-                              {r.status === "approved" ? "✓ Successful" : r.status}
-                            </Badge>
+                            {isCompleted ? (
+                              <Badge className="gap-1 bg-green-600 text-white hover:bg-green-700">
+                                <CheckCircle2 className="h-3 w-3" /> Successful
+                              </Badge>
+                            ) : isFailed || expired ? (
+                              <Badge variant="destructive" className="gap-1">
+                                <XCircle className="h-3 w-3" />
+                                {r.plisio_status === "expired" || expired ? "Failed · Expired" : "Failed"}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline">Pending</Badge>
+                            )}
                           </div>
                         </div>
                       );
