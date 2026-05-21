@@ -14,7 +14,12 @@ import {
   ShieldCheck,
   Bitcoin,
 } from "lucide-react";
-import { getMyPlan, listMyUpgradeRequests, listAvailablePackages } from "@/lib/billing.functions";
+import {
+  createPlisioInvoice,
+  getMyPlan,
+  listMyUpgradeRequests,
+  listAvailablePackages,
+} from "@/lib/billing.functions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,6 +82,7 @@ function UpgradePage() {
   const mine = useServerFn(getMyPlan);
   const myReqs = useServerFn(listMyUpgradeRequests);
   const packages = useServerFn(listAvailablePackages);
+  const createInvoice = useServerFn(createPlisioInvoice);
   const [email, setEmail] = useState("");
 
   useEffect(() => {
@@ -120,20 +126,8 @@ function UpgradePage() {
     mutationFn: async () => {
       if (!picked) throw new Error("Choose a package first");
       const verified = await getVerifiedClientSession();
-      const accessToken = verified?.session?.access_token;
-      if (!accessToken) throw new Error("Please login again before payment.");
-
-      const response = await fetch("/api/public/plisio-create-invoice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ package_slug: picked.slug }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result?.error || "Could not create invoice");
-      return result;
+      if (!verified) throw new Error("Please login again before payment.");
+      return createInvoice({ data: { package_slug: picked.slug } });
     },
     onSuccess: (res: any) => {
       if (res?.invoice_url) {
