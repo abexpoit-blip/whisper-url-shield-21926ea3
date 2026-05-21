@@ -151,8 +151,8 @@ export function AppSidebar({ email, isAdmin = false }: { email?: string; isAdmin
             <p className="mt-2 text-[11px] leading-relaxed text-sidebar-foreground/70">
               Upgrade for unlimited links, custom domains & API.
             </p>
-            <Button size="sm" className="mt-3 h-7 w-full bg-gradient-to-r from-sky-500 to-sky-400 text-white text-xs hover:opacity-90">
-              Upgrade
+            <Button asChild size="sm" className="mt-3 h-7 w-full bg-gradient-to-r from-sky-500 to-sky-400 text-white text-xs hover:opacity-90">
+              <Link to="/upgrade">Upgrade</Link>
             </Button>
           </div>
         )}
