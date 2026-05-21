@@ -1,12 +1,10 @@
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { ShieldCheck, AlertCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { getIsAdmin } from "@/lib/admin-auth.functions";
 
 export const Route = createFileRoute("/control-panel")({
   head: () => ({
@@ -21,7 +19,6 @@ export const Route = createFileRoute("/control-panel")({
 function ControlPanelLogin() {
   const navigate = useNavigate();
   const router = useRouter();
-  const checkAdmin = useServerFn(getIsAdmin);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,17 +30,12 @@ function ControlPanelLogin() {
     (async () => {
       const { data, error } = await supabase.auth.getUser();
       if (error || !data.user) return;
-      try {
-        const r = await checkAdmin();
-        if (!cancelled && r.isAdmin) navigate({ to: "/admin" });
-      } catch {
-        /* ignore */
-      }
+      if (!cancelled) navigate({ to: "/admin" });
     })();
     return () => {
       cancelled = true;
     };
-  }, [checkAdmin, navigate]);
+  }, [navigate]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -64,22 +56,6 @@ function ControlPanelLogin() {
     if (!data.session || userError || !userData.user) {
       setLoading(false);
       setErr("Login session was not ready. Please try again.");
-      return;
-    }
-
-    // Verify admin role; if not admin, sign out immediately.
-    try {
-      const r = await checkAdmin();
-      if (!r.isAdmin) {
-        await supabase.auth.signOut();
-        setLoading(false);
-        setErr("Invalid credentials.");
-        return;
-      }
-    } catch {
-      await supabase.auth.signOut();
-      setLoading(false);
-      setErr("Invalid credentials.");
       return;
     }
 

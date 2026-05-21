@@ -14,7 +14,6 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
-import { getIsAdmin } from "@/lib/admin-auth.functions";
 import { toast } from "sonner";
 
 // ---------- Admin sections (order matches the sidebar) ----------
@@ -50,9 +49,16 @@ async function getCachedAdminAccess(userId: string) {
   ) {
     return adminCheckCache.isAdmin;
   }
-  const r = await getIsAdmin();
-  adminCheckCache = { userId, isAdmin: r.isAdmin, checkedAt: Date.now() };
-  return r.isAdmin;
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  if (error) throw error;
+  const isAdmin = !!data;
+  adminCheckCache = { userId, isAdmin, checkedAt: Date.now() };
+  return isAdmin;
 }
 
 function pretty(seg: string) {
