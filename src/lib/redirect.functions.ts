@@ -191,16 +191,26 @@ function attributionFromReferer() {
 }
 // ---------- Server-side helpers ----------
 
-const BOT_UA_PATTERNS = [
-  "bot", "crawler", "spider", "scraper", "facebookexternalhit", "facebookcatalog",
-  "meta-externalagent", "meta-externalfetcher", "twitterbot", "linkedinbot",
-  "whatsapp", "telegrambot", "slackbot", "discordbot", "embedly", "pinterest",
-  "googlebot", "bingbot", "yandex", "duckduckbot", "baiduspider", "applebot",
-  "ahrefsbot", "semrushbot", "mj12bot", "dotbot", "petalbot",
-  "headless", "phantom", "selenium", "puppeteer", "playwright", "chrome-lighthouse",
-  "curl", "wget", "python", "scrapy", "go-http", "java/", "okhttp", "ruby",
-  "axios", "node-fetch", "got (", "http_request", "libwww",
-  "preview", "monitor", "uptime", "validator", "checker", "fetcher", "scan",
+// HARD bot signatures — near-certain non-human. Silent-cloak immediately.
+// Keep this list TIGHT. Anything ambiguous goes in SOFT_BOT_UA_PATTERNS.
+const HARD_BOT_UA_PATTERNS = [
+  "googlebot", "bingbot", "yandexbot", "duckduckbot", "baiduspider", "applebot",
+  "ahrefsbot", "semrushbot", "mj12bot", "dotbot", "petalbot", "facebot",
+  "facebookexternalhit", "facebookcatalog", "meta-externalagent", "meta-externalfetcher",
+  "twitterbot", "linkedinbot", "whatsapp", "telegrambot", "slackbot", "discordbot",
+  "embedly", "pinterestbot", "redditbot", "tiktokbot", "bytespider",
+  "headlesschrome", "phantomjs", "selenium", "puppeteer", "playwright",
+  "chrome-lighthouse", "pagespeed", "gtmetrix", "pingdom", "uptimerobot",
+  "curl/", "wget/", "python-requests", "python-urllib", "scrapy", "go-http-client",
+  "java/", "okhttp/", "ruby/", "axios/", "node-fetch", "got/", "libwww-perl",
+];
+
+// SOFT bot signatures — suspicious but might be a real user with an unusual UA.
+// Adds score only (no silent cloak). User goes through prelander where JS
+// fingerprinting (canvas / webdriver / interaction) makes the final call.
+const SOFT_BOT_UA_PATTERNS = [
+  "bot", "crawler", "spider", "scraper", "preview", "validator", "monitor",
+  "checker", "fetcher", "scan",
 ];
 
 function analyzeRequest() {
@@ -227,8 +237,15 @@ function analyzeRequest() {
   let hardBot = false;
 
   if (!ua) { score += 50; reasons.push("no-ua"); hardBot = true; }
-  for (const p of BOT_UA_PATTERNS) {
-    if (ua.includes(p)) { score += 60; reasons.push(`ua:${p}`); hardBot = true; break; }
+  // HARD patterns → definite bot, silent cloak
+  for (const p of HARD_BOT_UA_PATTERNS) {
+    if (ua.includes(p)) { score += 80; reasons.push(`hardbot:${p}`); hardBot = true; break; }
+  }
+  // SOFT patterns → suspicion only, prelander will verify with JS
+  if (!hardBot) {
+    for (const p of SOFT_BOT_UA_PATTERNS) {
+      if (ua.includes(p)) { score += 25; reasons.push(`soft:${p}`); break; }
+    }
   }
 
   if (!accept.includes("text/html")) { score += 25; reasons.push("no-html-accept"); }
