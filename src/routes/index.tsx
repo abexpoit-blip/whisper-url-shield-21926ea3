@@ -397,111 +397,51 @@ function LandingPage() {
           </div>
 
           <div className="mt-14 grid gap-6 md:grid-cols-3">
-            {[
-              {
-                slug: "free",
-                name: "Free",
-                price: 0,
-                period: "forever",
-                icon: Zap,
-                tagline: "Test cloaking and explore every core feature.",
-                links: "1",
-                clicks: "10K",
-                clicksLabel: "clicks/mo",
-                features: [
-                  "1 short link",
-                  "10,000 clicks / month",
-                  "Smart bot & fraud detection",
-                  "In-app browser relief (FB/IG/TikTok)",
-                  "Geo / device / OS / time targeting",
-                  "Rotating prelander variants",
-                  "Duplicate click protection",
-                  "Basic analytics",
-                  "Shared safe domains",
-                ],
-                cta: "Start free",
-                ctaTo: "/signup",
-                highlight: false,
-              },
-              {
-                slug: "pro_monthly",
-                name: "Pro Monthly",
-                price: 5,
-                period: "mo",
-                icon: Rocket,
-                tagline: "For active media buyers running Meta, TikTok & Google ads at scale.",
-                links: "50",
-                clicks: "1M",
-                clicksLabel: "clicks/mo",
-                features: [
-                  "50 short links",
-                  "1,000,000 clicks / month",
-                  "Advanced bot & fraud detection",
-                  "Unlimited prelander variants",
-                  "Auto-rotating A/B variants",
-                  "Unlimited custom domains",
-                  "Domain health monitoring",
-                  "Multi-destination weighted rotation",
-                  "Custom branding (logo, color, tagline)",
-                  "Advanced analytics (UTM, referer)",
-                  "ASN / IP / referer blocklists",
-                  "Priority support",
-                ],
-                cta: "Upgrade now",
-                ctaTo: "/upgrade",
-                highlight: false,
-              },
-              {
-                slug: "lifetime",
-                name: "Lifetime",
-                price: 50,
-                period: "lifetime",
-                icon: Crown,
-                tagline: "Every premium feature unlocked forever. One payment, zero renewals.",
-                links: "∞",
-                clicks: "∞",
-                clicksLabel: "clicks · ever",
-                features: [
-                  "Unlimited short links",
-                  "Unlimited clicks — forever",
-                  "Everything in Pro Monthly",
-                  "All current & future features",
-                  "Unlimited custom domains",
-                  "Full targeting suite",
-                  "Auto-tuning variant autopilot",
-                  "Multi-destination rotation",
-                  "Custom branding per link",
-                  "Advanced analytics + exports",
-                  "API access",
-                  "Priority support — lifetime",
-                  "One-time payment — no renewals",
-                ],
-                cta: "Get lifetime",
-                ctaTo: "/upgrade",
-                highlight: true,
-              },
-            ].map((p) => {
-              const Icon = p.icon;
-              const total = (p.price * 1.02).toFixed(2);
+            {homePkgs.map((p: any) => {
+              const isLifetime = p.billing_period === "lifetime" || Number(p.price_onetime) > 0;
+              const price = isLifetime ? Number(p.price_onetime) : Number(p.price_monthly);
+              const isFree = price === 0 && !isLifetime;
+              const isFeatured = !!p.is_featured;
+              const highlight = isFeatured || isLifetime;
+              const unlimitedClicks = p.click_limit == null;
+              const unlimitedLinks = p.link_limit == null || p.link_limit >= 999999;
+              const Icon = isLifetime ? Crown : isFree ? Zap : Rocket;
+              const period = isLifetime ? "lifetime" : isFree ? "forever" : "mo";
+              const tagline = isLifetime
+                ? "Every premium feature unlocked forever. One payment, zero renewals."
+                : isFree
+                  ? "Test cloaking and explore every core feature."
+                  : "For active media buyers running Meta, TikTok & Google ads at scale.";
+              const cta = isFree ? "Start free" : isLifetime ? "Get lifetime" : "Upgrade now";
+              const ctaTo = isFree ? "/signup" : "/upgrade";
+              const total = (price * 1.02).toFixed(2);
+              const linksLabel = unlimitedLinks ? "∞" : String(p.link_limit);
+              const clicksLabel = unlimitedClicks
+                ? "∞"
+                : Number(p.click_limit) >= 1_000_000
+                  ? `${(Number(p.click_limit) / 1_000_000).toFixed(0)}M`
+                  : `${(Number(p.click_limit) / 1000).toFixed(0)}K`;
+              const clicksUnit = isLifetime ? "clicks · ever" : "clicks/mo";
+
               return (
                 <div
-                  key={p.slug}
+                  key={p.id ?? p.slug}
                   className={`relative flex flex-col rounded-2xl border bg-card-gradient p-7 transition-all hover:-translate-y-1 hover:shadow-xl ${
-                    p.highlight
+                    highlight
                       ? "border-primary/60 shadow-glow shadow-primary/20"
                       : "border-border/60"
                   }`}
                 >
-                  {p.highlight && (
+                  {highlight && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
                       <Crown className="mr-1 inline h-3 w-3" /> Best value
                     </div>
                   )}
                   <div
                     className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl ${
-                      p.highlight
+                      highlight
                         ? "bg-gradient-to-br from-primary to-primary/60 text-primary-foreground"
-                        : p.price === 0
+                        : isFree
                           ? "bg-muted text-muted-foreground"
                           : "bg-primary/10 text-primary"
                     }`}
@@ -509,12 +449,12 @@ function LandingPage() {
                     <Icon className="h-5 w-5" />
                   </div>
                   <h3 className="font-display text-xl font-bold">{p.name}</h3>
-                  <p className="mt-1 min-h-[2.75rem] text-xs text-muted-foreground">{p.tagline}</p>
+                  <p className="mt-1 min-h-[2.75rem] text-xs text-muted-foreground">{tagline}</p>
                   <div className="mt-4 flex items-baseline gap-1">
-                    <span className="text-4xl font-bold tracking-tight">${p.price}</span>
-                    <span className="text-sm text-muted-foreground">/{p.period}</span>
+                    <span className="text-4xl font-bold tracking-tight">${price.toFixed(0)}</span>
+                    <span className="text-sm text-muted-foreground">/{period}</span>
                   </div>
-                  {p.price > 0 && (
+                  {!isFree && (
                     <div className="mt-1 text-[11px] text-muted-foreground">
                       ≈ <span className="font-medium text-foreground">${total}</span> total (incl. 2% network fee)
                     </div>
@@ -524,29 +464,35 @@ function LandingPage() {
                     <div className="flex items-center gap-2">
                       <Link2 className="h-4 w-4 text-primary" />
                       <div>
-                        <div className="font-semibold text-foreground">{p.links}</div>
-                        <div className="text-muted-foreground">links</div>
+                        <div className="font-semibold text-foreground">
+                          {unlimitedLinks ? <InfinityIcon className="h-3.5 w-3.5" /> : linksLabel}
+                        </div>
+                        <div className="text-muted-foreground">
+                          {unlimitedLinks ? "links" : p.link_limit === 1 ? "link" : "links"}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <MousePointerClick className="h-4 w-4 text-primary" />
                       <div>
-                        <div className="font-semibold text-foreground">{p.clicks}</div>
-                        <div className="text-muted-foreground">{p.clicksLabel}</div>
+                        <div className="font-semibold text-foreground">
+                          {unlimitedClicks ? <InfinityIcon className="h-3.5 w-3.5" /> : clicksLabel}
+                        </div>
+                        <div className="text-muted-foreground">{clicksUnit}</div>
                       </div>
                     </div>
                   </div>
 
-                  <Link to={p.ctaTo} className="mt-5 block">
+                  <Link to={ctaTo} className="mt-5 block">
                     <Button
                       className={`w-full gap-2 ${
-                        p.highlight
+                        highlight
                           ? "bg-gradient-to-r from-primary to-primary/80 shadow-lg hover:opacity-95"
                           : ""
                       }`}
-                      variant={p.highlight || p.price > 0 ? "default" : "outline"}
+                      variant={highlight || !isFree ? "default" : "outline"}
                     >
-                      {p.cta} <ArrowRight className="h-4 w-4" />
+                      {cta} <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
 
@@ -554,11 +500,11 @@ function LandingPage() {
                     What's included
                   </div>
                   <ul className="mt-3 space-y-2 text-xs">
-                    {p.features.map((f) => (
+                    {(p.features ?? []).map((f: string) => (
                       <li key={f} className="flex items-start gap-2">
                         <div
                           className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
-                            p.highlight ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"
+                            highlight ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"
                           }`}
                         >
                           <Check className="h-2.5 w-2.5" />
@@ -571,6 +517,7 @@ function LandingPage() {
               );
             })}
           </div>
+
 
           <p className="mx-auto mt-8 max-w-2xl text-center text-[11px] text-muted-foreground">
             Crypto payments only (BTC, LTC, USDT, USDT-TRC20) via Plisio. 2% network fee added at checkout.
