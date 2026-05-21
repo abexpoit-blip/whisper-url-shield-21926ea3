@@ -16,18 +16,6 @@ export const Route = createFileRoute("/control-panel")({
   component: ControlPanelLogin,
 });
 
-async function checkAdminRole(userId: string) {
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .maybeSingle();
-
-  if (error) throw error;
-  return !!data;
-}
-
 function ControlPanelLogin() {
   const navigate = useNavigate();
   const router = useRouter();
@@ -42,12 +30,7 @@ function ControlPanelLogin() {
     (async () => {
       const { data, error } = await supabase.auth.getUser();
       if (error || !data.user) return;
-      try {
-        const isAdmin = await checkAdminRole(data.user.id);
-        if (!cancelled && isAdmin) navigate({ to: "/admin" });
-      } catch {
-        /* ignore */
-      }
+      if (!cancelled) navigate({ to: "/admin" });
     })();
     return () => {
       cancelled = true;
@@ -73,22 +56,6 @@ function ControlPanelLogin() {
     if (!data.session || userError || !userData.user) {
       setLoading(false);
       setErr("Login session was not ready. Please try again.");
-      return;
-    }
-
-    // Verify admin role; if not admin, sign out immediately.
-    try {
-      const isAdmin = await checkAdminRole(userData.user.id);
-      if (!isAdmin) {
-        await supabase.auth.signOut();
-        setLoading(false);
-        setErr("Invalid credentials.");
-        return;
-      }
-    } catch {
-      await supabase.auth.signOut();
-      setLoading(false);
-      setErr("Invalid credentials.");
       return;
     }
 
