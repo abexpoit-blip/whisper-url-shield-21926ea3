@@ -1,15 +1,7 @@
 import { redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 
-const EXPECTED_PROJECT_REF = "qnzwncleajzzwpauifnp";
-const EXPECTED_ISSUER_PREFIX = `https://${EXPECTED_PROJECT_REF}.supabase.co/auth/v1`;
-const SUPPORTED_TOKEN_ALGORITHMS = new Set(["HS256", "ES256"]);
-
-function configuredIssuerPrefix() {
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  if (typeof url !== "string" || !url) return null;
-  return `${url.replace(/\/$/, "")}/auth/v1`;
-}
+const SUPPORTED_TOKEN_ALGORITHMS = new Set(["HS256", "ES256", "RS256"]);
 
 function decodeJwtPart(part: string) {
   const base64 = part.replace(/-/g, "+").replace(/_/g, "/");
@@ -18,21 +10,14 @@ function decodeJwtPart(part: string) {
 }
 
 function tokenMatchesCurrentProject(token: string) {
+  // Self-host friendly: only validate that the JWT is structurally valid and
+  // uses a supported algorithm. The Supabase server itself authoritatively
+  // validates the token on every request — we don't need to pin issuer here.
   try {
     const [headerPart, payloadPart] = token.split(".");
     if (!headerPart || !payloadPart) return false;
     const header = decodeJwtPart(headerPart);
-    const payload = decodeJwtPart(payloadPart);
-    const issuer = typeof payload.iss === "string" ? payload.iss : "";
-    const ref = typeof payload.ref === "string" ? payload.ref : "";
-    const currentIssuerPrefix = configuredIssuerPrefix();
-    return (
-      typeof header.alg === "string" &&
-      SUPPORTED_TOKEN_ALGORITHMS.has(header.alg) &&
-      ((currentIssuerPrefix && issuer.startsWith(currentIssuerPrefix)) ||
-        issuer.startsWith(EXPECTED_ISSUER_PREFIX) ||
-        ref === EXPECTED_PROJECT_REF)
-    );
+    return typeof header.alg === "string" && SUPPORTED_TOKEN_ALGORITHMS.has(header.alg);
   } catch {
     return false;
   }
