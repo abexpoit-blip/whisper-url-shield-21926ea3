@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { requireClientUser } from "@/lib/auth-guard";
-import { withFreshSupabaseAuth } from "@/lib/supabase-retry";
+import { isSupabaseAuthTokenError, withFreshSupabaseAuth } from "@/lib/supabase-retry";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -151,7 +151,7 @@ function Dashboard() {
         .order("created_at", { ascending: false })
         .limit(100),
     );
-    if (error) toast.error(error.message);
+    if (error && !isSupabaseAuthTokenError(error)) toast.error(error.message);
     else setLinks(data ?? []);
     setLoading(false);
   };
@@ -256,7 +256,7 @@ function Dashboard() {
       }),
     );
     setCreating(false);
-    if (error) return toast.error(error.message);
+    if (error) return isSupabaseAuthTokenError(error) ? undefined : toast.error(error.message);
     toast.success("Link created");
     setUrl("");
     setTitle("");
@@ -265,7 +265,7 @@ function Dashboard() {
 
   const remove = async (id: string) => {
     const { error } = await withFreshSupabaseAuth(() => supabase.from("links").delete().eq("id", id));
-    if (error) return toast.error(error.message);
+    if (error) return isSupabaseAuthTokenError(error) ? undefined : toast.error(error.message);
     toast.success("Deleted");
     load();
   };

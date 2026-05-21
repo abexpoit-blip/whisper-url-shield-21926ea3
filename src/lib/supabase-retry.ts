@@ -7,6 +7,10 @@ function isAuthTokenError(error: unknown) {
   return /Unauthorized: Invalid token|JWT expired|Invalid JWT/i.test(message);
 }
 
+export function isSupabaseAuthTokenError(error: unknown) {
+  return isAuthTokenError(error);
+}
+
 export async function withFreshSupabaseAuth<T extends { error: { message?: string } | null }>(
   operation: () => PromiseLike<T>,
 ) {
@@ -16,7 +20,8 @@ export async function withFreshSupabaseAuth<T extends { error: { message?: strin
   const refreshed = await supabase.auth.refreshSession();
   if (refreshed.error || !refreshed.data.session?.access_token) {
     await supabase.auth.signOut();
-    return first;
+    if (typeof window !== "undefined") window.location.replace(`/login?redirect=${encodeURIComponent(window.location.href)}`);
+    return { ...first, error: null } as T;
   }
 
   return operation();
