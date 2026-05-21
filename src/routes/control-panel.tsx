@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { getIsAdmin } from "@/lib/admin-stats.functions";
+import { getIsAdmin } from "@/lib/admin-auth.functions";
 
 export const Route = createFileRoute("/control-panel")({
   head: () => ({

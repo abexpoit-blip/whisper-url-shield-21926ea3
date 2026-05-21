@@ -14,7 +14,7 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
-import { getIsAdmin } from "@/lib/admin-stats.functions";
+import { getIsAdmin } from "@/lib/admin-auth.functions";
 import { toast } from "sonner";
 
 // ---------- Admin sections (order matches the sidebar) ----------
