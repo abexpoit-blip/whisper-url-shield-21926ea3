@@ -1,7 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 
-type SupabaseResult<T> = Promise<{ data: T; error: { message?: string } | null }>;
-
 function isAuthTokenError(error: unknown) {
   const message = error && typeof error === "object" && "message" in error
     ? String((error as { message?: unknown }).message ?? "")
@@ -9,7 +7,9 @@ function isAuthTokenError(error: unknown) {
   return /Unauthorized: Invalid token|JWT expired|Invalid JWT/i.test(message);
 }
 
-export async function withFreshSupabaseAuth<T>(operation: () => SupabaseResult<T>) {
+export async function withFreshSupabaseAuth<T extends { error: { message?: string } | null }>(
+  operation: () => PromiseLike<T>,
+) {
   const first = await operation();
   if (!first.error || !isAuthTokenError(first.error)) return first;
 
