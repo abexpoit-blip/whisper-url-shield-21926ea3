@@ -30,18 +30,10 @@ async function logActivity(entry: Record<string, any>) {
 async function getUserId(request: Request) {
   const authHeader = request.headers.get("authorization") ?? "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
-  console.log("[plisio-create] token in", { hasHeader: !!authHeader, tokenLen: token.length });
   if (!token) throw new Error("Please login again before payment. (no token)");
 
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_PUBLISHABLE_KEY;
-  console.log("[plisio-create] env", {
-    hasUrl: !!url,
-    urlHost: url ? new URL(url).host : null,
-    hasKey: !!key,
-    keyLen: key?.length ?? 0,
-    keyPrefix: key?.slice(0, 10) ?? null,
-  });
   if (!url || !key) throw new Error("Payment auth is not configured on the server.");
 
   const supabase = createClient<Database>(url, key, {
@@ -52,7 +44,9 @@ async function getUserId(request: Request) {
   const { data, error } = await supabase.auth.getClaims(token);
   if (error || !data?.claims?.sub) {
     console.warn("[plisio-create] auth claims failed", { message: error?.message });
-    throw new Error("Please login again before payment. (invalid token)");
+    throw new Error(
+      `Please login again before payment. (${error?.message ?? "invalid token"})`,
+    );
   }
   return data.claims.sub;
 }
