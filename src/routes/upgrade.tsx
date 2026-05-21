@@ -53,8 +53,7 @@ function UpgradePage() {
   const reqM = useMutation({
     mutationFn: () => {
       if (!picked) throw new Error("Choose a package first");
-      return
-      submit({
+      return submit({
         data: {
           package_slug: picked.slug,
           payment_method: "manual",
