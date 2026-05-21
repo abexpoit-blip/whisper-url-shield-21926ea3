@@ -44,9 +44,7 @@ async function getUserId(request: Request) {
   const { data, error } = await supabase.auth.getClaims(token);
   if (error || !data?.claims?.sub) {
     console.warn("[plisio-create] auth claims failed", { message: error?.message });
-    throw new Error(
-      `Please login again before payment. (${error?.message ?? "invalid token"})`,
-    );
+    throw new Error(`Please login again before payment. (${error?.message ?? "invalid token"})`);
   }
   return data.claims.sub;
 }
