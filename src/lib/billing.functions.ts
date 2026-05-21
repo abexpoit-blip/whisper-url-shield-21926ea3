@@ -550,12 +550,12 @@ export const listActivePackages = createServerFn({ method: "GET" }).handler(asyn
   const { data, error } = await (supabase as any)
     .from("packages")
     .select(
-      "slug,name,price_monthly,price_onetime,billing_period,link_limit,click_limit,features,sort_order",
+      "id,slug,name,price_monthly,price_onetime,billing_period,link_limit,click_limit,features,sort_order,is_featured",
     )
     .eq("is_active", true)
     .order("sort_order", { ascending: true });
   if (error) throw new Error(error.message);
-  return currentPackages(data);
+  return data ?? [];
 });
 
 // Auto-expire any Plisio invoices older than 30 minutes that never completed.
