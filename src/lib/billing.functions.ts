@@ -74,23 +74,26 @@ export const listPackages = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data, error } = await (supabase as any)
       .from("packages")
-      .select("id,slug,name,price_monthly,price_onetime,billing_period,link_limit,click_limit,features,sort_order,is_active,created_at")
+      .select(
+        "id,slug,name,price_monthly,price_onetime,billing_period,link_limit,click_limit,features,sort_order,is_active,created_at",
+      )
       .order("sort_order", { ascending: true });
     if (error) throw new Error(error.message);
     return data ?? [];
   });
 
-export const listAvailablePackages = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const { supabase } = await import("@/integrations/supabase/client");
-    const { data, error } = await (supabase as any)
-      .from("packages")
-      .select("id,slug,name,price_monthly,price_onetime,billing_period,link_limit,click_limit,features,sort_order,is_active,created_at")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true });
-    if (error) throw new Error(error.message);
-    return data ?? [];
-  });
+export const listAvailablePackages = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabase } = await import("@/integrations/supabase/client");
+  const { data, error } = await (supabase as any)
+    .from("packages")
+    .select(
+      "id,slug,name,price_monthly,price_onetime,billing_period,link_limit,click_limit,features,sort_order,is_active,created_at",
+    )
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+});
 
 export const createPackage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -187,7 +190,8 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
           ? pkg.price_onetime
           : pkg.price_monthly,
       );
-      if (!baseAmount || baseAmount <= 0) throw new Error("This plan is free — no payment required.");
+      if (!baseAmount || baseAmount <= 0)
+        throw new Error("This plan is free — no payment required.");
 
       const totalAmount = Math.round(baseAmount * 1.02 * 100) / 100;
       const { data: profile } = await (context.supabase as any)
@@ -232,7 +236,8 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
       const res = await fetch(`https://api.plisio.net/api/v1/invoices/new?${params.toString()}`);
       const payload = await res.json().catch(() => ({}));
       if (!res.ok || payload?.status !== "success" || !payload?.data?.invoice_url) {
-        const message = payload?.data?.message || payload?.message || `Plisio error (${res.status})`;
+        const message =
+          payload?.data?.message || payload?.message || `Plisio error (${res.status})`;
         await (supabaseAdmin as any)
           .from("upgrade_requests")
           .update({ plisio_status: "error", note: message })
@@ -267,7 +272,11 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
         },
       });
 
-      return { invoice_url: payload.data.invoice_url, request_id: reqRow.id, total_amount: totalAmount };
+      return {
+        invoice_url: payload.data.invoice_url,
+        request_id: reqRow.id,
+        total_amount: totalAmount,
+      };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not create invoice";
       console.warn("[plisio-create] failed", { requestId, message });
@@ -289,7 +298,9 @@ export const listMyUpgradeRequests = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data, error } = await (supabase as any)
       .from("upgrade_requests")
-      .select("id,package_slug,status,amount,payment_method,transaction_ref,note,created_at,reviewed_at,plisio_status,plisio_invoice_url,plisio_invoice_id")
+      .select(
+        "id,package_slug,status,amount,payment_method,transaction_ref,note,created_at,reviewed_at,plisio_status,plisio_invoice_url,plisio_invoice_id",
+      )
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -302,7 +313,9 @@ export const listAllUpgradeRequests = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data, error } = await (supabase as any)
       .from("upgrade_requests")
-      .select("id,user_id,package_slug,status,amount,payment_method,transaction_ref,note,created_at,reviewed_at,plisio_status,plisio_invoice_id,plisio_invoice_url")
+      .select(
+        "id,user_id,package_slug,status,amount,payment_method,transaction_ref,note,created_at,reviewed_at,plisio_status,plisio_invoice_id,plisio_invoice_url",
+      )
       .order("created_at", { ascending: false })
       .limit(200);
     if (error) throw new Error(error.message);
@@ -336,12 +349,17 @@ export const getUpgradeRequestDetail = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     const { data: profile } = await (supabase as any)
-      .from("profiles").select("id,email,full_name,plan_slug").eq("id", req.user_id).maybeSingle();
+      .from("profiles")
+      .select("id,email,full_name,plan_slug")
+      .eq("id", req.user_id)
+      .maybeSingle();
 
     const { data: logs } = await (supabase as any)
       .from("plisio_webhook_logs")
       .select("id,txn_id,order_number,status,signature_valid,payload,note,created_at")
-      .or(`upgrade_request_id.eq.${req.id}${req.plisio_invoice_id ? `,txn_id.eq.${req.plisio_invoice_id}` : ""}${req.transaction_ref ? `,order_number.eq.${req.transaction_ref}` : ""}`)
+      .or(
+        `upgrade_request_id.eq.${req.id}${req.plisio_invoice_id ? `,txn_id.eq.${req.plisio_invoice_id}` : ""}${req.transaction_ref ? `,order_number.eq.${req.transaction_ref}` : ""}`,
+      )
       .order("created_at", { ascending: false })
       .limit(50);
 
@@ -364,7 +382,12 @@ export const reviewUpgradeRequest = createServerFn({ method: "POST" })
     const newStatus = data.approve ? "approved" : "rejected";
     const { error: ue } = await (supabase as any)
       .from("upgrade_requests")
-      .update({ status: newStatus, reviewed_by: userId, reviewed_at: new Date().toISOString(), note: data.note ?? null })
+      .update({
+        status: newStatus,
+        reviewed_by: userId,
+        reviewed_at: new Date().toISOString(),
+        note: data.note ?? null,
+      })
       .eq("id", data.id);
     if (ue) throw new Error(ue.message);
 
@@ -391,17 +414,16 @@ export const getPaymentSettings = createServerFn({ method: "GET" })
     return data;
   });
 
-export const getPublicPaymentSettings = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await (supabaseAdmin as any)
-      .from("payment_settings")
-      .select("plisio_enabled,payment_instructions,updated_at")
-      .eq("id", 1)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    return data ?? { plisio_enabled: false, payment_instructions: null, updated_at: null };
-  });
+export const getPublicPaymentSettings = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await (supabaseAdmin as any)
+    .from("payment_settings")
+    .select("plisio_enabled,payment_instructions,updated_at")
+    .eq("id", 1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ?? { plisio_enabled: false, payment_instructions: null, updated_at: null };
+});
 
 export const updatePaymentSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -429,14 +451,15 @@ export const adminAssignPlan = createServerFn({ method: "POST" })
   });
 
 // Public — list active packages for pricing page (no auth required for unauthed view via client)
-export const listActivePackages = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const { supabase } = await import("@/integrations/supabase/client");
-    const { data, error } = await (supabase as any)
-      .from("packages")
-      .select("slug,name,price_monthly,price_onetime,billing_period,link_limit,click_limit,features,sort_order")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true });
-    if (error) throw new Error(error.message);
-    return data ?? [];
-  });
+export const listActivePackages = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabase } = await import("@/integrations/supabase/client");
+  const { data, error } = await (supabase as any)
+    .from("packages")
+    .select(
+      "slug,name,price_monthly,price_onetime,billing_period,link_limit,click_limit,features,sort_order",
+    )
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+});
