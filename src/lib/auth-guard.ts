@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const EXPECTED_PROJECT_REF = "qnzwncleajzzwpauifnp";
 const EXPECTED_ISSUER_PREFIX = `https://${EXPECTED_PROJECT_REF}.supabase.co/auth/v1`;
+const SUPPORTED_TOKEN_ALGORITHMS = new Set(["HS256", "ES256"]);
 
 function decodeJwtPart(part: string) {
   const base64 = part.replace(/-/g, "+").replace(/_/g, "/");
@@ -19,7 +20,8 @@ function tokenMatchesCurrentProject(token: string) {
     const issuer = typeof payload.iss === "string" ? payload.iss : "";
     const ref = typeof payload.ref === "string" ? payload.ref : "";
     return (
-      header.alg === "HS256" &&
+      typeof header.alg === "string" &&
+      SUPPORTED_TOKEN_ALGORITHMS.has(header.alg) &&
       (issuer.startsWith(EXPECTED_ISSUER_PREFIX) || ref === EXPECTED_PROJECT_REF)
     );
   } catch {

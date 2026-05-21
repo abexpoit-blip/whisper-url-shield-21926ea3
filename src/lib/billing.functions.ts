@@ -167,15 +167,22 @@ export const requestUpgrade = createServerFn({ method: "POST" })
   });
 
 export const createPlisioInvoice = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => CreatePlisioInvoiceSchema.parse(i))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { getPlisioApiKey } = await import("@/lib/plisio-config.server");
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const { requirePaymentUser } = await import("@/lib/payment-auth.server");
     const requestId = crypto.randomUUID();
     const startedAt = Date.now();
+    let userId: string | undefined;
 
     try {
+      const request = getRequest();
+      if (!request) throw new Error("Please login again before payment. (missing request)");
+      const paymentUser = await requirePaymentUser(request);
+      userId = paymentUser.userId;
+
       const { apiKey, source: apiKeySource } = await getPlisioApiKey(supabaseAdmin);
       if (!apiKey) throw new Error("PLISIO_API_KEY missing on server.");
 
@@ -195,17 +202,17 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
         throw new Error("This plan is free — no payment required.");
 
       const totalAmount = Math.round(baseAmount * 1.02 * 100) / 100;
-      const { data: profile } = await (context.supabase as any)
+      const { data: profile } = await (paymentUser.supabase as any)
         .from("profiles")
         .select("email")
-        .eq("id", context.userId)
+        .eq("id", userId)
         .single();
-      const orderNumber = `up_${context.userId.slice(0, 8)}_${Date.now()}`;
+      const orderNumber = `up_${userId.slice(0, 8)}_${Date.now()}`;
 
       const { data: reqRow, error: insErr } = await (supabaseAdmin as any)
         .from("upgrade_requests")
         .insert({
-          user_id: context.userId,
+          user_id: userId,
           package_slug: data.package_slug,
           payment_method: "plisio",
           amount: totalAmount,
@@ -217,8 +224,6 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
         .single();
       if (insErr || !reqRow) throw new Error(insErr?.message ?? "Could not create upgrade request");
 
-      const { getRequest } = await import("@tanstack/react-start/server");
-      const request = getRequest();
       const origin = process.env.PUBLIC_SITE_URL || (request ? new URL(request.url).origin : "");
       const params = new URLSearchParams({
         api_key: apiKey,
@@ -260,7 +265,7 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
         status_code: res.status,
         outcome: "success",
         upgrade_request_id: reqRow.id,
-        user_id: context.userId,
+        user_id: userId,
         txn_id: payload.data.txn_id ?? null,
         order_number: orderNumber,
         plisio_status: "pending",
@@ -285,7 +290,7 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
         request_id: requestId,
         status_code: 400,
         outcome: "error",
-        user_id: context.userId,
+        user_id: userId,
         message,
         metadata: { duration_ms: Date.now() - startedAt },
       });

@@ -2,10 +2,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { randomUUID } from "crypto";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import type { Database } from "@/integrations/supabase/types";
+import { requirePaymentUser } from "@/lib/payment-auth.server";
 import { getPlisioApiKey } from "@/lib/plisio-config.server";
 
 const CreateInvoiceSchema = z.object({
@@ -27,28 +26,6 @@ async function logActivity(entry: Record<string, any>) {
   }
 }
 
-async function getUserId(request: Request) {
-  const authHeader = request.headers.get("authorization") ?? "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
-  if (!token) throw new Error("Please login again before payment. (no token)");
-
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) throw new Error("Payment auth is not configured on the server.");
-
-  const supabase = createClient<Database>(url, key, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-  });
-
-  const { data, error } = await supabase.auth.getClaims(token);
-  if (error || !data?.claims?.sub) {
-    console.warn("[plisio-create] auth claims failed", { message: error?.message });
-    throw new Error(`Please login again before payment. (${error?.message ?? "invalid token"})`);
-  }
-  return data.claims.sub;
-}
-
 export const Route = createFileRoute("/api/public/plisio-create-invoice")({
   server: {
     handlers: {
@@ -57,7 +34,7 @@ export const Route = createFileRoute("/api/public/plisio-create-invoice")({
         const startedAt = Date.now();
 
         try {
-          const userId = await getUserId(request);
+          const { userId } = await requirePaymentUser(request);
           const body = CreateInvoiceSchema.parse(await request.json());
           const { apiKey, source: apiKeySource } = await getPlisioApiKey(supabaseAdmin);
           if (!apiKey) throw new Error("PLISIO_API_KEY missing on server.");
