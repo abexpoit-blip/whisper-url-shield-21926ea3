@@ -2,6 +2,7 @@ import { createStart, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+import { supabase } from "@/integrations/supabase/client";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -18,7 +19,17 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
   }
 });
 
+const ensureFreshSupabaseAuth = createMiddleware({ type: "function" }).client(async ({ next }) => {
+  const { data } = await supabase.auth.getSession();
+  const session = data.session;
+  if (session && session.expires_at && session.expires_at * 1000 - Date.now() < 60_000) {
+    const { error } = await supabase.auth.refreshSession();
+    if (error) await supabase.auth.signOut();
+  }
+  return next();
+});
+
 export const startInstance = createStart(() => ({
   requestMiddleware: [errorMiddleware],
-  functionMiddleware: [attachSupabaseAuth],
+  functionMiddleware: [ensureFreshSupabaseAuth, attachSupabaseAuth],
 }));
