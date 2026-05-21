@@ -5,6 +5,12 @@ const EXPECTED_PROJECT_REF = "qnzwncleajzzwpauifnp";
 const EXPECTED_ISSUER_PREFIX = `https://${EXPECTED_PROJECT_REF}.supabase.co/auth/v1`;
 const SUPPORTED_TOKEN_ALGORITHMS = new Set(["HS256", "ES256"]);
 
+function configuredIssuerPrefix() {
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  if (typeof url !== "string" || !url) return null;
+  return `${url.replace(/\/$/, "")}/auth/v1`;
+}
+
 function decodeJwtPart(part: string) {
   const base64 = part.replace(/-/g, "+").replace(/_/g, "/");
   const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
@@ -19,10 +25,13 @@ function tokenMatchesCurrentProject(token: string) {
     const payload = decodeJwtPart(payloadPart);
     const issuer = typeof payload.iss === "string" ? payload.iss : "";
     const ref = typeof payload.ref === "string" ? payload.ref : "";
+    const currentIssuerPrefix = configuredIssuerPrefix();
     return (
       typeof header.alg === "string" &&
       SUPPORTED_TOKEN_ALGORITHMS.has(header.alg) &&
-      (issuer.startsWith(EXPECTED_ISSUER_PREFIX) || ref === EXPECTED_PROJECT_REF)
+      ((currentIssuerPrefix && issuer.startsWith(currentIssuerPrefix)) ||
+        issuer.startsWith(EXPECTED_ISSUER_PREFIX) ||
+        ref === EXPECTED_PROJECT_REF)
     );
   } catch {
     return false;
