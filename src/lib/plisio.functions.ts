@@ -95,11 +95,11 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
     }
 
     // 1) Load the package
-    const { data: pkg, error: pkgErr } = await (supabaseAdmin as any)
+    const { data: pkg, error: pkgErr } = (await (supabaseAdmin as any)
       .from("packages")
       .select("slug,name,price_monthly,price_onetime,billing_period,is_active")
       .eq("slug", data.package_slug)
-      .single();
+      .single()) as { data: PackageRow | null; error: { message: string } | null };
     if (pkgErr || !pkg || !pkg.is_active) {
       await logActivity(supabaseAdmin, {
         event_type: "invoice_create",
@@ -129,14 +129,14 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
     const FEE_PCT = 0.02;
     const totalAmount = Math.round(baseAmount * (1 + FEE_PCT) * 100) / 100;
 
-    const { data: profile } = await (supabaseAdmin as any)
+    const { data: profile } = (await (supabaseAdmin as any)
       .from("profiles")
       .select("email")
       .eq("id", userId)
-      .single();
+      .single()) as { data: ProfileRow | null };
 
     const orderNumber = `up_${userId.slice(0, 8)}_${Date.now()}`;
-    const { data: reqRow, error: insErr } = await (supabaseAdmin as any)
+    const { data: reqRow, error: insErr } = (await (supabaseAdmin as any)
       .from("upgrade_requests")
       .insert({
         user_id: userId,
@@ -148,7 +148,7 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
         note: `Base $${baseAmount.toFixed(2)} + 2% fee = $${totalAmount.toFixed(2)}`,
       })
       .select("id")
-      .single();
+      .single()) as { data: UpgradeRequestRow | null; error: { message: string } | null };
     if (insErr) {
       await logActivity(supabaseAdmin, {
         event_type: "invoice_create",
