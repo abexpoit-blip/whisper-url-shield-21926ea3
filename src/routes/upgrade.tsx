@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -74,7 +74,6 @@ function Countdown({ createdAt }: { createdAt: string }) {
 }
 
 function UpgradePage() {
-  const qc = useQueryClient();
   const mine = useServerFn(getMyPlan);
   const myReqs = useServerFn(listMyUpgradeRequests);
   const packages = useServerFn(listAvailablePackages);
@@ -121,7 +120,7 @@ function UpgradePage() {
     mutationFn: async () => {
       if (!picked) throw new Error("Choose a package first");
       const verified = await getVerifiedClientSession();
-      const accessToken = verified?.session.access_token;
+      const accessToken = verified?.session?.access_token;
       if (!accessToken) throw new Error("Please login again before payment.");
 
       const response = await fetch("/api/public/plisio-create-invoice", {
