@@ -1,8 +1,7 @@
 import { createStart, createMiddleware } from "@tanstack/react-start";
-import type { CustomFetch } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
-import { supabase } from "@/integrations/supabase/client";
+import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -19,60 +18,7 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
   }
 });
 
-async function getFreshAuthHeader(): Promise<Record<string, string>> {
-  const { data } = await supabase.auth.getSession();
-  let session = data.session;
-
-  if (session && session.expires_at && session.expires_at * 1000 - Date.now() < 5 * 60_000) {
-    const refreshed = await supabase.auth.refreshSession();
-    if (refreshed.error) {
-      await supabase.auth.signOut();
-      return {};
-    }
-    session = refreshed.data.session;
-  }
-
-  if (session) {
-    const { error } = await supabase.auth.getUser();
-    if (error) {
-      const refreshed = await supabase.auth.refreshSession();
-      if (refreshed.error || !refreshed.data.session?.access_token) {
-        await supabase.auth.signOut();
-        return {};
-      }
-      session = refreshed.data.session;
-    }
-  }
-
-  return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
-}
-
-const ensureFreshSupabaseAuth = createMiddleware({ type: "function" }).client(async ({ next }) => {
-  const authHeader = await getFreshAuthHeader();
-  const retryWithFreshToken: CustomFetch = async (url, init) => {
-    const headers = new Headers(init?.headers);
-    const latestAuthHeader = await getFreshAuthHeader();
-    if (latestAuthHeader.Authorization) headers.set("Authorization", latestAuthHeader.Authorization);
-
-    const first = await fetch(url, { ...init, headers });
-    const text = first.clone ? await first.clone().text().catch(() => "") : "";
-
-    if (first.status !== 401 && !/Unauthorized: Invalid token|JWT expired|Invalid JWT|No authorization header provided/i.test(text)) return first;
-
-    const refreshed = await supabase.auth.refreshSession();
-    if (refreshed.error || !refreshed.data.session?.access_token) {
-      await supabase.auth.signOut();
-      return first;
-    }
-
-    headers.set("Authorization", `Bearer ${refreshed.data.session.access_token}`);
-    return fetch(url, { ...init, headers });
-  };
-
-  return next({ headers: authHeader, fetch: retryWithFreshToken });
-});
-
 export const startInstance = createStart(() => ({
   requestMiddleware: [errorMiddleware],
-  functionMiddleware: [ensureFreshSupabaseAuth],
+  functionMiddleware: [attachSupabaseAuth],
 }));

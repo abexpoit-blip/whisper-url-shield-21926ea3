@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getPlisioApiKey } from "@/lib/plisio-config.server";
 
 const SlugRe = /^[a-z0-9_-]{2,40}$/;
 
@@ -48,7 +49,7 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
     const requestId = randomUUID();
     const startedAt = Date.now();
 
-    const apiKey = process.env.PLISIO_API_KEY;
+    const { apiKey, source: apiKeySource } = await getPlisioApiKey(supabaseAdmin);
     if (!apiKey) {
       await logActivity(supabaseAdmin, {
         event_type: "invoice_create", request_id: requestId, outcome: "error",
@@ -156,7 +157,7 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
         message: msg,
         metadata: {
           package_slug: data.package_slug, base_amount: baseAmount, total_amount: totalAmount,
-          duration_ms: durationMs, plisio_response: payload,
+          duration_ms: durationMs, plisio_response: payload, api_key_source: apiKeySource,
         },
       });
       throw new Error(msg);
@@ -183,7 +184,7 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
       message: `Invoice created (${pkg.name})`,
       metadata: {
         package_slug: data.package_slug, base_amount: baseAmount, total_amount: totalAmount,
-        fee_pct: FEE_PCT, duration_ms: durationMs, invoice_url: invoiceUrl,
+        fee_pct: FEE_PCT, duration_ms: durationMs, invoice_url: invoiceUrl, api_key_source: apiKeySource,
       },
     });
 

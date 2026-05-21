@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHash, createHmac, randomUUID, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getPlisioApiKey } from "@/lib/plisio-config.server";
 import { enqueueRetry, processPlisioPayload } from "@/lib/plisio-process.server";
 
 
@@ -36,7 +37,7 @@ export const Route = createFileRoute("/api/public/plisio-webhook")({
       POST: async ({ request }) => {
         const requestId = randomUUID();
         const startedAt = Date.now();
-        const apiKey = process.env.PLISIO_API_KEY;
+        const { apiKey, source: apiKeySource } = await getPlisioApiKey(supabaseAdmin);
         if (!apiKey) {
           await logActivity({
             request_id: requestId, status_code: 500, outcome: "error",
@@ -99,7 +100,7 @@ export const Route = createFileRoute("/api/public/plisio-webhook")({
             request_id: requestId, correlation_id: orderNumber, status_code: 401,
             outcome: "signature_invalid", txn_id: txnId, order_number: orderNumber,
             plisio_status: status, message: "Signature mismatch",
-            metadata: { duration_ms: Date.now() - startedAt, payload },
+            metadata: { duration_ms: Date.now() - startedAt, payload, api_key_source: apiKeySource },
           });
           return new Response("invalid signature", { status: 401 });
         }
@@ -134,7 +135,7 @@ export const Route = createFileRoute("/api/public/plisio-webhook")({
           user_id: result.user_id ?? null,
           txn_id: txnId, order_number: orderNumber, plisio_status: status,
           message: result.message,
-          metadata: { duration_ms: Date.now() - startedAt, package_slug: result.package_slug ?? null },
+          metadata: { duration_ms: Date.now() - startedAt, package_slug: result.package_slug ?? null, api_key_source: apiKeySource },
         });
 
         return new Response("ok", { status: 200 });
