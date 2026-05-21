@@ -99,6 +99,8 @@ function PricingPage() {
             const isLifetime = p.billing_period === "lifetime" || Number(p.price_onetime) > 0;
             const price = isLifetime ? Number(p.price_onetime) : Number(p.price_monthly);
             const isFree = price === 0 && !isLifetime;
+            const isFeatured = !!p.is_featured;
+            const highlight = isFeatured || isLifetime;
             const unlimitedClicks = p.click_limit == null;
             const unlimitedLinks = p.link_limit == null || p.link_limit >= 999999;
             const Icon = isLifetime ? Crown : isFree ? Zap : Rocket;
@@ -113,12 +115,12 @@ function PricingPage() {
               <div
                 key={p.id}
                 className={`relative flex flex-col overflow-hidden rounded-2xl border bg-card-gradient p-8 transition-all hover:shadow-xl ${
-                  isLifetime
+                  highlight
                     ? "border-primary/60 shadow-glow shadow-primary/20"
                     : "border-border"
                 }`}
               >
-                {isLifetime && (
+                {highlight && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 px-3 py-1 text-xs font-medium text-white shadow-md">
                     <Crown className="mr-1 inline h-3 w-3" /> Best value
                   </div>
