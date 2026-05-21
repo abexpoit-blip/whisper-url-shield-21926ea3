@@ -708,6 +708,42 @@ export type Database = {
         }
         Relationships: []
       }
+      plisio_webhook_logs: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          order_number: string | null
+          payload: Json
+          signature_valid: boolean
+          status: string | null
+          txn_id: string | null
+          upgrade_request_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          order_number?: string | null
+          payload?: Json
+          signature_valid?: boolean
+          status?: string | null
+          txn_id?: string | null
+          upgrade_request_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          order_number?: string | null
+          payload?: Json
+          signature_valid?: boolean
+          status?: string | null
+          txn_id?: string | null
+          upgrade_request_id?: string | null
+        }
+        Relationships: []
+      }
       prelander_variants: {
         Row: {
           category: string

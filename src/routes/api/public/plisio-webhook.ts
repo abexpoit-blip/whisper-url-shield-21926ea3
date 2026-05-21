@@ -49,6 +49,14 @@ export const Route = createFileRoute("/api/public/plisio-webhook")({
           console.warn("Plisio webhook hash mismatch", {
             txn: payload.txn_id, expectedJson, expectedForm, got: verifyHash,
           });
+          await (supabaseAdmin as any).from("plisio_webhook_logs").insert({
+            txn_id: String(payload.txn_id ?? ""),
+            order_number: String(payload.order_number ?? ""),
+            status: String(payload.status ?? ""),
+            signature_valid: false,
+            payload,
+            note: "Rejected: signature mismatch",
+          });
           return new Response("invalid signature", { status: 401 });
         }
 
@@ -67,27 +75,31 @@ export const Route = createFileRoute("/api/public/plisio-webhook")({
 
         if (reqErr || !req) {
           console.warn("Plisio webhook: request not found", { txnId, orderNumber });
+          await (supabaseAdmin as any).from("plisio_webhook_logs").insert({
+            txn_id: txnId, order_number: orderNumber, status,
+            signature_valid: true, payload, note: "No matching upgrade_request",
+          });
           return new Response("ok", { status: 200 }); // Don't retry forever
         }
 
         // ---- Idempotency guard ----
-        // Already in terminal state with the same plisio status → no-op.
         const terminal = req.status === "approved" || req.status === "rejected";
         if (terminal && req.plisio_status === status) {
           console.log(`Plisio webhook ignored (already ${req.status}/${status}) txn=${txnId}`);
+          await (supabaseAdmin as any).from("plisio_webhook_logs").insert({
+            upgrade_request_id: req.id, txn_id: txnId, order_number: orderNumber, status,
+            signature_valid: true, payload, note: `Duplicate — already ${req.status}`,
+          });
           return new Response("ok (dup)", { status: 200 });
         }
 
-        // Persist latest plisio status for admin visibility
         await (supabaseAdmin as any).from("upgrade_requests")
           .update({ plisio_status: status, plisio_invoice_id: txnId })
           .eq("id", req.id);
 
-        // Auto-approve on completion (covers both completed & mismatched-overpay)
+        let outcomeNote = `status=${status}`;
         const success = status === "completed" || status === "mismatch";
         if (success && req.status !== "approved") {
-          // Conditional update guarantees we only flip pending → approved once,
-          // even under concurrent webhook retries.
           const { data: flipped } = await (supabaseAdmin as any)
             .from("upgrade_requests")
             .update({
@@ -104,6 +116,9 @@ export const Route = createFileRoute("/api/public/plisio-webhook")({
             await (supabaseAdmin as any).from("profiles")
               .update({ plan_slug: req.package_slug })
               .eq("id", req.user_id);
+            outcomeNote = `Approved & plan=${req.package_slug}`;
+          } else {
+            outcomeNote = `Already approved (race)`;
           }
         } else if ((status === "cancelled" || status === "error" || status === "expired") &&
                    req.status === "pending") {
@@ -111,7 +126,13 @@ export const Route = createFileRoute("/api/public/plisio-webhook")({
             .update({ status: "rejected", note: `Plisio: ${status}` })
             .eq("id", req.id)
             .eq("status", "pending");
+          outcomeNote = `Rejected: ${status}`;
         }
+
+        await (supabaseAdmin as any).from("plisio_webhook_logs").insert({
+          upgrade_request_id: req.id, txn_id: txnId, order_number: orderNumber, status,
+          signature_valid: true, payload, note: outcomeNote,
+        });
 
         const sanity = createHash("sha1").update(txnId).digest("hex").slice(0, 8);
         console.log(`Plisio webhook handled txn=${txnId} status=${status} sig=${sanity}`);

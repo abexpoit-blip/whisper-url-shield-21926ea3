@@ -184,7 +184,7 @@ export const listAllUpgradeRequests = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data, error } = await (supabase as any)
       .from("upgrade_requests")
-      .select("id,user_id,package_slug,status,amount,payment_method,transaction_ref,note,created_at,reviewed_at")
+      .select("id,user_id,package_slug,status,amount,payment_method,transaction_ref,note,created_at,reviewed_at,plisio_status,plisio_invoice_id,plisio_invoice_url")
       .order("created_at", { ascending: false })
       .limit(200);
     if (error) throw new Error(error.message);
@@ -199,6 +199,35 @@ export const listAllUpgradeRequests = createServerFn({ method: "GET" })
       emails = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p.email]));
     }
     return (data ?? []).map((r: any) => ({ ...r, user_email: emails[r.user_id] ?? null }));
+  });
+
+export const getUpgradeRequestDetail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => {
+    const v: any = i;
+    if (!v?.id || typeof v.id !== "string") throw new Error("id required");
+    return { id: v.id as string };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: req, error } = await (supabase as any)
+      .from("upgrade_requests")
+      .select("*")
+      .eq("id", data.id)
+      .single();
+    if (error) throw new Error(error.message);
+
+    const { data: profile } = await (supabase as any)
+      .from("profiles").select("id,email,full_name,plan_slug").eq("id", req.user_id).maybeSingle();
+
+    const { data: logs } = await (supabase as any)
+      .from("plisio_webhook_logs")
+      .select("id,txn_id,order_number,status,signature_valid,payload,note,created_at")
+      .or(`upgrade_request_id.eq.${req.id}${req.plisio_invoice_id ? `,txn_id.eq.${req.plisio_invoice_id}` : ""}${req.transaction_ref ? `,order_number.eq.${req.transaction_ref}` : ""}`)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    return { request: req, profile: profile ?? null, logs: logs ?? [] };
   });
 
 export const reviewUpgradeRequest = createServerFn({ method: "POST" })
