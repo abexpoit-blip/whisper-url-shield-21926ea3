@@ -184,7 +184,12 @@ function UpgradePage() {
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {new Date(r.created_at).toLocaleString()}
-                        {r.transaction_ref && <> · <code className="rounded bg-muted px-1">{r.transaction_ref}</code></>}
+                        {r.transaction_ref && <>
+                          {' '}· <code className="rounded bg-muted px-1">{r.transaction_ref}</code>
+                          <button type="button" className="ml-1 inline-flex align-middle text-primary" onClick={() => copy(r.transaction_ref, "Order ID")} aria-label="Copy order ID">
+                            <Copy className="h-3 w-3" />
+                          </button>
+                        </>}
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -253,24 +258,9 @@ function UpgradePage() {
               <Clock className="h-3 w-3" /> Invoice expires in 30 minutes · BTC, LTC, USDT, USDT-TRC20
             </p>
 
-            <details className="group rounded-lg border">
-              <summary className="cursor-pointer list-none p-3 text-sm font-medium text-muted-foreground transition hover:text-foreground">
-                Have a manual transaction? Submit for admin review →
-              </summary>
-              <div className="space-y-3 border-t p-3">
-                <div>
-                  <Label>Transaction reference</Label>
-                  <div className="flex gap-2">
-                    <Input value={txRef} onChange={(e) => setTxRef(e.target.value)} placeholder="TXID / external invoice id" />
-                    {txRef && <Button type="button" variant="outline" size="icon" onClick={() => copy(txRef, "TXID")}><Copy className="h-4 w-4" /></Button>}
-                  </div>
-                </div>
-                <div><Label>Note for admin</Label><Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} /></div>
-                <Button variant="outline" className="w-full" onClick={() => reqM.mutate()} disabled={reqM.isPending}>
-                  Submit manual request
-                </Button>
-              </div>
-            </details>
+            <div className="rounded-lg border bg-muted/30 p-3 text-center text-xs text-muted-foreground">
+              Automatic Plisio checkout only — no manual payment review needed.
+            </div>
           </div>
 
           <DialogFooter className="border-t bg-muted/30 px-6 py-3">
