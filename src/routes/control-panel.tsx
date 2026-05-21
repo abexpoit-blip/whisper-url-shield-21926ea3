@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ShieldCheck, AlertCircle, Lock } from "lucide-react";
@@ -20,6 +20,7 @@ export const Route = createFileRoute("/control-panel")({
 
 function ControlPanelLogin() {
   const navigate = useNavigate();
+  const router = useRouter();
   const checkAdmin = useServerFn(getIsAdmin);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,8 +31,8 @@ function ControlPanelLogin() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) return;
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data.user) return;
       try {
         const r = await checkAdmin();
         if (!cancelled && r.isAdmin) navigate({ to: "/admin" });
@@ -50,13 +51,19 @@ function ControlPanelLogin() {
     setErr(null);
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
     });
     if (error) {
       setLoading(false);
       setErr("Invalid credentials.");
+      return;
+    }
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (!data.session || userError || !userData.user) {
+      setLoading(false);
+      setErr("Login session was not ready. Please try again.");
       return;
     }
 
@@ -76,6 +83,7 @@ function ControlPanelLogin() {
       return;
     }
 
+    await router.invalidate();
     navigate({ to: "/admin" });
   };
 

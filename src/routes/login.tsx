@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { Shield, Zap, BarChart3, Bot, Sparkles, ArrowRight, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -27,6 +27,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const router = useRouter();
   const { redirect } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,8 +37,8 @@ function LoginPage() {
 
   useEffect(() => {
     void (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) navigate({ to: redirect });
+      const { data, error } = await supabase.auth.getUser();
+      if (!error && data.user) navigate({ to: redirect });
     })();
   }, [navigate, redirect]);
 
@@ -46,14 +47,14 @@ function LoginPage() {
     if (loading || googleLoading) return;
     setErrorMessage(null);
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (error) {
       setLoading(false);
       setErrorMessage(error.message);
       return toast.error(error.message);
     }
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session) {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (!data.session || userError || !userData.user) {
       setLoading(false);
       const message = "Login session was not saved. Please try again.";
       setErrorMessage(message);
@@ -61,6 +62,7 @@ function LoginPage() {
     }
     // Admin sign-in is handled at /control-panel only.
     toast.success("Welcome back!");
+    await router.invalidate();
     navigate({ to: redirect });
   };
 

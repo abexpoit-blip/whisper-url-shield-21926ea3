@@ -50,8 +50,8 @@ export const Route = createFileRoute("/funnel")({
     links: [{ rel: "canonical", href: "https://sleepox.com/funnel" }],
   }),
   beforeLoad: async ({ location }) => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) throw redirect({ to: "/login", search: { redirect: location.href } });
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) throw redirect({ to: "/login", search: { redirect: location.href } });
   },
   component: FunnelPage,
 });

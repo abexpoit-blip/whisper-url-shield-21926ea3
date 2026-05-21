@@ -18,8 +18,8 @@ import {
 
 export const Route = createFileRoute("/links/$linkId/time-rules")({
   beforeLoad: async ({ location }) => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) throw redirect({ to: "/login", search: { redirect: location.href } });
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) throw redirect({ to: "/login", search: { redirect: location.href } });
   },
   component: TimeRulesPage,
 });

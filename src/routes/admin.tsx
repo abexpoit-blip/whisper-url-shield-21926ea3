@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, Link, redirect, useRouter, useRouterState, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, redirect, useRouter, useRouterState, useNavigate, isRedirect } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
 import {
   ArrowLeft, ChevronRight, ChevronLeft, Shield, LayoutGrid,
@@ -63,18 +63,18 @@ export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin Console — LinkShield" }, { name: "robots", content: "noindex,nofollow" }] }),
   // Role-based gate: only admins reach any /admin/* route.
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) {
       throw redirect({ to: "/control-panel" });
     }
     try {
-      const isAdmin = await getCachedAdminAccess(data.session.user.id);
+      const isAdmin = await getCachedAdminAccess(data.user.id);
       if (!isAdmin) {
         throw redirect({ to: "/dashboard" });
       }
     } catch (e) {
       // Re-throw redirect; treat any other failure as forbidden.
-      if (e && typeof e === "object" && "to" in (e as object)) throw e;
+      if (isRedirect(e)) throw e;
       throw redirect({ to: "/dashboard" });
     }
   },
