@@ -58,7 +58,19 @@ export const listPackages = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data, error } = await (supabase as any)
       .from("packages")
-      .select("id,slug,name,price_monthly,link_limit,features,sort_order,is_active,created_at")
+      .select("id,slug,name,price_monthly,price_onetime,billing_period,link_limit,click_limit,features,sort_order,is_active,created_at")
+      .order("sort_order", { ascending: true });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const listAvailablePackages = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await (supabaseAdmin as any)
+      .from("packages")
+      .select("id,slug,name,price_monthly,price_onetime,billing_period,link_limit,click_limit,features,sort_order,is_active,created_at")
+      .eq("is_active", true)
       .order("sort_order", { ascending: true });
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -68,6 +80,13 @@ export const createPackage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => PackageCreateSchema.parse(i))
   .handler(async ({ data, context }) => {
+    const { data: role } = await (context.supabase as any)
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!role) throw new Error("Unauthorized: Admin access required");
     const { error } = await (context.supabase as any).from("packages").insert(data);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -77,6 +96,13 @@ export const updatePackage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => PackageUpdateSchema.parse(i))
   .handler(async ({ data, context }) => {
+    const { data: role } = await (context.supabase as any)
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!role) throw new Error("Unauthorized: Admin access required");
     const { id, ...patch } = data;
     const { error } = await (context.supabase as any).from("packages").update(patch).eq("id", id);
     if (error) throw new Error(error.message);
@@ -87,6 +113,13 @@ export const deletePackage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => IdSchema.parse(i))
   .handler(async ({ data, context }) => {
+    const { data: role } = await (context.supabase as any)
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!role) throw new Error("Unauthorized: Admin access required");
     const { error } = await (context.supabase as any).from("packages").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -113,16 +146,19 @@ export const requestUpgrade = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: pkg } = await (supabase as any)
       .from("packages")
-      .select("price_monthly,is_active")
+      .select("price_monthly,price_onetime,billing_period,is_active")
       .eq("slug", data.package_slug)
       .single();
     if (!pkg || !pkg.is_active) throw new Error("Package not available");
+    const amount = pkg.billing_period === "lifetime" || Number(pkg.price_onetime) > 0
+      ? pkg.price_onetime
+      : pkg.price_monthly;
     const { error } = await (supabase as any).from("upgrade_requests").insert({
       user_id: userId,
       package_slug: data.package_slug,
       payment_method: data.payment_method,
       transaction_ref: data.transaction_ref ?? null,
-      amount: pkg.price_monthly,
+      amount,
       note: data.note ?? null,
     });
     if (error) throw new Error(error.message);

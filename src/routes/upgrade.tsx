@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Check, Sparkles, Rocket } from "lucide-react";
 import {
-  listPackages,
+  listAvailablePackages,
   getMyPlan,
   requestUpgrade,
   listMyUpgradeRequests,
@@ -30,8 +30,7 @@ export const Route = createFileRoute("/upgrade")({
 
 function UpgradePage() {
   const qc = useQueryClient();
-  // Note: listPackages requires auth; this page must be visited while signed in.
-  const list = useServerFn(listPackages);
+  const list = useServerFn(listAvailablePackages);
   const mine = useServerFn(getMyPlan);
   const myReqs = useServerFn(listMyUpgradeRequests);
   const submit = useServerFn(requestUpgrade);
@@ -51,15 +50,17 @@ function UpgradePage() {
   const [note, setNote] = useState("");
 
   const reqM = useMutation({
-    mutationFn: () =>
-      submit({
+    mutationFn: () => {
+      if (!picked) throw new Error("Choose a package first");
+      return submit({
         data: {
           package_slug: picked.slug,
           payment_method: "manual",
           transaction_ref: txRef || undefined,
           note: note || undefined,
         },
-      }),
+      });
+    },
     onSuccess: () => {
       toast.success("Request submitted — admin will review shortly");
       setPicked(null); setTxRef(""); setNote("");
