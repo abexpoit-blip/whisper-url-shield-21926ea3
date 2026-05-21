@@ -6,15 +6,11 @@ import { toast } from "sonner";
 import { Check, Sparkles, Rocket, Copy, ExternalLink, Clock, ShieldCheck, Bitcoin } from "lucide-react";
 import {
   getMyPlan,
-  requestUpgrade,
   listMyUpgradeRequests,
   listAvailablePackages,
 } from "@/lib/billing.functions";
 import { createPlisioInvoice } from "@/lib/plisio.functions";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -54,7 +50,6 @@ function UpgradePage() {
   const mine = useServerFn(getMyPlan);
   const myReqs = useServerFn(listMyUpgradeRequests);
   const packages = useServerFn(listAvailablePackages);
-  const submit = useServerFn(requestUpgrade);
   const payWithPlisio = useServerFn(createPlisioInvoice);
 
   const { data: pkgs = [], isLoading: packagesLoading, error: packagesError } = useQuery({
@@ -69,8 +64,6 @@ function UpgradePage() {
   });
 
   const [picked, setPicked] = useState<any | null>(null);
-  const [txRef, setTxRef] = useState("");
-  const [note, setNote] = useState("");
 
   const basePrice = picked
     ? Number(
@@ -81,26 +74,6 @@ function UpgradePage() {
     : 0;
   const feeAmount = Math.round(basePrice * FEE_PCT * 100) / 100;
   const totalAmount = Math.round(basePrice * (1 + FEE_PCT) * 100) / 100;
-
-  const reqM = useMutation({
-    mutationFn: () => {
-      if (!picked) throw new Error("Choose a package first");
-      return submit({
-        data: {
-          package_slug: picked.slug,
-          payment_method: "manual",
-          transaction_ref: txRef || undefined,
-          note: note || undefined,
-        },
-      });
-    },
-    onSuccess: () => {
-      toast.success("Request submitted — admin will review shortly");
-      setPicked(null); setTxRef(""); setNote("");
-      qc.invalidateQueries({ queryKey: ["my-upgrade-requests"] });
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
 
   const plisioM = useMutation({
     mutationFn: () => {
