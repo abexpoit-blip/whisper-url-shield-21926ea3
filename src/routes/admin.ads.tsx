@@ -164,7 +164,7 @@ function AdsPage() {
           {saving ? "Saving…" : "Save settings"}
         </Button>
       </form>
-      <Outlet />
     </div>
   );
 }
+
