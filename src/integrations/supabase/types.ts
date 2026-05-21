@@ -708,6 +708,57 @@ export type Database = {
         }
         Relationships: []
       }
+      plisio_activity_log: {
+        Row: {
+          correlation_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          message: string | null
+          metadata: Json
+          order_number: string | null
+          outcome: string
+          plisio_status: string | null
+          request_id: string
+          status_code: number | null
+          txn_id: string | null
+          upgrade_request_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          correlation_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          message?: string | null
+          metadata?: Json
+          order_number?: string | null
+          outcome?: string
+          plisio_status?: string | null
+          request_id: string
+          status_code?: number | null
+          txn_id?: string | null
+          upgrade_request_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          correlation_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          message?: string | null
+          metadata?: Json
+          order_number?: string | null
+          outcome?: string
+          plisio_status?: string | null
+          request_id?: string
+          status_code?: number | null
+          txn_id?: string | null
+          upgrade_request_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       plisio_webhook_logs: {
         Row: {
           created_at: string
