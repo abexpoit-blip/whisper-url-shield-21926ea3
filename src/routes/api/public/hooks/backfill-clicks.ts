@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { requirePublicHookSecret } from "@/lib/public-hook-auth.server";
 
 // Backfill missing Phase 3 columns (fingerprint_hash, signals, bot_score) on
 // historical click rows by recomputing approximate values from the stored
@@ -47,6 +48,8 @@ export const Route = createFileRoute("/api/public/hooks/backfill-clicks")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const unauthorized = requirePublicHookSecret(request);
+        if (unauthorized) return unauthorized;
         const sb = admin();
         const url = new URL(request.url);
         const limit = Math.min(Math.max(Number(url.searchParams.get("limit") ?? 500), 1), 2000);

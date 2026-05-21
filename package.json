@@ -8,6 +8,7 @@
     "verify-env": "node scripts/verify-env.mjs",
     "build": "bun run verify-env && vite build",
     "build:dev": "bun run verify-env && vite build --mode development",
+    "serve:selfhost": "bash scripts/start-selfhost.sh",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write ."

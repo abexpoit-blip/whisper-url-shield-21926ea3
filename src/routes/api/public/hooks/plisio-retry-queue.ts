@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { randomUUID } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { nextBackoffSeconds, processPlisioPayload } from "@/lib/plisio-process.server";
+import { requirePublicHookSecret } from "@/lib/public-hook-auth.server";
 
 const MAX_PER_RUN = 25;
 
@@ -32,7 +33,9 @@ async function logActivity(entry: {
 export const Route = createFileRoute("/api/public/hooks/plisio-retry-queue")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const unauthorized = requirePublicHookSecret(request);
+        if (unauthorized) return unauthorized;
         const runId = randomUUID();
         const nowIso = new Date().toISOString();
 

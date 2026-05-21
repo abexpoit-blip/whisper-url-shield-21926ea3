@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { runAllDomainHealthChecks } from "@/lib/domain-health.functions";
+import { requirePublicHookSecret } from "@/lib/public-hook-auth.server";
 
 export const Route = createFileRoute("/api/public/hooks/domain-health")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const unauthorized = requirePublicHookSecret(request);
+        if (unauthorized) return unauthorized;
         try {
           const checked = await runAllDomainHealthChecks();
           return new Response(JSON.stringify({ ok: true, checked }), {

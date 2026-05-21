@@ -1,18 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { computeScoresAdmin, recomputeVariantTestsAdmin } from "@/lib/auto-pilot.functions";
+import { requirePublicHookSecret } from "@/lib/public-hook-auth.server";
 
 export const Route = createFileRoute("/api/public/hooks/autopilot")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        // optional shared header verify
-        const auth = request.headers.get("apikey") ?? request.headers.get("authorization");
-        if (!auth) {
-          return new Response(JSON.stringify({ error: "Missing apikey" }), {
-            status: 401,
-            headers: { "Content-Type": "application/json" },
-          });
-        }
+        const unauthorized = requirePublicHookSecret(request);
+        if (unauthorized) return unauthorized;
         try {
           const scores = await computeScoresAdmin();
           const variants = await recomputeVariantTestsAdmin();
