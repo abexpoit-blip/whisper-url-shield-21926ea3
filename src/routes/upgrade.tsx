@@ -162,21 +162,25 @@ function UpgradePage() {
             </div>
           </header>
 
-          <main className="mx-auto w-full max-w-6xl space-y-8 p-6">
-            <div>
-              <h1 className="flex items-center gap-2 text-3xl font-bold">
-                <Rocket className="h-7 w-7 text-primary" /> Upgrade your plan
+          <main className="mx-auto w-full max-w-6xl space-y-10 p-6">
+            <div className="text-center">
+              <Badge variant="outline" className="mb-3 border-primary/30 bg-primary/5 text-primary">
+                <Sparkles className="mr-1 h-3 w-3" /> Choose your plan
+              </Badge>
+              <h1 className="flex items-center justify-center gap-2 text-3xl font-bold md:text-4xl">
+                <Rocket className="h-8 w-8 text-primary" /> Upgrade your plan
               </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-2 text-sm text-muted-foreground">
                 You're on <Badge variant="outline">{plan?.plan_slug ?? "free"}</Badge> ·{" "}
-                {plan?.links_used ?? 0}/{plan?.link_quota ?? 1} links used.
+                {plan?.links_used ?? 0}/{plan?.link_quota ?? 1} links used. All paid plans charged
+                in crypto with a 2% network fee.
               </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-3">
               {packagesLoading &&
                 ["free", "pro", "lifetime"].map((key) => (
-                  <Card key={key} className="min-h-72 animate-pulse border-primary/10 bg-card/70" />
+                  <Card key={key} className="min-h-[28rem] animate-pulse border-primary/10 bg-card/70" />
                 ))}
               {!packagesLoading && packagesError && (
                 <Card className="md:col-span-3 border-destructive/30 bg-destructive/10">
@@ -189,58 +193,128 @@ function UpgradePage() {
                 const isCurrent = plan?.plan_slug === p.slug;
                 const isLifetime = p.billing_period === "lifetime" || Number(p.price_onetime) > 0;
                 const price = isLifetime ? Number(p.price_onetime) : Number(p.price_monthly);
-                const periodLabel = isLifetime ? "one-time" : "/mo";
-                const clickLabel =
-                  p.click_limit == null
-                    ? "Unlimited clicks"
-                    : `${Number(p.click_limit).toLocaleString()} clicks${isLifetime ? " — lifetime" : " / month"}`;
-                const linkLabel =
-                  p.link_limit == null || p.link_limit >= 999999
-                    ? "Unlimited links"
-                    : `${p.link_limit} links included`;
+                const periodLabel = isLifetime ? "one-time · forever" : "per month";
+                const unlimitedClicks = p.click_limit == null;
+                const unlimitedLinks = p.link_limit == null || p.link_limit >= 999999;
+                const clickLabel = unlimitedClicks
+                  ? "Unlimited clicks"
+                  : `${Number(p.click_limit).toLocaleString()} clicks${isLifetime ? " — lifetime" : " / month"}`;
+                const linkLabel = unlimitedLinks
+                  ? "Unlimited links"
+                  : `${p.link_limit} link${p.link_limit > 1 ? "s" : ""} included`;
                 const isFree = price === 0 && !isLifetime;
+                const tagline = isLifetime
+                  ? "All premium features unlocked forever. One payment, zero renewals."
+                  : isFree
+                    ? "Start free, test cloaking, and explore every core feature."
+                    : "For active media buyers running Meta, TikTok & Google ads at scale.";
+                const Icon = isLifetime ? Crown : isFree ? Zap : Rocket;
+                const total = (price * 1.02).toFixed(2);
+
                 return (
                   <Card
                     key={p.id}
-                    className={`flex flex-col ${isLifetime ? "border-primary shadow-lg" : ""} ${isCurrent ? "ring-2 ring-primary" : ""}`}
+                    className={`relative flex flex-col overflow-hidden transition-all hover:shadow-xl ${
+                      isLifetime
+                        ? "border-primary/60 bg-gradient-to-br from-primary/10 via-card to-card shadow-lg shadow-primary/20"
+                        : "border-border/60"
+                    } ${isCurrent ? "ring-2 ring-primary" : ""}`}
                   >
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                          {p.name}
-                          {isLifetime && (
-                            <Badge
-                              variant="default"
-                              className="bg-gradient-to-r from-primary to-primary/70"
-                            >
-                              Best value
-                            </Badge>
-                          )}
-                        </span>
-                        {isCurrent && <Badge>Current</Badge>}
+                    {isLifetime && (
+                      <div className="absolute right-3 top-3">
+                        <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md">
+                          <Crown className="mr-1 h-3 w-3" /> Best value
+                        </Badge>
+                      </div>
+                    )}
+                    <CardHeader className="pb-3">
+                      <div
+                        className={`mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl ${
+                          isLifetime
+                            ? "bg-gradient-to-br from-primary to-primary/60 text-primary-foreground"
+                            : isFree
+                              ? "bg-muted text-muted-foreground"
+                              : "bg-primary/10 text-primary"
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <CardTitle className="flex items-center justify-between text-xl">
+                        <span>{p.name}</span>
+                        {isCurrent && <Badge variant="secondary">Current</Badge>}
                       </CardTitle>
-                      <CardDescription>
-                        <span className="text-3xl font-bold text-foreground">
-                          ${price.toFixed(2)}
+                      <CardDescription className="min-h-[2.5rem] text-sm">{tagline}</CardDescription>
+                      <div className="mt-3 flex items-baseline gap-1">
+                        <span className="text-4xl font-bold tracking-tight text-foreground">
+                          ${price.toFixed(0)}
                         </span>
-                        <span className="text-muted-foreground"> {periodLabel}</span>
-                      </CardDescription>
+                        <span className="text-sm text-muted-foreground">/{isLifetime ? "lifetime" : "mo"}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">{periodLabel}</div>
+                      {!isFree && (
+                        <div className="mt-1 text-[11px] text-muted-foreground">
+                          ≈ <span className="font-medium text-foreground">${total}</span> total (incl. 2% network fee)
+                        </div>
+                      )}
                     </CardHeader>
                     <CardContent className="flex flex-1 flex-col">
-                      <div className="mb-3 space-y-1 rounded-md bg-muted/50 p-3 text-sm">
-                        <div className="font-medium">{linkLabel}</div>
-                        <div className="text-muted-foreground">{clickLabel}</div>
+                      <div className="mb-4 grid grid-cols-2 gap-2 rounded-xl border bg-muted/40 p-3 text-xs">
+                        <div className="flex items-center gap-2">
+                          <Link2 className="h-3.5 w-3.5 text-primary" />
+                          <div>
+                            <div className="font-semibold text-foreground">
+                              {unlimitedLinks ? (
+                                <span className="flex items-center gap-0.5">
+                                  <InfinityIcon className="h-3.5 w-3.5" />
+                                </span>
+                              ) : (
+                                p.link_limit
+                              )}
+                            </div>
+                            <div className="text-muted-foreground">{unlimitedLinks ? "links" : p.link_limit === 1 ? "link" : "links"}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MousePointerClick className="h-3.5 w-3.5 text-primary" />
+                          <div>
+                            <div className="font-semibold text-foreground">
+                              {unlimitedClicks ? (
+                                <InfinityIcon className="h-3.5 w-3.5" />
+                              ) : Number(p.click_limit) >= 1000000 ? (
+                                `${(Number(p.click_limit) / 1000000).toFixed(0)}M`
+                              ) : (
+                                `${(Number(p.click_limit) / 1000).toFixed(0)}K`
+                              )}
+                            </div>
+                            <div className="text-muted-foreground">{isLifetime ? "clicks · ever" : "clicks/mo"}</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        What's included
                       </div>
                       <ul className="flex-1 space-y-2 text-sm">
                         {(p.features ?? []).map((f: string) => (
                           <li key={f} className="flex items-start gap-2">
-                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                            {f}
+                            <div
+                              className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
+                                isLifetime ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"
+                              }`}
+                            >
+                              <Check className="h-3 w-3" />
+                            </div>
+                            <span className="text-foreground/90">{f}</span>
                           </li>
                         ))}
                       </ul>
                       <Button
-                        className="mt-4 w-full"
+                        size="lg"
+                        className={`mt-6 w-full font-semibold ${
+                          isLifetime
+                            ? "bg-gradient-to-r from-primary to-primary/80 shadow-lg hover:opacity-95"
+                            : ""
+                        }`}
+                        variant={isLifetime ? "default" : isFree ? "outline" : "default"}
                         disabled={isCurrent || isFree}
                         onClick={() => setPicked(p)}
                       >
@@ -250,8 +324,13 @@ function UpgradePage() {
                             ? "Free forever"
                             : isLifetime
                               ? "Get lifetime access"
-                              : "Request upgrade"}
+                              : "Upgrade with crypto"}
                       </Button>
+                      {!isFree && !isCurrent && (
+                        <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                          Instant activation after on-chain confirmation
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                 );
