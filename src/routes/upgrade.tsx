@@ -82,31 +82,47 @@ function UpgradePage() {
       <div className="grid gap-4 md:grid-cols-3">
         {visible.map((p: any) => {
           const isCurrent = plan?.plan_slug === p.slug;
+          const isLifetime = p.billing_period === "lifetime" || Number(p.price_onetime) > 0;
+          const price = isLifetime ? Number(p.price_onetime) : Number(p.price_monthly);
+          const periodLabel = isLifetime ? "one-time" : "/mo";
+          const clickLabel =
+            p.click_limit == null
+              ? "Unlimited clicks"
+              : `${Number(p.click_limit).toLocaleString()} clicks${isLifetime ? " — lifetime" : " / month"}`;
+          const linkLabel =
+            p.link_limit == null || p.link_limit >= 999999 ? "Unlimited links" : `${p.link_limit} links included`;
+          const isFree = price === 0 && !isLifetime;
           return (
-            <Card key={p.id} className={isCurrent ? "border-primary" : ""}>
+            <Card key={p.id} className={`flex flex-col ${isLifetime ? "border-primary shadow-lg" : ""} ${isCurrent ? "ring-2 ring-primary" : ""}`}>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  {p.name}
+                  <span className="flex items-center gap-2">
+                    {p.name}
+                    {isLifetime && <Badge variant="default" className="bg-gradient-to-r from-primary to-primary/70">Best value</Badge>}
+                  </span>
                   {isCurrent && <Badge>Current</Badge>}
                 </CardTitle>
                 <CardDescription>
-                  <span className="text-3xl font-bold text-foreground">${Number(p.price_monthly).toFixed(2)}</span>
-                  <span className="text-muted-foreground"> /mo</span>
+                  <span className="text-3xl font-bold text-foreground">${price.toFixed(2)}</span>
+                  <span className="text-muted-foreground"> {periodLabel}</span>
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="mb-3 text-sm font-medium">{p.link_limit} links included</div>
-                <ul className="space-y-2 text-sm">
+              <CardContent className="flex flex-1 flex-col">
+                <div className="mb-3 space-y-1 rounded-md bg-muted/50 p-3 text-sm">
+                  <div className="font-medium">{linkLabel}</div>
+                  <div className="text-muted-foreground">{clickLabel}</div>
+                </div>
+                <ul className="flex-1 space-y-2 text-sm">
                   {(p.features ?? []).map((f: string) => (
-                    <li key={f} className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 text-primary" />{f}</li>
+                    <li key={f} className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{f}</li>
                   ))}
                 </ul>
                 <Button
                   className="mt-4 w-full"
-                  disabled={isCurrent || Number(p.price_monthly) === 0}
+                  disabled={isCurrent || isFree}
                   onClick={() => setPicked(p)}
                 >
-                  {isCurrent ? "Current plan" : Number(p.price_monthly) === 0 ? "Free" : "Request upgrade"}
+                  {isCurrent ? "Current plan" : isFree ? "Free forever" : isLifetime ? "Get lifetime access" : "Request upgrade"}
                 </Button>
               </CardContent>
             </Card>
