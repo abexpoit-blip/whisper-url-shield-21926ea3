@@ -234,6 +234,8 @@ function UpgradePage() {
                 const unlimitedClicks = p.click_limit == null;
                 const unlimitedLinks = p.link_limit == null || p.link_limit >= 999999;
                 const isFree = price === 0 && !isLifetime;
+                const isFeatured = !!p.is_featured;
+                const highlight = isFeatured || isLifetime;
                 const tagline = isLifetime
                   ? "All premium features unlocked forever. One payment, zero renewals."
                   : isFree
@@ -246,12 +248,12 @@ function UpgradePage() {
                   <Card
                     key={p.id}
                     className={`relative flex flex-col overflow-hidden transition-all hover:shadow-xl ${
-                      isLifetime
+                      highlight
                         ? "border-primary/60 bg-gradient-to-br from-primary/10 via-card to-card shadow-lg shadow-primary/20"
                         : "border-border/60"
                     } ${isCurrent ? "ring-2 ring-primary" : ""}`}
                   >
-                    {isLifetime && (
+                    {highlight && (
                       <div className="absolute right-3 top-3">
                         <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md">
                           <Crown className="mr-1 h-3 w-3" /> Best value
