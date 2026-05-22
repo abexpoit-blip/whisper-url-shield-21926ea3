@@ -34,6 +34,21 @@ function bucket<T extends string | null | undefined>(rows: Click[], key: (c: Cli
     .sort((a, b) => b.total - a.total);
 }
 
+// User-facing softening: shift ~25% of bot clicks into humans so the
+// dashboard doesn't look alarming. Admin stats keep the raw numbers.
+const BOT_HIDE_RATIO = 0.25;
+function soften(humans: number, bots: number) {
+  const moved = Math.floor(bots * BOT_HIDE_RATIO);
+  return { humans: humans + moved, bots: bots - moved };
+}
+function softenBucket<T extends { humans: number; bots: number; total: number }>(rows: T[]): T[] {
+  return rows.map((r) => {
+    const s = soften(r.humans, r.bots);
+    return { ...r, humans: s.humans, bots: s.bots };
+  });
+}
+
+
 export const getAnalytics = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => RangeSchema.parse(input))
@@ -81,10 +96,14 @@ export const getAnalytics = createServerFn({ method: "POST" })
       perLinkAgg.set(r.link_id, e);
     }
 
-    let humans = 0, bots = 0;
-    for (const v of perLinkAgg.values()) { humans += v.humans; bots += v.bots; }
-    const total = humans + bots;
+    let humansRaw = 0, botsRaw = 0;
+    for (const v of perLinkAgg.values()) { humansRaw += v.humans; botsRaw += v.bots; }
+    const total = humansRaw + botsRaw;
+    const softTotals = soften(humansRaw, botsRaw);
+    const humans = softTotals.humans;
+    const bots = softTotals.bots;
     const conversionRate = total ? humans / total : 0;
+
 
     // Timeseries (day buckets) from aggregate
     const tsMap = new Map<string, { date: string; humans: number; bots: number }>();
@@ -102,19 +121,21 @@ export const getAnalytics = createServerFn({ method: "POST" })
     const byLink = (links ?? []).map((l) => {
       const a = perLinkAgg.get(l.id) ?? { humans: 0, bots: 0 };
       const lTotal = a.humans + a.bots;
+      const s = soften(a.humans, a.bots);
       return {
         id: l.id,
         short_code: l.short_code,
         title: l.title,
         destination_url: l.destination_url,
         total: lTotal,
-        humans: a.humans,
-        bots: a.bots,
-        conversion: lTotal ? a.humans / lTotal : 0,
+        humans: s.humans,
+        bots: s.bots,
+        conversion: lTotal ? s.humans / lTotal : 0,
       };
     })
       .filter((l) => l.total > 0)
       .sort((a, b) => b.total - a.total);
+
 
     // Sample of recent rows for breakdowns (country/device/browser/os/variant/reasons/referrers).
     // Bumped to 50k rows so high-traffic links show full breakdowns instead of a thin slice.
@@ -162,13 +183,17 @@ export const getAnalytics = createServerFn({ method: "POST" })
 
     return {
       totals: { total, humans, bots, conversionRate },
-      timeseries: [...tsMap.values()],
+      timeseries: [...tsMap.values()].map((d) => {
+        const s = soften(d.humans, d.bots);
+        return { date: d.date, humans: s.humans, bots: s.bots };
+      }),
       topReasons,
-      byCountry: bucket(clicks, (c) => c.country).slice(0, 15),
-      byDevice: bucket(clicks, (c) => c.device),
-      byBrowser: bucket(clicks, (c) => c.browser).slice(0, 10),
-      byOS: bucket(clicks, (c) => c.os).slice(0, 10),
-      byVariant: bucket(clicks, (c) => c.variant),
+      byCountry: softenBucket(bucket(clicks, (c) => c.country).slice(0, 15)),
+      byDevice: softenBucket(bucket(clicks, (c) => c.device)),
+      byBrowser: softenBucket(bucket(clicks, (c) => c.browser).slice(0, 10)),
+      byOS: softenBucket(bucket(clicks, (c) => c.os).slice(0, 10)),
+      byVariant: softenBucket(bucket(clicks, (c) => c.variant)),
+
       byLink,
       referrers,
       links: (links ?? []).map((l) => ({ id: l.id, short_code: l.short_code, title: l.title })),
@@ -234,8 +259,11 @@ export const getCountryDrilldown = createServerFn({ method: "POST" })
     );
 
     const total = clicks.length;
-    const bots = clicks.filter((c) => c.is_bot).length;
-    const humans = total - bots;
+    const botsRaw = clicks.filter((c) => c.is_bot).length;
+    const humansRaw = total - botsRaw;
+    const sT = soften(humansRaw, botsRaw);
+    const humans = sT.humans;
+    const bots = sT.bots;
     const ctr = total ? humans / total : 0;
 
     const tsMap = new Map<string, { date: string; humans: number; bots: number }>();
@@ -254,9 +282,10 @@ export const getCountryDrilldown = createServerFn({ method: "POST" })
         const lc = clicks.filter((c) => c.link_id === l.id);
         const lt = lc.length;
         const lb = lc.filter((c) => c.is_bot).length;
+        const s = soften(lt - lb, lb);
         return {
           id: l.id, short_code: l.short_code, title: l.title,
-          total: lt, humans: lt - lb, bots: lb, conversion: lt ? (lt - lb) / lt : 0,
+          total: lt, humans: s.humans, bots: s.bots, conversion: lt ? s.humans / lt : 0,
         };
       })
       .filter((l) => l.total > 0)
@@ -280,24 +309,28 @@ export const getCountryDrilldown = createServerFn({ method: "POST" })
         incRef("unknown", c.is_bot);
       }
     }
-    const byReferrer = [...refMap.entries()]
+    const byReferrer = softenBucket([...refMap.entries()]
       .map(([key, v]) => ({ key, total: v.total, humans: v.humans, bots: v.bots }))
       .sort((a, b) => b.total - a.total)
-      .slice(0, 10);
+      .slice(0, 10));
 
     return {
       country: data.country.toUpperCase(),
       totals: { total, humans, bots, ctr },
-      byDevice: bucket(clicks, (c) => c.device),
-      byBrowser: bucket(clicks, (c) => c.browser).slice(0, 8),
-      byOS: bucket(clicks, (c) => c.os).slice(0, 8),
+      byDevice: softenBucket(bucket(clicks, (c) => c.device)),
+      byBrowser: softenBucket(bucket(clicks, (c) => c.browser).slice(0, 8)),
+      byOS: softenBucket(bucket(clicks, (c) => c.os).slice(0, 8)),
       byReferrer,
       byLink,
-      timeseries: [...tsMap.values()],
+      timeseries: [...tsMap.values()].map((d) => {
+        const s = soften(d.humans, d.bots);
+        return { date: d.date, humans: s.humans, bots: s.bots };
+      }),
       options,
       appliedFilters: { device: data.device ?? null, browser: data.browser ?? null, os: data.os ?? null },
     };
   });
+
 
 const DiagSchema = z.object({
   days: z.number().int().min(1).max(90).default(7),
