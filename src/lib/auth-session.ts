@@ -102,7 +102,7 @@ export async function refreshSupabaseSessionOnce(options: { force?: boolean } = 
 
       if (error && !isAuthStorageError(error)) return null;
       return waitForStoredSession(currentToken, 2_000);
-    }, options.force ?? false).finally(() => {
+    }).finally(() => {
       refreshPromise = null;
     });
   }
@@ -110,7 +110,7 @@ export async function refreshSupabaseSessionOnce(options: { force?: boolean } = 
   return refreshPromise;
 }
 
-async function withRefreshLock(operation: () => Promise<string | null>, force = false) {
+async function withRefreshLock(operation: () => Promise<string | null>) {
   if (typeof window === "undefined") return operation();
 
   const lockId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
