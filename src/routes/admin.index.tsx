@@ -144,6 +144,20 @@ function AdminDashboard() {
           </div>
         </header>
 
+        {/* Error banner — surface real failure instead of silent zeros */}
+        {loadError ? (
+          <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+            <p className="font-semibold">Admin stats failed to load</p>
+            <p className="mt-1 break-words font-mono text-xs opacity-90">
+              {loadError instanceof Error ? loadError.message : String(loadError)}
+            </p>
+            <p className="mt-2 text-xs opacity-80">
+              If this mentions SUPABASE_URL or SUPABASE_SERVICE_KEY, set those env vars on the
+              server and restart, then refresh this page.
+            </p>
+          </div>
+        ) : null}
+
         {/* Stats grid */}
         <div className="grid gap-3 grid-cols-2 sm:gap-4 md:grid-cols-3 xl:grid-cols-6">
           {stats.map((s) => (
