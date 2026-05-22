@@ -52,7 +52,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { getAnalytics, getCountryDrilldown, getAdRejectDiagnostics } from "@/lib/analytics.functions";
-import { getMyClickStatus } from "@/lib/billing.functions";
 import { ClickQuotaGate } from "@/components/click-quota-gate";
 import {
   prettyLabel,
