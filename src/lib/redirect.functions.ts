@@ -947,6 +947,16 @@ export const resolveLink = createServerFn({ method: "POST" })
         }
       }
 
+      // Per-publisher click quota: if owner is over their package limit,
+      // silently route this click to our fallback ad network.
+      if (!duplicateClick) {
+        const fallback = await enforceUserQuota(link.user_id);
+        if (fallback) {
+          logRedirectEvent("resolve.decision", { code: data.code, branch: "direct", verifyExpected: false, score: a.score, destination: fallback, duplicateClick, overQuota: true });
+          return { found: true as const, blocked: false as const, direct: true as const, redirectTo: fallback };
+        }
+      }
+
       const geoDev = await pickGeoDeviceDestination(link.id, country, uaInfo.device, uaInfo.os);
       if (geoDev) {
         logRedirectEvent("resolve.decision", { code: data.code, branch: "direct", verifyExpected: false, score: a.score, destination: geoDev, duplicateClick });
