@@ -1,6 +1,8 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
+  Sparkles,
+  LayoutDashboard,
   BarChart3,
   Trophy,
   ShieldCheck,
@@ -12,6 +14,7 @@ import {
   Users,
   Package,
   CreditCard,
+  Rocket,
   LayoutGrid,
   Activity,
   Megaphone,
@@ -46,9 +49,11 @@ function planLabelFromSlug(slug?: string | null) {
 }
 
 const mainNav = [
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Funnel", url: "/funnel", icon: GitBranch },
   { title: "Domains", url: "/domains", icon: Globe2 },
+  { title: "Upgrade", url: "/upgrade", icon: Rocket },
 ];
 
 const adminNav = [
