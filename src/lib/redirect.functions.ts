@@ -1359,6 +1359,15 @@ export const verifyHuman = createServerFn({ method: "POST" })
       }
     }
 
+    // Per-publisher click quota enforcement (verifyHuman path).
+    if (!duplicateClick) {
+      const fallback = await enforceUserQuota(link.user_id);
+      if (fallback) {
+        logRedirectEvent("verify.decision", { code: data.code, branch: "human-passed", score, duplicateClick, destination: fallback, overQuota: true });
+        return { ok: true as const, destination: fallback };
+      }
+    }
+
     // Final destination priority (cascade):
     //   1) Geo / device-OS specific Adsterra link (per-link rules)
     //   2) Weighted rotator over link_destinations
