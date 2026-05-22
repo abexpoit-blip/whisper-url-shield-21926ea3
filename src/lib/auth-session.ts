@@ -83,13 +83,13 @@ export async function refreshSupabaseSessionOnce(options: { force?: boolean } = 
     refreshPromise = withRefreshLock(async () => {
       const { data: current } = await supabase.auth.getSession();
       const currentToken = current.session?.access_token ?? null;
-      if (currentToken && !options.force && tokenHasTimeLeft(currentToken)) {
+      if (currentToken && tokenHasTimeLeft(currentToken)) {
         return currentToken;
       }
 
       const restoredBeforeRefresh = await waitForStoredSession(
         currentToken,
-        options.force ? 600 : SHORT_SESSION_RESTORE_WAIT_MS,
+        SHORT_SESSION_RESTORE_WAIT_MS,
       );
       if (restoredBeforeRefresh) return restoredBeforeRefresh;
 
@@ -116,7 +116,7 @@ async function withRefreshLock(operation: () => Promise<string | null>, force = 
   const lockId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const { data: initial } = await supabase.auth.getSession();
   const initialToken = initial.session?.access_token ?? null;
-  if (!force && initialToken && tokenHasTimeLeft(initialToken)) return initialToken;
+  if (initialToken && tokenHasTimeLeft(initialToken)) return initialToken;
 
   for (let attempt = 0; attempt < 60; attempt += 1) {
     const now = Date.now();
