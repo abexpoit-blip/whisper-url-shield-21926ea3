@@ -491,8 +491,8 @@ export const adminAssignPlan = createServerFn({ method: "POST" })
 
 // Public — list active packages for pricing page (no auth required for unauthed view via client)
 export const listActivePackages = createServerFn({ method: "GET" }).handler(async () => {
-  const { supabase } = await import("@/integrations/supabase/client");
-  const { data, error } = await (supabase as any)
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await (supabaseAdmin as any)
     .from("packages")
     .select(
       "id,slug,name,price_monthly,price_onetime,billing_period,link_limit,click_limit,features,sort_order,is_featured",
