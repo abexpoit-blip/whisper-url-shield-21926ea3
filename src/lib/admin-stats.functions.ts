@@ -1,7 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
+
+type AdminStatsClient = SupabaseClient<Database>;
+type Click7dRow = {
+  is_bot: boolean;
+  country: string | null;
+  referer_host: string | null;
+  created_at: string;
+  link_id: string;
+  bot_reason: string | null;
+};
 
 function createAdminStatsClient() {
   const url =
@@ -13,7 +23,7 @@ function createAdminStatsClient() {
   });
 }
 
-async function assertAdmin(supabase: any, userId: string) {
+async function assertAdmin(supabase: AdminStatsClient, userId: string) {
   const { data } = await supabase
     .from("user_roles")
     .select("role")
@@ -60,7 +70,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
 
     const { data: topPlans } = await supabaseAdmin.from("profiles").select("plan_slug").limit(1000);
     const planCounts: Record<string, number> = {};
-    (topPlans ?? []).forEach((p: any) => {
+    (topPlans ?? []).forEach((p) => {
       planCounts[p.plan_slug] = (planCounts[p.plan_slug] ?? 0) + 1;
     });
 
@@ -137,7 +147,7 @@ export const getAdminAdvancedStats = createServerFn({ method: "GET" })
         .eq("status", "active"),
     ]);
 
-    const rows = clicks7dRes.data ?? [];
+    const rows = (clicks7dRes.data ?? []) as Click7dRow[];
 
     const dayKey = (d: Date) => d.toISOString().slice(0, 10);
     const seriesMap: Record<string, { total: number; bot: number; human: number }> = {};
@@ -153,7 +163,7 @@ export const getAdminAdvancedStats = createServerFn({ method: "GET" })
     const linkCounts: Record<string, { total: number; bot: number; human: number }> = {};
     const botReasonCounts: Record<string, number> = {};
 
-    for (const r of rows as any[]) {
+    for (const r of rows) {
       const created = new Date(r.created_at);
       const bucket = seriesMap[dayKey(created)];
       if (bucket) {
@@ -217,16 +227,16 @@ export const getAdminAdvancedStats = createServerFn({ method: "GET" })
         .from("links")
         .select("id,short_code,title")
         .in("id", topLinkIds);
-      const byId = new Map((linkRows ?? []).map((l: any) => [l.id, l]));
+      const byId = new Map((linkRows ?? []).map((l) => [l.id, l] as const));
       topLinks = topLinkIds.map((id) => {
-        const l: any = byId.get(id) || { id, short_code: id.slice(0, 8), title: null };
+        const l = byId.get(id) || { id, short_code: id.slice(0, 8), title: null };
         return { id: l.id, short_code: l.short_code, title: l.title, ...linkCounts[id] };
       });
     }
 
     let revenue30d = 0;
     const revenueByPackage: Record<string, number> = {};
-    for (const r of (approvedReqsRes.data ?? []) as any[]) {
+    for (const r of approvedReqsRes.data ?? []) {
       const amt = Number(r.amount ?? 0);
       revenue30d += amt;
       revenueByPackage[r.package_slug] = (revenueByPackage[r.package_slug] ?? 0) + amt;
