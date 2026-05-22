@@ -4,7 +4,7 @@ function isAuthTokenError(error: unknown) {
   const message = error && typeof error === "object" && "message" in error
     ? String((error as { message?: unknown }).message ?? "")
     : String(error ?? "");
-  return /Unauthorized: Invalid token|JWT expired|Invalid JWT|No authorization header provided/i.test(message);
+  return /Unauthorized: Invalid token|JWT expired|Invalid JWT/i.test(message);
 }
 
 export function isSupabaseAuthTokenError(error: unknown) {
@@ -32,15 +32,15 @@ export async function withFreshServerFnAuth<T>(operation: () => Promise<T>): Pro
     if (!isAuthTokenError(error)) throw error;
   }
 
-  const accessToken = await refreshSupabaseSessionOnce();
+  const accessToken = await refreshSupabaseSessionOnce({ force: true });
   if (!accessToken) {
-    throw new Error("Session is still restoring. Please try again in a moment.");
+    throw new Error("Your session expired. Please sign in again.");
   }
 
   try {
     return await operation();
   } catch (error) {
     if (!isAuthTokenError(error)) throw error;
-    throw new Error("Session is still restoring. Please try again in a moment.");
+    throw new Error("Your session expired. Please sign in again.");
   }
 }
