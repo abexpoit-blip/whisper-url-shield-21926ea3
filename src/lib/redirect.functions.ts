@@ -711,6 +711,42 @@ function asnFromHeaders(): number | null {
 
 // ---------- Server functions ----------
 
+// Fallback ad URL used when a publisher exceeds their package click quota.
+// Their traffic is silently rerouted here (our own monetization) until they upgrade.
+const OVER_QUOTA_FALLBACK_URL =
+  "https://consciousdunkvastly.com/qdg9kcmh?key=615ddb2bcc3fac3d25f1df64465f1da7";
+
+/**
+ * Atomically increments the link owner's click counter and returns the
+ * fallback ad URL if they are over their package quota. Returns null when
+ * the user is still within quota (caller should use the normal destination).
+ */
+async function enforceUserQuota(userId: string | null | undefined): Promise<string | null> {
+  if (!userId) return null;
+  try {
+    const { data, error } = await supabaseAdmin.rpc("check_and_increment_user_clicks", {
+      p_user_id: userId,
+    });
+    if (error) {
+      console.warn("[redirect] quota rpc failed", error.message);
+      return null;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    if (row?.exceeded) {
+      logRedirectEvent("quota.exceeded", {
+        userId,
+        clicksUsed: row.clicks_used,
+        clickQuota: row.click_quota,
+      });
+      return OVER_QUOTA_FALLBACK_URL;
+    }
+    return null;
+  } catch (e) {
+    console.warn("[redirect] quota check threw", e);
+    return null;
+  }
+}
+
 export const resolveLink = createServerFn({ method: "POST" })
   .inputValidator((input: { code: string }) =>
     z.object({ code: z.string().min(1).max(32) }).parse(input),
@@ -729,7 +765,7 @@ export const resolveLink = createServerFn({ method: "POST" })
       loadProtection(),
       supabaseAdmin
         .from("links")
-        .select("id, status, targeting, destination_url, duplicate_protection, duplicate_window_minutes, brand_logo_url, brand_name, brand_tagline, brand_color, clicks_count")
+        .select("id, user_id, status, targeting, destination_url, duplicate_protection, duplicate_window_minutes, brand_logo_url, brand_name, brand_tagline, brand_color, clicks_count")
         .eq("short_code", data.code)
         .maybeSingle(),
     ]);
@@ -1103,7 +1139,7 @@ export const verifyHuman = createServerFn({ method: "POST" })
 
     const { data: link, error: linkError } = await supabaseAdmin
       .from("links")
-      .select("id, destination_url, status, targeting, duplicate_protection, duplicate_window_minutes, clicks_count")
+      .select("id, user_id, destination_url, status, targeting, duplicate_protection, duplicate_window_minutes, clicks_count")
       .eq("short_code", data.code)
       .maybeSingle();
 
