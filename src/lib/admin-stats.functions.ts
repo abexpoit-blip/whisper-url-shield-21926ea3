@@ -1,9 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { Database } from "@/integrations/supabase/types";
-
-type AdminStatsClient = SupabaseClient<Database>;
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 type Click7dRow = {
   is_bot: boolean;
   country: string | null;
@@ -13,8 +10,8 @@ type Click7dRow = {
   bot_reason: string | null;
 };
 
-async function assertAdmin(supabase: AdminStatsClient, userId: string) {
-  const { data } = await supabase
+async function assertAdmin(userId: string) {
+  const { data } = await supabaseAdmin
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
@@ -30,8 +27,7 @@ function throwIfError(label: string, error: { message?: string } | null) {
 export const getAdminOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
-    const supabaseAdmin = context.supabase;
+    await assertAdmin(context.userId);
     const [users, links, clicks, pending, domains, packages] = await Promise.all([
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("links").select("id", { count: "exact", head: true }),
@@ -101,8 +97,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
 export const getAdminAdvancedStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
-    const supabaseAdmin = context.supabase;
+    await assertAdmin(context.userId);
 
     const now = new Date();
     const since7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);

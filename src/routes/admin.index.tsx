@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Users,
   Link2,
@@ -33,6 +35,17 @@ export const Route = createFileRoute("/admin/")({ component: AdminDashboard });
 function AdminDashboard() {
   const fn = useServerFn(getAdminOverview);
   const advFn = useServerFn(getAdminAdvancedStats);
+  const [authReady, setAuthReady] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(() => {
+      if (active) setAuthReady(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
   const {
     data,
     isLoading,
@@ -40,6 +53,7 @@ function AdminDashboard() {
   } = useQuery({
     queryKey: ["admin", "overview"],
     queryFn: () => withFreshServerFnAuth(() => fn()),
+    enabled: authReady,
     staleTime: 5 * 60_000,
     retry: (failureCount, error) => !isRecoverableSessionError(error) && failureCount < 1,
   });
@@ -50,6 +64,7 @@ function AdminDashboard() {
   } = useQuery({
     queryKey: ["admin", "advanced"],
     queryFn: () => withFreshServerFnAuth(() => advFn()),
+    enabled: authReady,
     staleTime: 5 * 60_000,
     retry: (failureCount, error) => !isRecoverableSessionError(error) && failureCount < 1,
   });
@@ -152,8 +167,7 @@ function AdminDashboard() {
               {loadError instanceof Error ? loadError.message : String(loadError)}
             </p>
             <p className="mt-2 text-xs opacity-80">
-              If this mentions SUPABASE_URL or SUPABASE_SERVICE_KEY, set those env vars on the
-              server and restart, then refresh this page.
+              Please refresh once. If it continues, sign out and log in again from the admin login page.
             </p>
           </div>
         ) : null}

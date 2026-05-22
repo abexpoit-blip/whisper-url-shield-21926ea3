@@ -1,8 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  Sparkles,
-  LayoutDashboard,
   BarChart3,
   Trophy,
   ShieldCheck,
@@ -14,7 +12,6 @@ import {
   Users,
   Package,
   CreditCard,
-  Rocket,
   LayoutGrid,
   Activity,
   Megaphone,
@@ -49,11 +46,9 @@ function planLabelFromSlug(slug?: string | null) {
 }
 
 const mainNav = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Funnel", url: "/funnel", icon: GitBranch },
   { title: "Domains", url: "/domains", icon: Globe2 },
-  { title: "Upgrade", url: "/upgrade", icon: Rocket },
 ];
 
 const adminNav = [
@@ -128,6 +123,7 @@ export function AppSidebar({ email, isAdmin = false }: { email?: string; isAdmin
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-3">
+        {!isAdmin && (
         <SidebarGroup>
           {!collapsed && (
             <SidebarGroupLabel className="px-3 text-[10px] uppercase tracking-[0.14em] text-sidebar-foreground/50">
@@ -153,9 +149,10 @@ export function AppSidebar({ email, isAdmin = false }: { email?: string; isAdmin
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
 
         {isAdmin && (
-        <SidebarGroup className="mt-4">
+        <SidebarGroup>
           {!collapsed && (
             <SidebarGroupLabel className="px-3 text-[10px] uppercase tracking-[0.14em] text-sidebar-foreground/50">
               Admin
@@ -180,21 +177,6 @@ export function AppSidebar({ email, isAdmin = false }: { email?: string; isAdmin
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        )}
-
-        {!collapsed && (
-          <div className="mx-2 mt-6 overflow-hidden rounded-xl border border-sidebar-border/60 bg-gradient-to-br from-sky-500/15 via-sky-400/5 to-transparent p-4">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-sky-300" />
-              <span className="text-xs font-semibold text-white">{planLabel}</span>
-            </div>
-            <p className="mt-2 text-[11px] leading-relaxed text-sidebar-foreground/70">
-              Upgrade for unlimited links, custom domains & API.
-            </p>
-            <Button asChild size="sm" className="mt-3 h-7 w-full bg-gradient-to-r from-sky-500 to-sky-400 text-white text-xs hover:opacity-90">
-              <Link to="/upgrade">Upgrade</Link>
-            </Button>
-          </div>
         )}
 
         {/* Dev Credit */}

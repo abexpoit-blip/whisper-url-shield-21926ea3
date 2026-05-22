@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { waitForStoredSession } from "@/lib/auth-session";
 
 export const Route = createFileRoute("/control-panel")({
   head: () => ({
@@ -52,6 +53,7 @@ function ControlPanelLogin() {
       setErr("Invalid credentials.");
       return;
     }
+    await waitForStoredSession(null, 1_500);
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (!data.session || userError || !userData.user) {
       setLoading(false);

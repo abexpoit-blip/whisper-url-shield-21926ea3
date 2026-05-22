@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, Link, redirect, useRouter, useRouterState, use
 import { useEffect, useState, useMemo } from "react";
 import {
   ArrowLeft, ChevronRight, ChevronLeft, Shield, LayoutGrid,
-  LogOut, LayoutDashboard,
+  LogOut,
 } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -201,8 +201,6 @@ function AdminLayout() {
             </Badge>
 
             {/* Account menu */}
-
-            {/* Account menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="ml-auto h-9 gap-2 px-1.5 sm:ml-1 sm:px-2">
@@ -234,12 +232,6 @@ function AdminLayout() {
                     <LayoutGrid className="h-4 w-4" /> Admin Overview
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/dashboard" className="flex items-center gap-2">
-                    <LayoutDashboard className="h-4 w-4" /> User Dashboard
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="text-destructive focus:text-destructive"

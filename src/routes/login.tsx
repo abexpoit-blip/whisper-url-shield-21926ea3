@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { getVerifiedClientSession } from "@/lib/auth-guard";
+import { waitForStoredSession } from "@/lib/auth-session";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (search) => ({
@@ -44,7 +45,8 @@ function LoginPage() {
   useEffect(() => {
     let active = true;
     void (async () => {
-      const verified = await getVerifiedClientSession();
+      await waitForStoredSession(null, 1_500);
+    const verified = await getVerifiedClientSession();
       if (active && verified) navigate({ to: redirect });
     })();
     return () => {
@@ -63,6 +65,7 @@ function LoginPage() {
       setErrorMessage(error.message);
       return toast.error(error.message);
     }
+    await waitForStoredSession(null, 1_500);
     const verified = await getVerifiedClientSession();
     if (!verified) {
       setLoading(false);
