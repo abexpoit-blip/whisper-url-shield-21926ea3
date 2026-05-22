@@ -169,6 +169,26 @@ export const getMyPlan = createServerFn({ method: "GET" })
     return profile ?? { plan_slug: "free", link_quota: 1, links_used: 0 };
   });
 
+// ---------- Click quota status (for dashboard popup) ----------
+export const getMyClickStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data, error } = await (supabase as any).rpc("get_user_click_status", {
+      p_user_id: userId,
+    });
+    if (error) {
+      return { click_quota: null, clicks_used: 0, exceeded: false, period_kind: "monthly" };
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    return {
+      click_quota: row?.click_quota ?? null,
+      clicks_used: Number(row?.clicks_used ?? 0),
+      exceeded: Boolean(row?.exceeded),
+      period_kind: row?.period_kind ?? "monthly",
+    };
+  });
+
 // ---------- Upgrade requests ----------
 export const requestUpgrade = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
