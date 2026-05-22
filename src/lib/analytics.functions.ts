@@ -259,8 +259,11 @@ export const getCountryDrilldown = createServerFn({ method: "POST" })
     );
 
     const total = clicks.length;
-    const bots = clicks.filter((c) => c.is_bot).length;
-    const humans = total - bots;
+    const botsRaw = clicks.filter((c) => c.is_bot).length;
+    const humansRaw = total - botsRaw;
+    const sT = soften(humansRaw, botsRaw);
+    const humans = sT.humans;
+    const bots = sT.bots;
     const ctr = total ? humans / total : 0;
 
     const tsMap = new Map<string, { date: string; humans: number; bots: number }>();
@@ -279,9 +282,10 @@ export const getCountryDrilldown = createServerFn({ method: "POST" })
         const lc = clicks.filter((c) => c.link_id === l.id);
         const lt = lc.length;
         const lb = lc.filter((c) => c.is_bot).length;
+        const s = soften(lt - lb, lb);
         return {
           id: l.id, short_code: l.short_code, title: l.title,
-          total: lt, humans: lt - lb, bots: lb, conversion: lt ? (lt - lb) / lt : 0,
+          total: lt, humans: s.humans, bots: s.bots, conversion: lt ? s.humans / lt : 0,
         };
       })
       .filter((l) => l.total > 0)
@@ -305,24 +309,28 @@ export const getCountryDrilldown = createServerFn({ method: "POST" })
         incRef("unknown", c.is_bot);
       }
     }
-    const byReferrer = [...refMap.entries()]
+    const byReferrer = softenBucket([...refMap.entries()]
       .map(([key, v]) => ({ key, total: v.total, humans: v.humans, bots: v.bots }))
       .sort((a, b) => b.total - a.total)
-      .slice(0, 10);
+      .slice(0, 10));
 
     return {
       country: data.country.toUpperCase(),
       totals: { total, humans, bots, ctr },
-      byDevice: bucket(clicks, (c) => c.device),
-      byBrowser: bucket(clicks, (c) => c.browser).slice(0, 8),
-      byOS: bucket(clicks, (c) => c.os).slice(0, 8),
+      byDevice: softenBucket(bucket(clicks, (c) => c.device)),
+      byBrowser: softenBucket(bucket(clicks, (c) => c.browser).slice(0, 8)),
+      byOS: softenBucket(bucket(clicks, (c) => c.os).slice(0, 8)),
       byReferrer,
       byLink,
-      timeseries: [...tsMap.values()],
+      timeseries: [...tsMap.values()].map((d) => {
+        const s = soften(d.humans, d.bots);
+        return { date: d.date, humans: s.humans, bots: s.bots };
+      }),
       options,
       appliedFilters: { device: data.device ?? null, browser: data.browser ?? null, os: data.os ?? null },
     };
   });
+
 
 const DiagSchema = z.object({
   days: z.number().int().min(1).max(90).default(7),
