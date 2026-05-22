@@ -937,6 +937,10 @@ export type Database = {
         Row: {
           ads_shown_today: number
           avatar_url: string | null
+          click_quota: number | null
+          clicks_period_kind: string
+          clicks_period_start: string
+          clicks_used: number
           created_at: string
           email: string | null
           full_name: string | null
@@ -951,6 +955,10 @@ export type Database = {
         Insert: {
           ads_shown_today?: number
           avatar_url?: string | null
+          click_quota?: number | null
+          clicks_period_kind?: string
+          clicks_period_start?: string
+          clicks_used?: number
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -965,6 +973,10 @@ export type Database = {
         Update: {
           ads_shown_today?: number
           avatar_url?: string | null
+          click_quota?: number | null
+          clicks_period_kind?: string
+          clicks_period_start?: string
+          clicks_used?: number
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -1124,6 +1136,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_and_increment_user_clicks: {
+        Args: { p_user_id: string }
+        Returns: {
+          click_quota: number
+          clicks_used: number
+          exceeded: boolean
+        }[]
+      }
       clicks_breakdown: {
         Args: { p_dim: string; p_link_id: string; p_since: string }
         Returns: {
@@ -1140,6 +1160,16 @@ export type Database = {
           day: string
           humans: number
           link_id: string
+        }[]
+      }
+      get_user_click_status: {
+        Args: { p_user_id: string }
+        Returns: {
+          click_quota: number
+          clicks_used: number
+          exceeded: boolean
+          period_kind: string
+          period_start: string
         }[]
       }
       has_role: {
