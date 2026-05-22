@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { redirectToLoginPreservingPath, refreshSupabaseSessionOnce } from "@/lib/auth-session";
 
 function isAuthTokenError(error: unknown) {
   const message = error && typeof error === "object" && "message" in error
@@ -17,21 +17,17 @@ export async function withFreshSupabaseAuth<T extends { error: { message?: strin
   const first = await operation();
   if (!first.error || !isAuthTokenError(first.error)) return first;
 
-  const refreshed = await supabase.auth.refreshSession();
-  if (refreshed.error || !refreshed.data.session?.access_token) {
-    await supabase.auth.signOut();
-    if (typeof window !== "undefined") window.location.replace(`/login?redirect=${encodeURIComponent(window.location.href)}`);
+  const accessToken = await refreshSupabaseSessionOnce();
+  if (!accessToken) {
+    redirectToLoginPreservingPath();
     return { ...first, error: null } as T;
   }
 
   return operation();
 }
 
-async function clearBadSessionAndRedirect() {
-  await supabase.auth.signOut();
-  if (typeof window !== "undefined") {
-    window.location.replace(`/login?redirect=${encodeURIComponent(window.location.href)}`);
-  }
+function redirectExpiredSession() {
+  redirectToLoginPreservingPath();
 }
 
 export async function withFreshServerFnAuth<T>(operation: () => Promise<T>): Promise<T> {
@@ -41,9 +37,9 @@ export async function withFreshServerFnAuth<T>(operation: () => Promise<T>): Pro
     if (!isAuthTokenError(error)) throw error;
   }
 
-  const refreshed = await supabase.auth.refreshSession();
-  if (refreshed.error || !refreshed.data.session?.access_token) {
-    await clearBadSessionAndRedirect();
+  const accessToken = await refreshSupabaseSessionOnce();
+  if (!accessToken) {
+    redirectExpiredSession();
     throw new Error("Session expired. Please sign in again.");
   }
 
@@ -51,7 +47,7 @@ export async function withFreshServerFnAuth<T>(operation: () => Promise<T>): Pro
     return await operation();
   } catch (error) {
     if (!isAuthTokenError(error)) throw error;
-    await clearBadSessionAndRedirect();
+    redirectExpiredSession();
     throw new Error("Session expired. Please sign in again.");
   }
 }

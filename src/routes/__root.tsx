@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { supabase } from "@/integrations/supabase/client";
+import { refreshSupabaseSessionOnce } from "@/lib/auth-session";
 import { APP_BUILD_VERSION, versionedAssetUrl } from "@/lib/build-version";
 import appCss from "../styles.css?url";
 
@@ -300,9 +301,8 @@ function AuthSync() {
       if (!sess.session) return;
       const { error } = await supabase.auth.getUser();
       if (error) {
-        const refreshed = await supabase.auth.refreshSession();
-        if (refreshed.error || !refreshed.data.session?.access_token) {
-          await supabase.auth.signOut();
+        const accessToken = await refreshSupabaseSessionOnce();
+        if (!accessToken) {
           router.invalidate();
           queryClient.clear();
         }
