@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -13,23 +13,6 @@ type Click7dRow = {
   bot_reason: string | null;
 };
 
-function createAdminStatsClient() {
-  // IMPORTANT: must point to the SAME Supabase project as auth-middleware.
-  // Do NOT fall back to REDIRECT_SUPABASE_URL — that env var is for the
-  // public redirect worker and may point to a different/empty project,
-  // which would silently return 0 counts on the admin dashboard.
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
-  if (!url) throw new Error("Admin stats: SUPABASE_URL is not set on the server");
-  if (!key)
-    throw new Error(
-      "Admin stats: SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SERVICE_KEY) is not set on the server",
-    );
-  return createClient<Database>(url, key, {
-    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-  });
-}
-
 async function assertAdmin(supabase: AdminStatsClient, userId: string) {
   const { data } = await supabase
     .from("user_roles")
@@ -40,11 +23,15 @@ async function assertAdmin(supabase: AdminStatsClient, userId: string) {
   if (!data) throw new Error("Forbidden");
 }
 
+function throwIfError(label: string, error: { message?: string } | null) {
+  if (error) throw new Error(`Admin stats ${label} failed: ${error.message ?? "unknown error"}`);
+}
+
 export const getAdminOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const supabaseAdmin = createAdminStatsClient();
+    const supabaseAdmin = context.supabase;
     const [users, links, clicks, pending, domains, packages] = await Promise.all([
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("links").select("id", { count: "exact", head: true }),
@@ -63,19 +50,32 @@ export const getAdminOverview = createServerFn({ method: "GET" })
         .eq("is_active", true),
     ]);
 
-    const { data: recentReqs } = await supabaseAdmin
+    throwIfError("users count", users.error);
+    throwIfError("links count", links.error);
+    throwIfError("clicks count", clicks.error);
+    throwIfError("pending requests count", pending.error);
+    throwIfError("active domains count", domains.error);
+    throwIfError("active packages count", packages.error);
+
+    const { data: recentReqs, error: recentReqsError } = await supabaseAdmin
       .from("upgrade_requests")
       .select("id,user_id,package_slug,status,amount,created_at")
       .order("created_at", { ascending: false })
       .limit(5);
+    throwIfError("recent requests", recentReqsError);
 
-    const { data: recentLinks } = await supabaseAdmin
+    const { data: recentLinks, error: recentLinksError } = await supabaseAdmin
       .from("links")
       .select("id,short_code,title,clicks_count,created_at")
       .order("created_at", { ascending: false })
       .limit(5);
+    throwIfError("recent links", recentLinksError);
 
-    const { data: topPlans } = await supabaseAdmin.from("profiles").select("plan_slug").limit(1000);
+    const { data: topPlans, error: topPlansError } = await supabaseAdmin
+      .from("profiles")
+      .select("plan_slug")
+      .limit(1000);
+    throwIfError("plan distribution", topPlansError);
     const planCounts: Record<string, number> = {};
     (topPlans ?? []).forEach((p) => {
       planCounts[p.plan_slug] = (planCounts[p.plan_slug] ?? 0) + 1;
@@ -102,7 +102,7 @@ export const getAdminAdvancedStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const supabaseAdmin = createAdminStatsClient();
+    const supabaseAdmin = context.supabase;
 
     const now = new Date();
     const since7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -153,6 +153,13 @@ export const getAdminAdvancedStats = createServerFn({ method: "GET" })
         .select("id", { count: "exact", head: true })
         .eq("status", "active"),
     ]);
+
+    throwIfError("clicks 7d", clicks7dRes.error);
+    throwIfError("approved requests", approvedReqsRes.error);
+    throwIfError("new users 7d", newUsers7dRes.error);
+    throwIfError("new users 30d", newUsers30dRes.error);
+    throwIfError("banned users", bannedUsersRes.error);
+    throwIfError("active links", activeLinksRes.error);
 
     const rows = (clicks7dRes.data ?? []) as Click7dRow[];
 
@@ -230,10 +237,11 @@ export const getAdminAdvancedStats = createServerFn({ method: "GET" })
       human: number;
     }> = [];
     if (topLinkIds.length) {
-      const { data: linkRows } = await supabaseAdmin
+      const { data: linkRows, error: linkRowsError } = await supabaseAdmin
         .from("links")
         .select("id,short_code,title")
         .in("id", topLinkIds);
+      throwIfError("top links", linkRowsError);
       const byId = new Map((linkRows ?? []).map((l) => [l.id, l] as const));
       topLinks = topLinkIds.map((id) => {
         const l = byId.get(id) || { id, short_code: id.slice(0, 8), title: null };
