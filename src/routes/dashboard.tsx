@@ -236,13 +236,14 @@ function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [range, refreshTick]);
 
-  // Auto-refresh only while the tab is visible; keep stats near real-time.
+  // Auto-refresh only while the tab is visible. 60s keeps stats fresh
+  // without hammering the server (analytics scans up to 5000 rows).
   useEffect(() => {
     if (!autoRefresh) return;
     const id = setInterval(() => {
       if (document.visibilityState !== "visible") return;
       setRefreshTick((t) => t + 1);
-    }, 15_000);
+    }, 60_000);
     return () => clearInterval(id);
   }, [autoRefresh]);
 
