@@ -1,11 +1,16 @@
 import { redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { refreshSupabaseSessionOnce, safeRedirectPath, tokenLooksUsable } from "@/lib/auth-session";
+import { refreshSupabaseSessionOnce, safeRedirectPath, tokenLooksUsable, waitForStoredSession } from "@/lib/auth-session";
 
 export async function getVerifiedClientSession() {
   if (typeof window === "undefined") return null;
 
   let { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session?.access_token) {
+    const restoredToken = await waitForStoredSession(null, 12_000);
+    if (!restoredToken) return null;
+    ({ data: sessionData } = await supabase.auth.getSession());
+  }
   if (!sessionData.session?.access_token) return null;
   if (!tokenLooksUsable(sessionData.session.access_token)) {
     return null;
