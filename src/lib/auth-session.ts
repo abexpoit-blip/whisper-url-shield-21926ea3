@@ -1,8 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 
 const SUPPORTED_TOKEN_ALGORITHMS = new Set(["HS256", "ES256", "RS256"]);
+const REFRESH_LOCK_KEY = "sleepox.auth.refresh.lock";
+const REFRESH_LOCK_TTL_MS = 12_000;
 
 let refreshPromise: Promise<string | null> | null = null;
+
+const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
 function decodeJwtPart(part: string) {
   const base64 = part.replace(/-/g, "+").replace(/_/g, "/");
@@ -38,18 +42,46 @@ export function safeRedirectPath(locationHref?: string | null) {
 
 export async function refreshSupabaseSessionOnce() {
   if (!refreshPromise) {
-    refreshPromise = supabase.auth
-      .refreshSession()
-      .then(({ data, error }) => {
+    refreshPromise = withRefreshLock(async () => {
+      const { data, error } = await supabase.auth.refreshSession();
         if (!error && data.session?.access_token) return data.session.access_token;
         return supabase.auth.getSession().then(({ data: current }) => current.session?.access_token ?? null);
-      })
-      .finally(() => {
-        refreshPromise = null;
-      });
+    }).finally(() => {
+      refreshPromise = null;
+    });
   }
 
   return refreshPromise;
+}
+
+async function withRefreshLock<T>(operation: () => Promise<T>) {
+  if (typeof window === "undefined") return operation();
+
+  const lockId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  for (let attempt = 0; attempt < 24; attempt += 1) {
+    const now = Date.now();
+    const raw = window.localStorage.getItem(REFRESH_LOCK_KEY);
+    const existing = raw ? JSON.parse(raw) as { id?: string; expiresAt?: number } : null;
+
+    if (!existing?.expiresAt || existing.expiresAt < now) {
+      window.localStorage.setItem(REFRESH_LOCK_KEY, JSON.stringify({ id: lockId, expiresAt: now + REFRESH_LOCK_TTL_MS }));
+      const confirmed = JSON.parse(window.localStorage.getItem(REFRESH_LOCK_KEY) ?? "{}") as { id?: string };
+      if (confirmed.id === lockId) {
+        try {
+          return await operation();
+        } finally {
+          const latest = JSON.parse(window.localStorage.getItem(REFRESH_LOCK_KEY) ?? "{}") as { id?: string };
+          if (latest.id === lockId) window.localStorage.removeItem(REFRESH_LOCK_KEY);
+        }
+      }
+    }
+
+    await wait(250);
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.access_token) return data.session.access_token as T;
+  }
+
+  return operation();
 }
 
 export function redirectToLoginPreservingPath() {
