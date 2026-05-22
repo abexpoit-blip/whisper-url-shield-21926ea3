@@ -220,8 +220,11 @@ function Dashboard() {
       })
       .catch((error) => {
         const msg = error instanceof Error ? error.message : "Analytics failed to load";
+        // Don't flash "Refresh failed" for transient session-restore blips —
+        // the next auto-refresh tick will succeed once the token is ready.
+        if (isRecoverableSessionError(error)) return;
         setRefreshError(msg);
-        if (!isRecoverableSessionError(error)) toast.error(msg);
+        toast.error(msg);
       })
       .finally(() => setAnalyticsLoading(false));
 
