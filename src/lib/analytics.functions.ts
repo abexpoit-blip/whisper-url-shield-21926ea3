@@ -117,14 +117,14 @@ export const getAnalytics = createServerFn({ method: "POST" })
       .sort((a, b) => b.total - a.total);
 
     // Sample of recent rows for breakdowns (country/device/browser/os/variant/reasons/referrers).
-    // These are best-effort top-N from up to 10k recent rows — totals above are still accurate.
+    // Bumped to 50k rows so high-traffic links show full breakdowns instead of a thin slice.
     const { data: clicksRaw } = await supabase
       .from("clicks")
       .select("link_id,is_bot,country,device,os,browser,variant,bot_reason,referer,created_at")
       .in("link_id", linkIds)
       .gte("created_at", since)
       .order("created_at", { ascending: false })
-      .limit(10000);
+      .limit(50000);
     const clicks = (clicksRaw ?? []) as Click[];
 
     // Top reject reasons (split comma-separated reason strings)
