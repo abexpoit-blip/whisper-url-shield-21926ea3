@@ -26,3 +26,32 @@ export async function withFreshSupabaseAuth<T extends { error: { message?: strin
 
   return operation();
 }
+
+async function clearBadSessionAndRedirect() {
+  await supabase.auth.signOut();
+  if (typeof window !== "undefined") {
+    window.location.replace(`/login?redirect=${encodeURIComponent(window.location.href)}`);
+  }
+}
+
+export async function withFreshServerFnAuth<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (!isAuthTokenError(error)) throw error;
+  }
+
+  const refreshed = await supabase.auth.refreshSession();
+  if (refreshed.error || !refreshed.data.session?.access_token) {
+    await clearBadSessionAndRedirect();
+    throw new Error("Session expired. Please sign in again.");
+  }
+
+  try {
+    return await operation();
+  } catch (error) {
+    if (!isAuthTokenError(error)) throw error;
+    await clearBadSessionAndRedirect();
+    throw new Error("Session expired. Please sign in again.");
+  }
+}

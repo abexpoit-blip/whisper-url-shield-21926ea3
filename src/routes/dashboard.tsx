@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { requireClientUser } from "@/lib/auth-guard";
-import { isSupabaseAuthTokenError, withFreshSupabaseAuth } from "@/lib/supabase-retry";
+import { isSupabaseAuthTokenError, withFreshServerFnAuth, withFreshSupabaseAuth } from "@/lib/supabase-retry";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -181,7 +181,7 @@ function Dashboard() {
     setAnalyticsLoading(true);
     setRefreshError(null);
     const days = range === "day" ? 1 : range === "week" ? 7 : 30;
-    void fetchAnalytics({ data: { days, linkId: null } })
+    void withFreshServerFnAuth(() => fetchAnalytics({ data: { days, linkId: null } }))
       .then((res) => {
         setAnalytics(res);
         setLastUpdated(new Date());
@@ -195,7 +195,7 @@ function Dashboard() {
       .finally(() => setAnalyticsLoading(false));
 
     setDiagLoading(true);
-    void fetchDiag({ data: { days, linkId: null } })
+    void withFreshServerFnAuth(() => fetchDiag({ data: { days, linkId: null } }))
       .then((res) => setDiag(res))
       .catch(() => setDiag(null))
       .finally(() => setDiagLoading(false));
@@ -220,7 +220,7 @@ function Dashboard() {
 
   const loadCountryDrill = (cc: string, filters: { device: string | null; browser: string | null; os: string | null }) => {
     setCountryDrillLoading(true);
-    void fetchCountry({ data: { country: cc, days: rangeDays, linkId: null, device: filters.device, browser: filters.browser, os: filters.os } })
+    void withFreshServerFnAuth(() => fetchCountry({ data: { country: cc, days: rangeDays, linkId: null, device: filters.device, browser: filters.browser, os: filters.os } }))
       .then((res) => setCountryDrill(res))
       .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to load country data"))
       .finally(() => setCountryDrillLoading(false));

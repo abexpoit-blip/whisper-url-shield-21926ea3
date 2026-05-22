@@ -30,6 +30,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getFbAdQuality } from "@/lib/analytics.functions";
+import { withFreshServerFnAuth } from "@/lib/supabase-retry";
+import { requireClientUser } from "@/lib/auth-guard";
 import { CountryFlag, COUNTRY_NAMES } from "@/components/brand-icons";
 
 type Search = { days: number; linkId: string };
@@ -54,6 +56,7 @@ export const Route = createFileRoute("/fb-quality")({
     const linkId = typeof s.linkId === "string" && s.linkId.length ? s.linkId : "all";
     return { days, linkId };
   },
+  beforeLoad: ({ location }) => requireClientUser(location.href),
   component: FbQualityPage,
 });
 
@@ -90,9 +93,11 @@ function FbQualityPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await fetchQuality({
-        data: { days, linkId: linkId === "all" ? null : linkId, tzOffsetMinutes },
-      });
+      const res = await withFreshServerFnAuth(() =>
+        fetchQuality({
+          data: { days, linkId: linkId === "all" ? null : linkId, tzOffsetMinutes },
+        }),
+      );
       setData(res);
     } finally {
       setLoading(false);

@@ -34,6 +34,7 @@ import {
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { requireClientUser } from "@/lib/auth-guard";
+import { withFreshServerFnAuth } from "@/lib/supabase-retry";
 import { getLinkMonitor } from "@/lib/link-monitor.functions";
 import { getLinkBotInsights } from "@/lib/link-insights.functions";
 import { Button } from "@/components/ui/button";
@@ -93,7 +94,7 @@ function LinkMonitorPage() {
   const load = async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const res = await fetchMonitor({ data: { linkId, days } });
+      const res = await withFreshServerFnAuth(() => fetchMonitor({ data: { linkId, days } }));
       setData(res);
     } catch (e) {
       if (!silent) toast.error(e instanceof Error ? e.message : "Failed to load");
