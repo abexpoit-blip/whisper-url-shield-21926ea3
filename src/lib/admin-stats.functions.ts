@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -13,23 +13,6 @@ type Click7dRow = {
   bot_reason: string | null;
 };
 
-function createAdminStatsClient() {
-  // IMPORTANT: must point to the SAME Supabase project as auth-middleware.
-  // Do NOT fall back to REDIRECT_SUPABASE_URL — that env var is for the
-  // public redirect worker and may point to a different/empty project,
-  // which would silently return 0 counts on the admin dashboard.
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
-  if (!url) throw new Error("Admin stats: SUPABASE_URL is not set on the server");
-  if (!key)
-    throw new Error(
-      "Admin stats: SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SERVICE_KEY) is not set on the server",
-    );
-  return createClient<Database>(url, key, {
-    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-  });
-}
-
 async function assertAdmin(supabase: AdminStatsClient, userId: string) {
   const { data } = await supabase
     .from("user_roles")
@@ -38,6 +21,10 @@ async function assertAdmin(supabase: AdminStatsClient, userId: string) {
     .eq("role", "admin")
     .maybeSingle();
   if (!data) throw new Error("Forbidden");
+}
+
+function throwIfError(label: string, error: { message?: string } | null) {
+  if (error) throw new Error(`Admin stats ${label} failed: ${error.message ?? "unknown error"}`);
 }
 
 export const getAdminOverview = createServerFn({ method: "GET" })
