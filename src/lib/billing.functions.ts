@@ -97,8 +97,8 @@ export const listPackages = createServerFn({ method: "GET" })
   });
 
 export const listAvailablePackages = createServerFn({ method: "GET" }).handler(async () => {
-  const { supabase } = await import("@/integrations/supabase/client");
-  const { data, error } = await (supabase as any)
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await (supabaseAdmin as any)
     .from("packages")
     .select(PACKAGE_COLUMNS)
     .eq("is_active", true)
