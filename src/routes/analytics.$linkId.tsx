@@ -47,6 +47,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { SmartBackButton } from "@/components/smart-back-button";
 
 const ALLOWED_DAYS = [1, 7, 14, 30, 90] as const;
 const RANGE_TO_DAYS = { day: 1, week: 7, month: 30 } as const;

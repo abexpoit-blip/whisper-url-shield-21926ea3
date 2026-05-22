@@ -16,6 +16,7 @@ import {
   getProtectionStats,
 } from "@/lib/admin-protection.functions";
 import { analyzeSignalWeights, applyTunedWeights } from "@/lib/admin-tune.functions";
+import { SmartBackButton } from "@/components/smart-back-button";
 
 export const Route = createFileRoute("/admin/protection")({
   beforeLoad: ({ location }) => requireClientUser(location.href),

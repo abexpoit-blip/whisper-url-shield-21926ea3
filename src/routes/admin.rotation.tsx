@@ -23,6 +23,7 @@ import {
   promoteVariant,
   resetRotation,
 } from "@/lib/admin-rotation.functions";
+import { SmartBackButton } from "@/components/smart-back-button";
 
 export const Route = createFileRoute("/admin/rotation")({
   beforeLoad: ({ location }) => requireClientUser(location.href),

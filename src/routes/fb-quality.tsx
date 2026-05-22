@@ -33,6 +33,7 @@ import { getFbAdQuality } from "@/lib/analytics.functions";
 import { withFreshServerFnAuth } from "@/lib/supabase-retry";
 import { requireClientUser } from "@/lib/auth-guard";
 import { CountryFlag, COUNTRY_NAMES } from "@/components/brand-icons";
+import { SmartBackButton } from "@/components/smart-back-button";
 
 type Search = { days: number; linkId: string };
 const ALLOWED_DAYS = [1, 7, 14, 30] as const;
