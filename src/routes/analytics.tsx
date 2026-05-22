@@ -35,6 +35,7 @@ import {
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { requireClientUser } from "@/lib/auth-guard";
+import { withFreshServerFnAuth } from "@/lib/supabase-retry";
 import { getAnalytics } from "@/lib/analytics.functions";
 import {
   CountryFlag,
@@ -162,9 +163,11 @@ function AnalyticsPage() {
   const load = async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const res = await fetchAnalytics({
-        data: { days, linkId: linkId === "all" ? null : linkId },
-      });
+      const res = await withFreshServerFnAuth(() =>
+        fetchAnalytics({
+          data: { days, linkId: linkId === "all" ? null : linkId },
+        }),
+      );
       setData(res);
       setLastUpdated(new Date());
     } finally {
