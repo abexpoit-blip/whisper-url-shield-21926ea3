@@ -1,8 +1,29 @@
 import { createServerFn } from "@tanstack/react-start";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Database } from "@/integrations/supabase/types";
 
-async function assertAdmin(supabase: any, userId: string) {
+type AdminStatsClient = SupabaseClient<Database>;
+type Click7dRow = {
+  is_bot: boolean;
+  country: string | null;
+  referer_host: string | null;
+  created_at: string;
+  link_id: string;
+  bot_reason: string | null;
+};
+
+function createAdminStatsClient() {
+  const url =
+    process.env.SUPABASE_URL || process.env.REDIRECT_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+  if (!url || !key) throw new Error("Missing backend admin environment for admin dashboard stats");
+  return createClient<Database>(url, key, {
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+  });
+}
+
+async function assertAdmin(supabase: AdminStatsClient, userId: string) {
   const { data } = await supabase
     .from("user_roles")
     .select("role")
@@ -16,13 +37,23 @@ export const getAdminOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.supabase, context.userId);
+    const supabaseAdmin = createAdminStatsClient();
     const [users, links, clicks, pending, domains, packages] = await Promise.all([
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("links").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("clicks").select("id", { count: "exact", head: true }),
-      supabaseAdmin.from("upgrade_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
-      supabaseAdmin.from("shared_domains").select("id", { count: "exact", head: true }).eq("is_active", true),
-      supabaseAdmin.from("packages").select("id", { count: "exact", head: true }).eq("is_active", true),
+      supabaseAdmin
+        .from("upgrade_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending"),
+      supabaseAdmin
+        .from("shared_domains")
+        .select("id", { count: "exact", head: true })
+        .eq("is_active", true),
+      supabaseAdmin
+        .from("packages")
+        .select("id", { count: "exact", head: true })
+        .eq("is_active", true),
     ]);
 
     const { data: recentReqs } = await supabaseAdmin
@@ -37,12 +68,9 @@ export const getAdminOverview = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(5);
 
-    const { data: topPlans } = await supabaseAdmin
-      .from("profiles")
-      .select("plan_slug")
-      .limit(1000);
+    const { data: topPlans } = await supabaseAdmin.from("profiles").select("plan_slug").limit(1000);
     const planCounts: Record<string, number> = {};
-    (topPlans ?? []).forEach((p: any) => {
+    (topPlans ?? []).forEach((p) => {
       planCounts[p.plan_slug] = (planCounts[p.plan_slug] ?? 0) + 1;
     });
 
@@ -67,6 +95,7 @@ export const getAdminAdvancedStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.supabase, context.userId);
+    const supabaseAdmin = createAdminStatsClient();
 
     const now = new Date();
     const since7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -118,7 +147,7 @@ export const getAdminAdvancedStats = createServerFn({ method: "GET" })
         .eq("status", "active"),
     ]);
 
-    const rows = clicks7dRes.data ?? [];
+    const rows = (clicks7dRes.data ?? []) as Click7dRow[];
 
     const dayKey = (d: Date) => d.toISOString().slice(0, 10);
     const seriesMap: Record<string, { total: number; bot: number; human: number }> = {};
@@ -126,22 +155,26 @@ export const getAdminAdvancedStats = createServerFn({ method: "GET" })
       seriesMap[dayKey(new Date(now.getTime() - i * 86400000))] = { total: 0, bot: 0, human: 0 };
     }
 
-    let last24hTotal = 0, last24hBot = 0, last24hHuman = 0;
+    let last24hTotal = 0,
+      last24hBot = 0,
+      last24hHuman = 0;
     const countryCounts: Record<string, number> = {};
     const refererCounts: Record<string, number> = {};
     const linkCounts: Record<string, { total: number; bot: number; human: number }> = {};
     const botReasonCounts: Record<string, number> = {};
 
-    for (const r of rows as any[]) {
+    for (const r of rows) {
       const created = new Date(r.created_at);
       const bucket = seriesMap[dayKey(created)];
       if (bucket) {
         bucket.total++;
-        if (r.is_bot) bucket.bot++; else bucket.human++;
+        if (r.is_bot) bucket.bot++;
+        else bucket.human++;
       }
       if (created >= since24h) {
         last24hTotal++;
-        if (r.is_bot) last24hBot++; else last24hHuman++;
+        if (r.is_bot) last24hBot++;
+        else last24hHuman++;
       }
       const cc = (r.country || "??").toUpperCase();
       countryCounts[cc] = (countryCounts[cc] ?? 0) + 1;
@@ -164,33 +197,46 @@ export const getAdminAdvancedStats = createServerFn({ method: "GET" })
     const dailySeries = Object.entries(seriesMap).map(([date, v]) => ({ date, ...v }));
 
     const topCountries = Object.entries(countryCounts)
-      .sort((a, b) => b[1] - a[1]).slice(0, 8)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
       .map(([country, count]) => ({ country, count }));
     const topReferers = Object.entries(refererCounts)
-      .sort((a, b) => b[1] - a[1]).slice(0, 8)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
       .map(([host, count]) => ({ host, count }));
     const topBotReasons = Object.entries(botReasonCounts)
-      .sort((a, b) => b[1] - a[1]).slice(0, 6)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
       .map(([reason, count]) => ({ reason, count }));
 
     const topLinkIds = Object.entries(linkCounts)
-      .sort((a, b) => b[1].total - a[1].total).slice(0, 8)
+      .sort((a, b) => b[1].total - a[1].total)
+      .slice(0, 8)
       .map(([id]) => id);
 
-    let topLinks: Array<{ id: string; short_code: string; title: string | null; total: number; bot: number; human: number }> = [];
+    let topLinks: Array<{
+      id: string;
+      short_code: string;
+      title: string | null;
+      total: number;
+      bot: number;
+      human: number;
+    }> = [];
     if (topLinkIds.length) {
       const { data: linkRows } = await supabaseAdmin
-        .from("links").select("id,short_code,title").in("id", topLinkIds);
-      const byId = new Map((linkRows ?? []).map((l: any) => [l.id, l]));
+        .from("links")
+        .select("id,short_code,title")
+        .in("id", topLinkIds);
+      const byId = new Map((linkRows ?? []).map((l) => [l.id, l] as const));
       topLinks = topLinkIds.map((id) => {
-        const l: any = byId.get(id) || { id, short_code: id.slice(0, 8), title: null };
+        const l = byId.get(id) || { id, short_code: id.slice(0, 8), title: null };
         return { id: l.id, short_code: l.short_code, title: l.title, ...linkCounts[id] };
       });
     }
 
     let revenue30d = 0;
     const revenueByPackage: Record<string, number> = {};
-    for (const r of (approvedReqsRes.data ?? []) as any[]) {
+    for (const r of approvedReqsRes.data ?? []) {
       const amt = Number(r.amount ?? 0);
       revenue30d += amt;
       revenueByPackage[r.package_slug] = (revenueByPackage[r.package_slug] ?? 0) + amt;
@@ -203,7 +249,12 @@ export const getAdminAdvancedStats = createServerFn({ method: "GET" })
     return {
       dailySeries,
       last24h: { total: last24hTotal, bot: last24hBot, human: last24hHuman },
-      last7d: { total: total7d, bot: bot7d, human: human7d, botPct: total7d ? Math.round((bot7d / total7d) * 100) : 0 },
+      last7d: {
+        total: total7d,
+        bot: bot7d,
+        human: human7d,
+        botPct: total7d ? Math.round((bot7d / total7d) * 100) : 0,
+      },
       topCountries,
       topReferers,
       topLinks,

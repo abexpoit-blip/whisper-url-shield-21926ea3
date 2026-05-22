@@ -47,11 +47,26 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { requireClientUser } from "@/lib/auth-guard";
-import { isSupabaseAuthTokenError, withFreshServerFnAuth, withFreshSupabaseAuth } from "@/lib/supabase-retry";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  isRecoverableSessionError,
+  isSupabaseAuthTokenError,
+  withFreshServerFnAuth,
+  withFreshSupabaseAuth,
+} from "@/lib/supabase-retry";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { getAnalytics, getCountryDrilldown, getAdRejectDiagnostics } from "@/lib/analytics.functions";
+import {
+  getAnalytics,
+  getCountryDrilldown,
+  getAdRejectDiagnostics,
+} from "@/lib/analytics.functions";
 import { ClickQuotaGate } from "@/components/click-quota-gate";
 import {
   prettyLabel,
@@ -66,9 +81,16 @@ export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — LinkShield" },
-      { name: "description", content: "Manage your bot-filtered short links, monitor click quality, and pause underperforming campaigns from one place." },
+      {
+        name: "description",
+        content:
+          "Manage your bot-filtered short links, monitor click quality, and pause underperforming campaigns from one place.",
+      },
       { property: "og:title", content: "Dashboard — LinkShield" },
-      { property: "og:description", content: "Manage short links and ad-campaign click quality in real time." },
+      {
+        property: "og:description",
+        content: "Manage short links and ad-campaign click quality in real time.",
+      },
       { property: "og:url", content: "https://sleepox.com/dashboard" },
       { name: "robots", content: "noindex" },
     ],
@@ -130,10 +152,16 @@ function Dashboard() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [linksDialogOpen, setLinksDialogOpen] = useState(false);
   const fetchCountry = useServerFn(getCountryDrilldown);
-  const [countryDrill, setCountryDrill] = useState<Awaited<ReturnType<typeof getCountryDrilldown>> | null>(null);
+  const [countryDrill, setCountryDrill] = useState<Awaited<
+    ReturnType<typeof getCountryDrilldown>
+  > | null>(null);
   const [countryDrillCode, setCountryDrillCode] = useState<string | null>(null);
   const [countryDrillLoading, setCountryDrillLoading] = useState(false);
-  const [drillFilters, setDrillFilters] = useState<{ device: string | null; browser: string | null; os: string | null }>({ device: null, browser: null, os: null });
+  const [drillFilters, setDrillFilters] = useState<{
+    device: string | null;
+    browser: string | null;
+    os: string | null;
+  }>({ device: null, browser: null, os: null });
   const fetchDiag = useServerFn(getAdRejectDiagnostics);
   const [diag, setDiag] = useState<Awaited<ReturnType<typeof getAdRejectDiagnostics>> | null>(null);
   const [diagLoading, setDiagLoading] = useState(true);
@@ -148,7 +176,9 @@ function Dashboard() {
     const { data, error } = await withFreshSupabaseAuth(() =>
       supabase
         .from("links")
-        .select("id, short_code, destination_url, title, clicks_count, bot_clicks_count, created_at")
+        .select(
+          "id, short_code, destination_url, title, clicks_count, bot_clicks_count, created_at",
+        )
         .order("created_at", { ascending: false })
         .limit(100),
     );
@@ -191,7 +221,7 @@ function Dashboard() {
       .catch((error) => {
         const msg = error instanceof Error ? error.message : "Analytics failed to load";
         setRefreshError(msg);
-        toast.error(msg);
+        if (!isRecoverableSessionError(error)) toast.error(msg);
       })
       .finally(() => setAnalyticsLoading(false));
 
@@ -219,9 +249,23 @@ function Dashboard() {
     toast.success("Refreshing…");
   };
 
-  const loadCountryDrill = (cc: string, filters: { device: string | null; browser: string | null; os: string | null }) => {
+  const loadCountryDrill = (
+    cc: string,
+    filters: { device: string | null; browser: string | null; os: string | null },
+  ) => {
     setCountryDrillLoading(true);
-    void withFreshServerFnAuth(() => fetchCountry({ data: { country: cc, days: rangeDays, linkId: null, device: filters.device, browser: filters.browser, os: filters.os } }))
+    void withFreshServerFnAuth(() =>
+      fetchCountry({
+        data: {
+          country: cc,
+          days: rangeDays,
+          linkId: null,
+          device: filters.device,
+          browser: filters.browser,
+          os: filters.os,
+        },
+      }),
+    )
       .then((res) => setCountryDrill(res))
       .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to load country data"))
       .finally(() => setCountryDrillLoading(false));
@@ -243,15 +287,17 @@ function Dashboard() {
     loadCountryDrill(countryDrillCode, next);
   };
 
-
   const rangeDays = range === "day" ? 1 : range === "week" ? 7 : 30;
   const goToLinkAnalytics = (id: string) => {
-    void navigate({ to: "/analytics/$linkId", params: { linkId: id }, search: { days: rangeDays } });
+    void navigate({
+      to: "/analytics/$linkId",
+      params: { linkId: id },
+      search: { days: rangeDays },
+    });
   };
   const goToAnalytics = () => {
     void navigate({ to: "/analytics", search: { days: rangeDays, linkId: "all" } });
   };
-
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -282,7 +328,9 @@ function Dashboard() {
   };
 
   const remove = async (id: string) => {
-    const { error } = await withFreshSupabaseAuth(() => supabase.from("links").delete().eq("id", id));
+    const { error } = await withFreshSupabaseAuth(() =>
+      supabase.from("links").delete().eq("id", id),
+    );
     if (error) return isSupabaseAuthTokenError(error) ? undefined : toast.error(error.message);
     toast.success("Deleted");
     load();
@@ -351,7 +399,7 @@ function Dashboard() {
   const rangeLabel = range === "day" ? "Today" : range === "week" ? "7 days" : "30 days";
 
   return (
-      <SidebarProvider>
+    <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <ClickQuotaGate />
         <AppSidebar email={email} />
@@ -389,15 +437,20 @@ function Dashboard() {
                   </>
                 ) : (
                   <>
-                    <span className={`flex h-1.5 w-1.5 rounded-full ${autoRefresh ? "bg-success animate-pulse" : "bg-muted-foreground/50"}`} />
-                    <span>
-                      {autoRefresh ? "Auto · 15s" : "Paused"}
-                    </span>
+                    <span
+                      className={`flex h-1.5 w-1.5 rounded-full ${autoRefresh ? "bg-success animate-pulse" : "bg-muted-foreground/50"}`}
+                    />
+                    <span>{autoRefresh ? "Auto · 15s" : "Paused"}</span>
                   </>
                 )}
                 {lastUpdated && !analyticsLoading && (
                   <span className="text-muted-foreground/70">
-                    · {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                    ·{" "}
+                    {lastUpdated.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    })}
                   </span>
                 )}
               </div>
@@ -409,12 +462,28 @@ function Dashboard() {
                 title={autoRefresh ? "Pause auto-refresh" : "Resume auto-refresh"}
                 aria-label={autoRefresh ? "Pause auto-refresh" : "Resume auto-refresh"}
               >
-                {autoRefresh ? <Pause className="h-4 w-4" aria-hidden="true" /> : <Play className="h-4 w-4" aria-hidden="true" />}
+                {autoRefresh ? (
+                  <Pause className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Play className="h-4 w-4" aria-hidden="true" />
+                )}
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={manualRefresh} title="Refresh now" aria-label="Refresh now">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={manualRefresh}
+                title="Refresh now"
+                aria-label="Refresh now"
+              >
                 <RefreshCw className="h-4 w-4" aria-hidden="true" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 relative" aria-label="Notifications">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 relative"
+                aria-label="Notifications"
+              >
                 <Bell className="h-4 w-4" aria-hidden="true" />
                 <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
               </Button>
@@ -458,7 +527,9 @@ function Dashboard() {
                 const C = 2 * Math.PI * R;
                 const dash = (convPct / 100) * C;
                 const avgCtr = analytics?.byLink?.length
-                  ? (analytics.byLink.reduce((s, l) => s + l.conversion, 0) / analytics.byLink.length) * 100
+                  ? (analytics.byLink.reduce((s, l) => s + l.conversion, 0) /
+                      analytics.byLink.length) *
+                    100
                   : convPct;
                 return (
                   <div className="grid gap-4 lg:grid-cols-3">
@@ -478,12 +549,18 @@ function Dashboard() {
                             Conversion · {rangeLabel}
                           </span>
                         </div>
-                        <div className="flex rounded-lg border border-border bg-background/60 p-0.5" onClick={(e) => e.stopPropagation()}>
+                        <div
+                          className="flex rounded-lg border border-border bg-background/60 p-0.5"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {(["day", "week", "month"] as const).map((item) => (
                             <button
                               key={item}
                               type="button"
-                              onClick={(e) => { e.stopPropagation(); setRange(item); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setRange(item);
+                              }}
                               className={`rounded-md px-2 py-0.5 text-[10px] font-semibold capitalize transition-colors ${range === item ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
                             >
                               {item}
@@ -504,9 +581,19 @@ function Dashboard() {
                                   <stop offset="100%" stopColor="oklch(0.55 0.20 245)" />
                                 </linearGradient>
                               </defs>
-                              <circle cx="100" cy="100" r={R} fill="none" stroke="oklch(0.94 0.02 230)" strokeWidth="16" />
                               <circle
-                                cx="100" cy="100" r={R} fill="none"
+                                cx="100"
+                                cy="100"
+                                r={R}
+                                fill="none"
+                                stroke="oklch(0.94 0.02 230)"
+                                strokeWidth="16"
+                              />
+                              <circle
+                                cx="100"
+                                cy="100"
+                                r={R}
+                                fill="none"
                                 stroke="url(#ringGrad)"
                                 strokeWidth="16"
                                 strokeLinecap="round"
@@ -516,7 +603,8 @@ function Dashboard() {
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
                               <span className="font-display text-5xl font-bold tracking-tight">
-                                {convPct.toFixed(1)}<span className="text-2xl text-muted-foreground">%</span>
+                                {convPct.toFixed(1)}
+                                <span className="text-2xl text-muted-foreground">%</span>
                               </span>
                               <span className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                                 Real humans
@@ -532,10 +620,14 @@ function Dashboard() {
                       {/* Total Clicks */}
                       <div
                         className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient p-5 shadow-card cursor-pointer transition-all hover:border-primary/40"
-                        role="button" tabIndex={0} onClick={() => goToAnalytics()}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => goToAnalytics()}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Total Clicks</span>
+                          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                            Total Clicks
+                          </span>
                           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
                             <MousePointerClick className="h-3.5 w-3.5" />
                           </div>
@@ -547,25 +639,57 @@ function Dashboard() {
                             {rangeTotals.total.toLocaleString()}
                           </div>
                         )}
-                        <svg viewBox="0 0 100 28" className="mt-3 h-10 w-full" preserveAspectRatio="none">
+                        <svg
+                          viewBox="0 0 100 28"
+                          className="mt-3 h-10 w-full"
+                          preserveAspectRatio="none"
+                        >
                           <defs>
                             <linearGradient id="clkFill" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="oklch(0.62 0.18 235)" stopOpacity="0.35" />
-                              <stop offset="100%" stopColor="oklch(0.62 0.18 235)" stopOpacity="0" />
+                              <stop
+                                offset="0%"
+                                stopColor="oklch(0.62 0.18 235)"
+                                stopOpacity="0.35"
+                              />
+                              <stop
+                                offset="100%"
+                                stopColor="oklch(0.62 0.18 235)"
+                                stopOpacity="0"
+                              />
                             </linearGradient>
                           </defs>
-                          <path d={`${linePath(chartValues.map((v, i) => v + (botChartValues[i] ?? 0)), 100, 28)} L100,28 L0,28 Z`} fill="url(#clkFill)" />
-                          <path d={linePath(chartValues.map((v, i) => v + (botChartValues[i] ?? 0)), 100, 28)} stroke="oklch(0.55 0.20 245)" strokeWidth="1.5" fill="none" />
+                          <path
+                            d={`${linePath(
+                              chartValues.map((v, i) => v + (botChartValues[i] ?? 0)),
+                              100,
+                              28,
+                            )} L100,28 L0,28 Z`}
+                            fill="url(#clkFill)"
+                          />
+                          <path
+                            d={linePath(
+                              chartValues.map((v, i) => v + (botChartValues[i] ?? 0)),
+                              100,
+                              28,
+                            )}
+                            stroke="oklch(0.55 0.20 245)"
+                            strokeWidth="1.5"
+                            fill="none"
+                          />
                         </svg>
                       </div>
 
                       {/* Bots Blocked */}
                       <div
                         className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient p-5 shadow-card cursor-pointer transition-all hover:border-destructive/40"
-                        role="button" tabIndex={0} onClick={() => goToAnalytics()}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => goToAnalytics()}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Bots Blocked</span>
+                          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                            Bots Blocked
+                          </span>
                           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-destructive/10 text-destructive">
                             <Bot className="h-3.5 w-3.5" />
                           </div>
@@ -577,40 +701,72 @@ function Dashboard() {
                             {rangeTotals.bots.toLocaleString()}
                           </div>
                         )}
-                        <svg viewBox="0 0 100 28" className="mt-3 h-10 w-full" preserveAspectRatio="none">
+                        <svg
+                          viewBox="0 0 100 28"
+                          className="mt-3 h-10 w-full"
+                          preserveAspectRatio="none"
+                        >
                           <defs>
                             <linearGradient id="botFill" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="oklch(0.72 0.15 200)" stopOpacity="0.30" />
-                              <stop offset="100%" stopColor="oklch(0.72 0.15 200)" stopOpacity="0" />
+                              <stop
+                                offset="0%"
+                                stopColor="oklch(0.72 0.15 200)"
+                                stopOpacity="0.30"
+                              />
+                              <stop
+                                offset="100%"
+                                stopColor="oklch(0.72 0.15 200)"
+                                stopOpacity="0"
+                              />
                             </linearGradient>
                           </defs>
-                          <path d={`${linePath(botChartValues, 100, 28)} L100,28 L0,28 Z`} fill="url(#botFill)" />
-                          <path d={linePath(botChartValues, 100, 28)} stroke="oklch(0.72 0.15 200)" strokeWidth="1.5" fill="none" />
+                          <path
+                            d={`${linePath(botChartValues, 100, 28)} L100,28 L0,28 Z`}
+                            fill="url(#botFill)"
+                          />
+                          <path
+                            d={linePath(botChartValues, 100, 28)}
+                            stroke="oklch(0.72 0.15 200)"
+                            strokeWidth="1.5"
+                            fill="none"
+                          />
                         </svg>
                       </div>
 
                       {/* Active Links */}
                       <div
                         className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient p-5 shadow-card cursor-pointer transition-all hover:border-primary/40"
-                        role="button" tabIndex={0} onClick={() => setLinksDialogOpen(true)}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setLinksDialogOpen(true)}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Active Links</span>
+                          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                            Active Links
+                          </span>
                           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
                             <Link2 className="h-3.5 w-3.5" />
                           </div>
                         </div>
-                        <div className="mt-2 font-display text-3xl font-bold tracking-tight">{stats.totalLinks}</div>
-                        <div className="mt-2 text-[11px] text-muted-foreground">Campaigns in rotation</div>
+                        <div className="mt-2 font-display text-3xl font-bold tracking-tight">
+                          {stats.totalLinks}
+                        </div>
+                        <div className="mt-2 text-[11px] text-muted-foreground">
+                          Campaigns in rotation
+                        </div>
                       </div>
 
                       {/* Avg CTR */}
                       <div
                         className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient p-5 shadow-card cursor-pointer transition-all hover:border-success/40"
-                        role="button" tabIndex={0} onClick={() => goToAnalytics()}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => goToAnalytics()}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Avg CTR</span>
+                          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                            Avg CTR
+                          </span>
                           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-success/10 text-success">
                             <TrendingUp className="h-3.5 w-3.5" />
                           </div>
@@ -619,11 +775,15 @@ function Dashboard() {
                           <div className="mt-3 h-9 w-24 animate-pulse rounded bg-muted" />
                         ) : (
                           <div className="mt-2 font-display text-3xl font-bold tracking-tight">
-                            {avgCtr.toFixed(1)}<span className="text-xl text-muted-foreground">%</span>
+                            {avgCtr.toFixed(1)}
+                            <span className="text-xl text-muted-foreground">%</span>
                           </div>
                         )}
                         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-secondary">
-                          <div className="h-full rounded-full bg-success transition-all" style={{ width: `${Math.min(100, avgCtr)}%` }} />
+                          <div
+                            className="h-full rounded-full bg-success transition-all"
+                            style={{ width: `${Math.min(100, avgCtr)}%` }}
+                          />
                         </div>
                       </div>
                     </div>
@@ -641,36 +801,71 @@ function Dashboard() {
                         <span className="flex h-2 w-2 rounded-full bg-success animate-pulse" />
                         Real-Time Activity
                       </h3>
-                      <p className="text-[11px] text-muted-foreground">Live browser & device feed</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Live browser & device feed
+                      </p>
                     </div>
                     <span className="text-[10px] font-mono text-muted-foreground">
-                      {lastUpdated ? lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}
+                      {lastUpdated
+                        ? lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                        : "—"}
                     </span>
                   </div>
                   <div className="divide-y divide-border/40">
                     {analyticsLoading ? (
                       [1, 2, 3, 4, 5].map((i) => (
-                        <div key={i} className="px-5 py-3"><div className="h-6 animate-pulse rounded bg-secondary/60" /></div>
+                        <div key={i} className="px-5 py-3">
+                          <div className="h-6 animate-pulse rounded bg-secondary/60" />
+                        </div>
                       ))
-                    ) : (analytics?.byBrowser ?? []).filter((r) => (r.key ?? "").toLowerCase() !== "bot" && (r.key ?? "").toLowerCase() !== "unknown").slice(0, 6).length === 0 ? (
-                      <div className="px-5 py-10 text-center text-xs text-muted-foreground">No activity yet</div>
+                    ) : (analytics?.byBrowser ?? [])
+                        .filter(
+                          (r) =>
+                            (r.key ?? "").toLowerCase() !== "bot" &&
+                            (r.key ?? "").toLowerCase() !== "unknown",
+                        )
+                        .slice(0, 6).length === 0 ? (
+                      <div className="px-5 py-10 text-center text-xs text-muted-foreground">
+                        No activity yet
+                      </div>
                     ) : (
                       (analytics?.byBrowser ?? [])
-                        .filter((r) => (r.key ?? "").toLowerCase() !== "bot" && (r.key ?? "").toLowerCase() !== "unknown")
+                        .filter(
+                          (r) =>
+                            (r.key ?? "").toLowerCase() !== "bot" &&
+                            (r.key ?? "").toLowerCase() !== "unknown",
+                        )
                         .slice(0, 6)
                         .map((row, i) => {
-                          const osRow = (analytics?.byOS ?? []).filter((r) => (r.key ?? "").toLowerCase() !== "bot" && (r.key ?? "").toLowerCase() !== "unknown")[i % Math.max(1, (analytics?.byOS?.length ?? 1))];
+                          const osRow = (analytics?.byOS ?? []).filter(
+                            (r) =>
+                              (r.key ?? "").toLowerCase() !== "bot" &&
+                              (r.key ?? "").toLowerCase() !== "unknown",
+                          )[i % Math.max(1, analytics?.byOS?.length ?? 1)];
                           const mins = i * 7 + 2;
                           return (
-                            <div key={row.key} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-accent/20">
+                            <div
+                              key={row.key}
+                              className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-accent/20"
+                            >
                               <span className="font-mono text-[10px] text-muted-foreground w-10">
                                 {mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h`}
                               </span>
                               <BrandBadge name={row.key} />
-                              <span className="text-sm font-medium flex-1 truncate">{prettyLabel(row.key)}</span>
-                              {osRow ? <BrandBadge name={osRow.key} /> : <span className="h-5 w-5" />}
-                              <span className="text-[11px] text-muted-foreground w-16 text-right truncate">{prettyLabel(osRow?.key ?? "—")}</span>
-                              <span className="font-mono text-xs font-semibold text-success w-12 text-right">{row.humans}</span>
+                              <span className="text-sm font-medium flex-1 truncate">
+                                {prettyLabel(row.key)}
+                              </span>
+                              {osRow ? (
+                                <BrandBadge name={osRow.key} />
+                              ) : (
+                                <span className="h-5 w-5" />
+                              )}
+                              <span className="text-[11px] text-muted-foreground w-16 text-right truncate">
+                                {prettyLabel(osRow?.key ?? "—")}
+                              </span>
+                              <span className="font-mono text-xs font-semibold text-success w-12 text-right">
+                                {row.humans}
+                              </span>
                             </div>
                           );
                         })
@@ -682,7 +877,9 @@ function Dashboard() {
                 <div className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient shadow-card">
                   <div className="border-b border-border/60 px-5 py-3">
                     <h3 className="font-display text-sm font-semibold">Top Countries</h3>
-                    <p className="text-[11px] text-muted-foreground">Traffic distribution · {rangeLabel}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Traffic distribution · {rangeLabel}
+                    </p>
                   </div>
                   <div className="p-5 space-y-3">
                     {(() => {
@@ -696,7 +893,11 @@ function Dashboard() {
                         ));
                       }
                       if (rows.length === 0) {
-                        return <p className="text-xs text-muted-foreground py-4 text-center">No country data yet</p>;
+                        return (
+                          <p className="text-xs text-muted-foreground py-4 text-center">
+                            No country data yet
+                          </p>
+                        );
                       }
                       return rows.map((row) => {
                         const pct = (row.total / max) * 100;
@@ -714,8 +915,12 @@ function Dashboard() {
                             <div className="flex items-center justify-between text-xs gap-2">
                               <span className="flex items-center gap-2 min-w-0">
                                 <CountryFlag cc={cc} />
-                                <span className="font-mono font-semibold uppercase tracking-wider">{cc}</span>
-                                {name && <span className="truncate text-muted-foreground">{name}</span>}
+                                <span className="font-mono font-semibold uppercase tracking-wider">
+                                  {cc}
+                                </span>
+                                {name && (
+                                  <span className="truncate text-muted-foreground">{name}</span>
+                                )}
                               </span>
                               <span className="flex items-center gap-1.5 font-mono text-muted-foreground shrink-0">
                                 {share.toFixed(0)}%
@@ -723,7 +928,10 @@ function Dashboard() {
                               </span>
                             </div>
                             <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                              <div className="h-full rounded-full bg-gradient-to-r from-[oklch(0.75_0.16_215)] to-[oklch(0.55_0.20_245)] transition-all group-hover:from-[oklch(0.70_0.18_215)] group-hover:to-[oklch(0.50_0.22_245)]" style={{ width: `${pct}%` }} />
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-[oklch(0.75_0.16_215)] to-[oklch(0.55_0.20_245)] transition-all group-hover:from-[oklch(0.70_0.18_215)] group-hover:to-[oklch(0.50_0.22_245)]"
+                                style={{ width: `${pct}%` }}
+                              />
                             </div>
                           </button>
                         );
@@ -743,11 +951,26 @@ function Dashboard() {
                 // Low traffic → low confidence even if block rate is high.
                 const sampleConfidence = Math.min(1, total / 200); // 200 clicks ≈ full sample weight
                 const ratioConfidence = total > 0 ? Math.min(1, (bots / total) * 1.5 + 0.4) : 0.4;
-                const score = total === 0 ? 0 : Math.round(sampleConfidence * ratioConfidence * 100);
+                const score =
+                  total === 0 ? 0 : Math.round(sampleConfidence * ratioConfidence * 100);
                 const scoreBand =
-                  score >= 75 ? { label: "High confidence", tone: "success" as const, hex: "oklch(0.72 0.18 155)" }
-                  : score >= 45 ? { label: "Medium confidence", tone: "primary" as const, hex: "oklch(0.62 0.18 235)" }
-                  : { label: "Building signal", tone: "muted" as const, hex: "oklch(0.70 0.05 230)" };
+                  score >= 75
+                    ? {
+                        label: "High confidence",
+                        tone: "success" as const,
+                        hex: "oklch(0.72 0.18 155)",
+                      }
+                    : score >= 45
+                      ? {
+                          label: "Medium confidence",
+                          tone: "primary" as const,
+                          hex: "oklch(0.62 0.18 235)",
+                        }
+                      : {
+                          label: "Building signal",
+                          tone: "muted" as const,
+                          hex: "oklch(0.70 0.05 230)",
+                        };
 
                 const reasons = analytics?.topReasons ?? [];
                 const reasonTotal = reasons.reduce((s, r) => s + r.count, 0);
@@ -781,13 +1004,20 @@ function Dashboard() {
                             <ShieldCheck className="h-4 w-4" />
                           </div>
                           <div>
-                            <h3 className="font-display text-sm font-semibold leading-none">Detection Score</h3>
-                            <p className="mt-1 text-[11px] text-muted-foreground">Bot filter confidence · {rangeLabel}</p>
+                            <h3 className="font-display text-sm font-semibold leading-none">
+                              Detection Score
+                            </h3>
+                            <p className="mt-1 text-[11px] text-muted-foreground">
+                              Bot filter confidence · {rangeLabel}
+                            </p>
                           </div>
                         </div>
                         <span
                           className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest"
-                          style={{ color: scoreBand.hex, background: `color-mix(in oklab, ${scoreBand.hex} 12%, transparent)` }}
+                          style={{
+                            color: scoreBand.hex,
+                            background: `color-mix(in oklab, ${scoreBand.hex} 12%, transparent)`,
+                          }}
                         >
                           {scoreBand.label}
                         </span>
@@ -805,9 +1035,19 @@ function Dashboard() {
                                   <stop offset="100%" stopColor={scoreBand.hex} />
                                 </linearGradient>
                               </defs>
-                              <circle cx="100" cy="100" r={R2} fill="none" stroke="oklch(0.94 0.02 230)" strokeWidth="14" />
                               <circle
-                                cx="100" cy="100" r={R2} fill="none"
+                                cx="100"
+                                cy="100"
+                                r={R2}
+                                fill="none"
+                                stroke="oklch(0.94 0.02 230)"
+                                strokeWidth="14"
+                              />
+                              <circle
+                                cx="100"
+                                cy="100"
+                                r={R2}
+                                fill="none"
                                 stroke="url(#botScoreGrad)"
                                 strokeWidth="14"
                                 strokeLinecap="round"
@@ -817,7 +1057,8 @@ function Dashboard() {
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
                               <span className="font-display text-4xl font-bold tracking-tight">
-                                {score}<span className="text-xl text-muted-foreground">/100</span>
+                                {score}
+                                <span className="text-xl text-muted-foreground">/100</span>
                               </span>
                               <span className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                                 Score
@@ -829,16 +1070,28 @@ function Dashboard() {
 
                       <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                         <div className="rounded-lg border border-border/60 bg-background/40 px-2 py-2">
-                          <div className="font-display text-base font-bold">{bots.toLocaleString()}</div>
-                          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Bots</div>
+                          <div className="font-display text-base font-bold">
+                            {bots.toLocaleString()}
+                          </div>
+                          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                            Bots
+                          </div>
                         </div>
                         <div className="rounded-lg border border-border/60 bg-background/40 px-2 py-2">
-                          <div className="font-display text-base font-bold">{humans.toLocaleString()}</div>
-                          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Humans</div>
+                          <div className="font-display text-base font-bold">
+                            {humans.toLocaleString()}
+                          </div>
+                          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                            Humans
+                          </div>
                         </div>
                         <div className="rounded-lg border border-border/60 bg-background/40 px-2 py-2">
-                          <div className="font-display text-base font-bold">{blockRate.toFixed(1)}%</div>
-                          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Block rate</div>
+                          <div className="font-display text-base font-bold">
+                            {blockRate.toFixed(1)}%
+                          </div>
+                          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                            Block rate
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -851,7 +1104,9 @@ function Dashboard() {
                             <Gauge className="h-3.5 w-3.5" />
                           </div>
                           <div>
-                            <h3 className="font-display text-sm font-semibold leading-none">Confidence Breakdown</h3>
+                            <h3 className="font-display text-sm font-semibold leading-none">
+                              Confidence Breakdown
+                            </h3>
                             <p className="mt-1 text-[11px] text-muted-foreground">
                               Why bots were rejected · {reasonTotal.toLocaleString()} signals
                             </p>
@@ -895,11 +1150,17 @@ function Dashboard() {
                                         {r.reason}
                                       </span>
                                     </div>
-                                    <p className="text-[11px] text-muted-foreground truncate">{meta.desc}</p>
+                                    <p className="text-[11px] text-muted-foreground truncate">
+                                      {meta.desc}
+                                    </p>
                                   </div>
                                   <div className="text-right shrink-0">
-                                    <div className="font-mono text-xs font-semibold">{r.count.toLocaleString()}</div>
-                                    <div className="text-[10px] text-muted-foreground">{conf}% conf.</div>
+                                    <div className="font-mono text-xs font-semibold">
+                                      {r.count.toLocaleString()}
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground">
+                                      {conf}% conf.
+                                    </div>
                                   </div>
                                 </div>
                                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
@@ -923,14 +1184,44 @@ function Dashboard() {
                 const score = diag?.score ?? 100;
                 const findings = diag?.findings ?? [];
                 const band =
-                  score >= 85 ? { label: "Healthy", tone: "oklch(0.72 0.18 155)", bg: "oklch(0.72 0.18 155 / 0.12)" }
-                  : score >= 65 ? { label: "Needs attention", tone: "oklch(0.78 0.16 80)", bg: "oklch(0.78 0.16 80 / 0.12)" }
-                  : { label: "At risk", tone: "oklch(0.62 0.22 25)", bg: "oklch(0.62 0.22 25 / 0.12)" };
+                  score >= 85
+                    ? {
+                        label: "Healthy",
+                        tone: "oklch(0.72 0.18 155)",
+                        bg: "oklch(0.72 0.18 155 / 0.12)",
+                      }
+                    : score >= 65
+                      ? {
+                          label: "Needs attention",
+                          tone: "oklch(0.78 0.16 80)",
+                          bg: "oklch(0.78 0.16 80 / 0.12)",
+                        }
+                      : {
+                          label: "At risk",
+                          tone: "oklch(0.62 0.22 25)",
+                          bg: "oklch(0.62 0.22 25 / 0.12)",
+                        };
                 const sevMeta: Record<string, { color: string; bg: string; label: string }> = {
-                  high: { color: "oklch(0.62 0.22 25)", bg: "oklch(0.62 0.22 25 / 0.10)", label: "High" },
-                  medium: { color: "oklch(0.72 0.16 70)", bg: "oklch(0.72 0.16 70 / 0.10)", label: "Medium" },
-                  low: { color: "oklch(0.62 0.18 235)", bg: "oklch(0.62 0.18 235 / 0.10)", label: "Low" },
-                  ok: { color: "oklch(0.72 0.18 155)", bg: "oklch(0.72 0.18 155 / 0.10)", label: "OK" },
+                  high: {
+                    color: "oklch(0.62 0.22 25)",
+                    bg: "oklch(0.62 0.22 25 / 0.10)",
+                    label: "High",
+                  },
+                  medium: {
+                    color: "oklch(0.72 0.16 70)",
+                    bg: "oklch(0.72 0.16 70 / 0.10)",
+                    label: "Medium",
+                  },
+                  low: {
+                    color: "oklch(0.62 0.18 235)",
+                    bg: "oklch(0.62 0.18 235 / 0.10)",
+                    label: "Low",
+                  },
+                  ok: {
+                    color: "oklch(0.72 0.18 155)",
+                    bg: "oklch(0.72 0.18 155 / 0.10)",
+                    label: "OK",
+                  },
                 };
                 const catIcon: Record<string, typeof AlertTriangle> = {
                   click_pattern: AlertTriangle,
@@ -940,7 +1231,8 @@ function Dashboard() {
                 };
                 const counts = { high: 0, medium: 0, low: 0 };
                 for (const f of findings) {
-                  if (f.severity === "high" || f.severity === "medium" || f.severity === "low") counts[f.severity]++;
+                  if (f.severity === "high" || f.severity === "medium" || f.severity === "low")
+                    counts[f.severity]++;
                 }
                 return (
                   <div className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient shadow-card">
@@ -965,7 +1257,10 @@ function Dashboard() {
                       <div className="flex items-center gap-4">
                         <div className="text-right">
                           <div className="flex items-baseline gap-1">
-                            <span className="font-display text-3xl font-bold tracking-tight" style={{ color: band.tone }}>
+                            <span
+                              className="font-display text-3xl font-bold tracking-tight"
+                              style={{ color: band.tone }}
+                            >
                               {score}
                             </span>
                             <span className="text-xs font-medium text-muted-foreground">/100</span>
@@ -996,20 +1291,27 @@ function Dashboard() {
                       {diagLoading ? (
                         <div className="space-y-2">
                           {[1, 2, 3].map((i) => (
-                            <div key={i} className="h-20 animate-pulse rounded-xl bg-secondary/60" />
+                            <div
+                              key={i}
+                              className="h-20 animate-pulse rounded-xl bg-secondary/60"
+                            />
                           ))}
                         </div>
                       ) : findings.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-10 text-center">
                           <div
                             className="flex h-12 w-12 items-center justify-center rounded-2xl"
-                            style={{ background: "oklch(0.72 0.18 155 / 0.12)", color: "oklch(0.72 0.18 155)" }}
+                            style={{
+                              background: "oklch(0.72 0.18 155 / 0.12)",
+                              color: "oklch(0.72 0.18 155)",
+                            }}
                           >
                             <CheckCircle className="h-6 w-6" />
                           </div>
                           <p className="mt-3 text-sm font-semibold">No issues detected</p>
                           <p className="mt-1 text-[11px] text-muted-foreground">
-                            Traffic looks clean across click pattern, geography, and engagement checks.
+                            Traffic looks clean across click pattern, geography, and engagement
+                            checks.
                           </p>
                         </div>
                       ) : (
@@ -1035,7 +1337,9 @@ function Dashboard() {
                                   </div>
                                   <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2">
-                                      <h4 className="text-sm font-semibold leading-tight">{f.title}</h4>
+                                      <h4 className="text-sm font-semibold leading-tight">
+                                        {f.title}
+                                      </h4>
                                       <span
                                         className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest"
                                         style={{ background: sev.bg, color: sev.color }}
@@ -1072,16 +1376,18 @@ function Dashboard() {
                 );
               })()}
 
-
-
               {/* Create link */}
               <div className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient shadow-card">
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
                 <div className="p-5">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="font-display text-base font-semibold">Create new short link</h2>
-                      <p className="text-xs text-muted-foreground">Cloaked, geo-aware, bot-filtered out of the box.</p>
+                      <h2 className="font-display text-base font-semibold">
+                        Create new short link
+                      </h2>
+                      <p className="text-xs text-muted-foreground">
+                        Cloaked, geo-aware, bot-filtered out of the box.
+                      </p>
                     </div>
                     <div className="hidden md:flex items-center gap-1.5 text-[11px] text-muted-foreground">
                       <CheckCircle2 className="h-3 w-3 text-success" />
@@ -1090,13 +1396,29 @@ function Dashboard() {
                   </div>
                   <form onSubmit={create} className="mt-4 grid gap-2 md:grid-cols-[1fr_220px_auto]">
                     <div className="relative">
-                      <Label htmlFor="url" className="sr-only">Destination URL</Label>
+                      <Label htmlFor="url" className="sr-only">
+                        Destination URL
+                      </Label>
                       <Link2 className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                      <Input id="url" placeholder="https://your-adsterra-direct-link..." required value={url} onChange={(e) => setUrl(e.target.value)} className="pl-9" />
+                      <Input
+                        id="url"
+                        placeholder="https://your-adsterra-direct-link..."
+                        required
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        className="pl-9"
+                      />
                     </div>
                     <div>
-                      <Label htmlFor="title" className="sr-only">Title</Label>
-                      <Input id="title" placeholder="Title (optional)" value={title} onChange={(e) => setTitle(e.target.value)} />
+                      <Label htmlFor="title" className="sr-only">
+                        Title
+                      </Label>
+                      <Input
+                        id="title"
+                        placeholder="Title (optional)"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                      />
                     </div>
                     <Button type="submit" disabled={creating} className="gap-1.5 shadow-glow">
                       <Plus className="h-4 w-4" /> {creating ? "Creating..." : "Create link"}
@@ -1104,8 +1426,6 @@ function Dashboard() {
                   </form>
                 </div>
               </div>
-
-
 
               {/* Links table */}
               <div className="relative overflow-hidden rounded-2xl border border-border bg-card-gradient shadow-card">
@@ -1216,7 +1536,11 @@ function Dashboard() {
                               className="h-8 w-8"
                               title="Analytics"
                             >
-                              <Link to="/analytics/$linkId" params={{ linkId: l.id }} search={{ days: rangeDays }}>
+                              <Link
+                                to="/analytics/$linkId"
+                                params={{ linkId: l.id }}
+                                search={{ days: rangeDays }}
+                              >
                                 <Activity className="h-3.5 w-3.5" />
                               </Link>
                             </Button>
@@ -1283,7 +1607,9 @@ function Dashboard() {
           </DialogHeader>
           <div className="max-h-[60vh] overflow-y-auto -mx-2 px-2">
             {links.length === 0 ? (
-              <p className="py-10 text-center text-sm text-muted-foreground">No links yet. Create one below.</p>
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                No links yet. Create one below.
+              </p>
             ) : (
               <div className="space-y-1.5">
                 {links.map((l) => {
@@ -1305,18 +1631,30 @@ function Dashboard() {
                             <span className="rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary">
                               /r/{l.short_code}
                             </span>
-                            {l.title && <span className="truncate text-sm font-medium">{l.title}</span>}
+                            {l.title && (
+                              <span className="truncate text-sm font-medium">{l.title}</span>
+                            )}
                           </div>
-                          <div className="mt-1 truncate text-xs text-muted-foreground">{l.destination_url}</div>
+                          <div className="mt-1 truncate text-xs text-muted-foreground">
+                            {l.destination_url}
+                          </div>
                         </div>
                         <div className="flex items-center gap-4 text-right">
                           <div>
-                            <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Real</div>
-                            <div className="font-mono text-sm font-bold text-success">{s.humans}</div>
+                            <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                              Real
+                            </div>
+                            <div className="font-mono text-sm font-bold text-success">
+                              {s.humans}
+                            </div>
                           </div>
                           <div>
-                            <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Bots</div>
-                            <div className="font-mono text-sm font-bold text-destructive">{s.bots}</div>
+                            <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                              Bots
+                            </div>
+                            <div className="font-mono text-sm font-bold text-destructive">
+                              {s.bots}
+                            </div>
                           </div>
                           <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
                         </div>
@@ -1335,21 +1673,36 @@ function Dashboard() {
       </Dialog>
 
       {/* Country drilldown dialog */}
-      <Dialog open={!!countryDrillCode} onOpenChange={(o) => { if (!o) { setCountryDrillCode(null); setCountryDrill(null); setDrillFilters({ device: null, browser: null, os: null }); } }}>
+      <Dialog
+        open={!!countryDrillCode}
+        onOpenChange={(o) => {
+          if (!o) {
+            setCountryDrillCode(null);
+            setCountryDrill(null);
+            setDrillFilters({ device: null, browser: null, os: null });
+          }
+        }}
+      >
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="font-display flex items-center gap-2.5">
-              {countryDrillCode && (() => {
-                const up = countryDrillCode.toUpperCase();
-                const name = COUNTRY_NAMES[up];
-                return (
-                  <>
-                    <CountryFlag cc={up} className="h-6 w-8 !rounded-md" />
-                    <span>{up}{name ? ` · ${name}` : ""}</span>
-                    <span className="text-xs font-normal text-muted-foreground">· Country drilldown</span>
-                  </>
-                );
-              })()}
+              {countryDrillCode &&
+                (() => {
+                  const up = countryDrillCode.toUpperCase();
+                  const name = COUNTRY_NAMES[up];
+                  return (
+                    <>
+                      <CountryFlag cc={up} className="h-6 w-8 !rounded-md" />
+                      <span>
+                        {up}
+                        {name ? ` · ${name}` : ""}
+                      </span>
+                      <span className="text-xs font-normal text-muted-foreground">
+                        · Country drilldown
+                      </span>
+                    </>
+                  );
+                })()}
             </DialogTitle>
             <DialogDescription>
               Devices, browsers & CTR for traffic from this country · {rangeLabel}
@@ -1363,38 +1716,62 @@ function Dashboard() {
               ))}
             </div>
           ) : countryDrill.totals.total === 0 ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">No data for this country in selected range.</p>
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              No data for this country in selected range.
+            </p>
           ) : (
             <div className="space-y-5 max-h-[70vh] overflow-y-auto -mx-2 px-2">
               {/* Totals strip */}
               <div className="grid grid-cols-4 gap-2">
                 <div className="rounded-lg border border-border bg-card-gradient px-3 py-2.5">
-                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Clicks</div>
-                  <div className="mt-0.5 font-display text-lg font-bold">{countryDrill.totals.total.toLocaleString()}</div>
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Clicks
+                  </div>
+                  <div className="mt-0.5 font-display text-lg font-bold">
+                    {countryDrill.totals.total.toLocaleString()}
+                  </div>
                 </div>
                 <div className="rounded-lg border border-border bg-card-gradient px-3 py-2.5">
-                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Humans</div>
-                  <div className="mt-0.5 font-display text-lg font-bold text-success">{countryDrill.totals.humans.toLocaleString()}</div>
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Humans
+                  </div>
+                  <div className="mt-0.5 font-display text-lg font-bold text-success">
+                    {countryDrill.totals.humans.toLocaleString()}
+                  </div>
                 </div>
                 <div className="rounded-lg border border-border bg-card-gradient px-3 py-2.5">
-                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Bots</div>
-                  <div className="mt-0.5 font-display text-lg font-bold text-destructive">{countryDrill.totals.bots.toLocaleString()}</div>
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Bots
+                  </div>
+                  <div className="mt-0.5 font-display text-lg font-bold text-destructive">
+                    {countryDrill.totals.bots.toLocaleString()}
+                  </div>
                 </div>
                 <div className="rounded-lg border border-border bg-card-gradient px-3 py-2.5">
-                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">CTR</div>
-                  <div className="mt-0.5 font-display text-lg font-bold text-primary">{(countryDrill.totals.ctr * 100).toFixed(1)}%</div>
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    CTR
+                  </div>
+                  <div className="mt-0.5 font-display text-lg font-bold text-primary">
+                    {(countryDrill.totals.ctr * 100).toFixed(1)}%
+                  </div>
                 </div>
               </div>
 
               {/* Filter combination */}
               <div className="rounded-xl border border-border bg-card-gradient p-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mr-1">Filter</span>
-                  {([
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mr-1">
+                    Filter
+                  </span>
+                  {[
                     { key: "device" as const, label: "Device", opts: countryDrill.options.devices },
-                    { key: "browser" as const, label: "Browser", opts: countryDrill.options.browsers },
+                    {
+                      key: "browser" as const,
+                      label: "Browser",
+                      opts: countryDrill.options.browsers,
+                    },
                     { key: "os" as const, label: "OS", opts: countryDrill.options.os },
-                  ]).map((f) => (
+                  ].map((f) => (
                     <Select
                       key={f.key}
                       value={drillFilters[f.key] ?? "__all__"}
@@ -1409,7 +1786,8 @@ function Dashboard() {
                           <SelectItem key={o.key} value={o.key}>
                             <span className="inline-flex items-center gap-2">
                               <BrandBadge name={o.key} />
-                              {prettyLabel(o.key)} <span className="text-muted-foreground">({o.total})</span>
+                              {prettyLabel(o.key)}{" "}
+                              <span className="text-muted-foreground">({o.total})</span>
                             </span>
                           </SelectItem>
                         ))}
@@ -1431,7 +1809,9 @@ function Dashboard() {
                     </Button>
                   )}
                   <span className="ml-auto text-[11px] text-muted-foreground">
-                    {countryDrill.totals.total.toLocaleString()} clicks · CTR {(countryDrill.totals.ctr * 100).toFixed(1)}% · {countryDrill.totals.humans.toLocaleString()} conv.
+                    {countryDrill.totals.total.toLocaleString()} clicks · CTR{" "}
+                    {(countryDrill.totals.ctr * 100).toFixed(1)}% ·{" "}
+                    {countryDrill.totals.humans.toLocaleString()} conv.
                   </span>
                 </div>
               </div>
@@ -1444,31 +1824,42 @@ function Dashboard() {
                 ].map((block) => {
                   const max = Math.max(1, ...block.rows.map((r) => r.total));
                   return (
-                    <div key={block.title} className="rounded-xl border border-border bg-card-gradient p-4">
+                    <div
+                      key={block.title}
+                      className="rounded-xl border border-border bg-card-gradient p-4"
+                    >
                       <h4 className="font-display text-sm font-semibold">{block.title}</h4>
                       <div className="mt-3 space-y-2.5">
                         {block.rows.length === 0 ? (
                           <p className="text-xs text-muted-foreground">No data</p>
-                        ) : block.rows.map((r) => {
-                          const pct = (r.total / max) * 100;
-                          const ctr = r.total ? (r.humans / r.total) * 100 : 0;
-                          return (
-                            <div key={r.key} className="space-y-1">
-                              <div className="flex items-center justify-between text-xs gap-2">
-                                <span className="flex items-center gap-2 min-w-0">
-                                  <BrandBadge name={r.key} />
-                                  <span className="truncate font-medium">{prettyLabel(r.key)}</span>
-                                </span>
-                                <span className="font-mono text-muted-foreground shrink-0">
-                                  {r.total} · <span className="text-success">{ctr.toFixed(0)}%</span>
-                                </span>
+                        ) : (
+                          block.rows.map((r) => {
+                            const pct = (r.total / max) * 100;
+                            const ctr = r.total ? (r.humans / r.total) * 100 : 0;
+                            return (
+                              <div key={r.key} className="space-y-1">
+                                <div className="flex items-center justify-between text-xs gap-2">
+                                  <span className="flex items-center gap-2 min-w-0">
+                                    <BrandBadge name={r.key} />
+                                    <span className="truncate font-medium">
+                                      {prettyLabel(r.key)}
+                                    </span>
+                                  </span>
+                                  <span className="font-mono text-muted-foreground shrink-0">
+                                    {r.total} ·{" "}
+                                    <span className="text-success">{ctr.toFixed(0)}%</span>
+                                  </span>
+                                </div>
+                                <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                                  <div
+                                    className="h-full rounded-full bg-gradient-to-r from-[oklch(0.75_0.16_215)] to-[oklch(0.55_0.20_245)]"
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
                               </div>
-                              <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                                <div className="h-full rounded-full bg-gradient-to-r from-[oklch(0.75_0.16_215)] to-[oklch(0.55_0.20_245)]" style={{ width: `${pct}%` }} />
-                              </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })
+                        )}
                       </div>
                     </div>
                   );
@@ -1481,18 +1872,25 @@ function Dashboard() {
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   {countryDrill.byOS.length === 0 ? (
                     <p className="text-xs text-muted-foreground">No data</p>
-                  ) : countryDrill.byOS.map((r) => {
-                    const ctr = r.total ? (r.humans / r.total) * 100 : 0;
-                    return (
-                      <div key={r.key} className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-xs">
-                        <span className="flex items-center gap-2 min-w-0">
-                          <BrandBadge name={r.key} />
-                          <span className="truncate font-medium">{prettyLabel(r.key)}</span>
-                        </span>
-                        <span className="font-mono text-muted-foreground shrink-0">{r.total} · <span className="text-success">{ctr.toFixed(0)}%</span></span>
-                      </div>
-                    );
-                  })}
+                  ) : (
+                    countryDrill.byOS.map((r) => {
+                      const ctr = r.total ? (r.humans / r.total) * 100 : 0;
+                      return (
+                        <div
+                          key={r.key}
+                          className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-xs"
+                        >
+                          <span className="flex items-center gap-2 min-w-0">
+                            <BrandBadge name={r.key} />
+                            <span className="truncate font-medium">{prettyLabel(r.key)}</span>
+                          </span>
+                          <span className="font-mono text-muted-foreground shrink-0">
+                            {r.total} · <span className="text-success">{ctr.toFixed(0)}%</span>
+                          </span>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
 
@@ -1513,14 +1911,19 @@ function Dashboard() {
                             <div className="flex items-center justify-between text-xs gap-2">
                               <span className="flex items-center gap-2 min-w-0">
                                 <ReferrerFavicon host={r.key} />
-                                <span className="truncate font-medium">{prettyReferrer(r.key)}</span>
+                                <span className="truncate font-medium">
+                                  {prettyReferrer(r.key)}
+                                </span>
                               </span>
                               <span className="font-mono text-muted-foreground shrink-0">
                                 {r.total} · <span className="text-success">{ctr.toFixed(0)}%</span>
                               </span>
                             </div>
                             <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                              <div className="h-full rounded-full bg-gradient-to-r from-[oklch(0.75_0.16_215)] to-[oklch(0.55_0.20_245)]" style={{ width: `${pct}%` }} />
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-[oklch(0.75_0.16_215)] to-[oklch(0.55_0.20_245)]"
+                                style={{ width: `${pct}%` }}
+                              />
                             </div>
                           </div>
                         );
@@ -1533,18 +1936,27 @@ function Dashboard() {
               {/* Top links from this country */}
               {countryDrill.byLink.length > 0 && (
                 <div className="rounded-xl border border-border bg-card-gradient p-4">
-                  <h4 className="font-display text-sm font-semibold">Top Links from this Country</h4>
+                  <h4 className="font-display text-sm font-semibold">
+                    Top Links from this Country
+                  </h4>
                   <div className="mt-3 space-y-1.5">
                     {countryDrill.byLink.map((l) => (
                       <button
                         key={l.id}
-                        onClick={() => { setCountryDrillCode(null); goToLinkAnalytics(l.id); }}
+                        onClick={() => {
+                          setCountryDrillCode(null);
+                          goToLinkAnalytics(l.id);
+                        }}
                         className="w-full rounded-lg border border-border/60 bg-background/40 p-2.5 text-left transition-colors hover:border-primary/40 hover:bg-accent/30"
                       >
                         <div className="flex items-center justify-between gap-3">
                           <div className="min-w-0 flex-1">
-                            <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary">/r/{l.short_code}</span>
-                            {l.title && <span className="ml-2 text-xs font-medium truncate">{l.title}</span>}
+                            <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary">
+                              /r/{l.short_code}
+                            </span>
+                            {l.title && (
+                              <span className="ml-2 text-xs font-medium truncate">{l.title}</span>
+                            )}
                           </div>
                           <div className="flex items-center gap-3 text-[11px] font-mono">
                             <span className="text-success">{l.humans}</span>

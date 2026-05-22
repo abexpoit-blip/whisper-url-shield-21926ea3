@@ -102,7 +102,7 @@ export async function refreshSupabaseSessionOnce(options: { force?: boolean } = 
 
       if (error && !isAuthStorageError(error)) return null;
       return waitForStoredSession(currentToken, 2_000);
-    }).finally(() => {
+    }, options.force ?? false).finally(() => {
       refreshPromise = null;
     });
   }
@@ -110,13 +110,13 @@ export async function refreshSupabaseSessionOnce(options: { force?: boolean } = 
   return refreshPromise;
 }
 
-async function withRefreshLock(operation: () => Promise<string | null>) {
+async function withRefreshLock(operation: () => Promise<string | null>, force = false) {
   if (typeof window === "undefined") return operation();
 
   const lockId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const { data: initial } = await supabase.auth.getSession();
   const initialToken = initial.session?.access_token ?? null;
-  if (initialToken && tokenHasTimeLeft(initialToken)) return initialToken;
+  if (!force && initialToken && tokenHasTimeLeft(initialToken)) return initialToken;
 
   for (let attempt = 0; attempt < 60; attempt += 1) {
     const now = Date.now();
