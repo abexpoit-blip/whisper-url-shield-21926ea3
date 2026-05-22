@@ -129,59 +129,74 @@ export function AppSidebar({ email, isAdmin = false }: { email?: string; isAdmin
 
       <SidebarContent className="px-2 py-3">
         {!isAdmin && (
-        <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel className="px-3 text-[10px] uppercase tracking-[0.14em] text-sidebar-foreground/50">
-              Workspace
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-0.5">
-              {mainNav.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.url)}
-                    className="h-9 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent/40 hover:text-white data-[active=true]:bg-gradient-to-r data-[active=true]:from-sky-500/25 data-[active=true]:via-sky-400/10 data-[active=true]:to-transparent data-[active=true]:text-white data-[active=true]:shadow-[inset_2px_0_0_oklch(0.72_0.16_235)]"
-                  >
-                    <Link to={item.url} className="flex items-center gap-2.5">
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      {!collapsed && <span className="text-sm font-medium">{item.title}</span>}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+          <SidebarGroup>
+            {!collapsed && (
+              <SidebarGroupLabel className="px-3 text-[10px] uppercase tracking-[0.14em] text-sidebar-foreground/50">
+                Workspace
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-0.5">
+                {mainNav.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.url)}
+                      className="h-9 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent/40 hover:text-white data-[active=true]:bg-gradient-to-r data-[active=true]:from-sky-500/25 data-[active=true]:via-sky-400/10 data-[active=true]:to-transparent data-[active=true]:text-white data-[active=true]:shadow-[inset_2px_0_0_oklch(0.72_0.16_235)]"
+                    >
+                      <Link to={item.url} className="flex items-center gap-2.5">
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        {!collapsed && <span className="text-sm font-medium">{item.title}</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         )}
 
         {isAdmin && (
-        <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel className="px-3 text-[10px] uppercase tracking-[0.14em] text-sidebar-foreground/50">
-              Admin
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-0.5">
-              {adminNav.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.url)}
-                    className="h-9 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent/40 hover:text-white data-[active=true]:bg-gradient-to-r data-[active=true]:from-sky-500/25 data-[active=true]:via-sky-400/10 data-[active=true]:to-transparent data-[active=true]:text-white data-[active=true]:shadow-[inset_2px_0_0_oklch(0.72_0.16_235)]"
-                  >
-                    <Link to={item.url} className="flex items-center gap-2.5">
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      {!collapsed && <span className="text-sm font-medium">{item.title}</span>}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+          <SidebarGroup>
+            {!collapsed && (
+              <SidebarGroupLabel className="px-3 text-[10px] uppercase tracking-[0.14em] text-sidebar-foreground/50">
+                Admin
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-0.5">
+                {adminNav.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.url)}
+                      className="h-9 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent/40 hover:text-white data-[active=true]:bg-gradient-to-r data-[active=true]:from-sky-500/25 data-[active=true]:via-sky-400/10 data-[active=true]:to-transparent data-[active=true]:text-white data-[active=true]:shadow-[inset_2px_0_0_oklch(0.72_0.16_235)]"
+                    >
+                      <Link to={item.url} className="flex items-center gap-2.5">
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        {!collapsed && <span className="text-sm font-medium">{item.title}</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {!isAdmin && !collapsed && (
+          <div className="mx-2 mt-6 overflow-hidden rounded-xl border border-sidebar-border/60 bg-gradient-to-br from-sky-500/15 via-sky-400/5 to-transparent p-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-sky-300" />
+              <span className="text-xs font-semibold text-white">{planLabel}</span>
+            </div>
+            <p className="mt-2 text-[11px] leading-relaxed text-sidebar-foreground/70">
+              Upgrade for unlimited links, custom domains & API.
+            </p>
+            <Button asChild size="sm" className="mt-3 h-7 w-full bg-gradient-to-r from-sky-500 to-sky-400 text-white text-xs hover:opacity-90">
+              <Link to="/upgrade">Upgrade</Link>
+            </Button>
+          </div>
         )}
 
         {/* Dev Credit */}
