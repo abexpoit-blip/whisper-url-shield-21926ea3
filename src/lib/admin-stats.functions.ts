@@ -31,7 +31,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const supabaseAdmin = createAdminStatsClient();
+    const supabaseAdmin = context.supabase;
     const [users, links, clicks, pending, domains, packages] = await Promise.all([
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("links").select("id", { count: "exact", head: true }),
@@ -50,19 +50,32 @@ export const getAdminOverview = createServerFn({ method: "GET" })
         .eq("is_active", true),
     ]);
 
-    const { data: recentReqs } = await supabaseAdmin
+    throwIfError("users count", users.error);
+    throwIfError("links count", links.error);
+    throwIfError("clicks count", clicks.error);
+    throwIfError("pending requests count", pending.error);
+    throwIfError("active domains count", domains.error);
+    throwIfError("active packages count", packages.error);
+
+    const { data: recentReqs, error: recentReqsError } = await supabaseAdmin
       .from("upgrade_requests")
       .select("id,user_id,package_slug,status,amount,created_at")
       .order("created_at", { ascending: false })
       .limit(5);
+    throwIfError("recent requests", recentReqsError);
 
-    const { data: recentLinks } = await supabaseAdmin
+    const { data: recentLinks, error: recentLinksError } = await supabaseAdmin
       .from("links")
       .select("id,short_code,title,clicks_count,created_at")
       .order("created_at", { ascending: false })
       .limit(5);
+    throwIfError("recent links", recentLinksError);
 
-    const { data: topPlans } = await supabaseAdmin.from("profiles").select("plan_slug").limit(1000);
+    const { data: topPlans, error: topPlansError } = await supabaseAdmin
+      .from("profiles")
+      .select("plan_slug")
+      .limit(1000);
+    throwIfError("plan distribution", topPlansError);
     const planCounts: Record<string, number> = {};
     (topPlans ?? []).forEach((p) => {
       planCounts[p.plan_slug] = (planCounts[p.plan_slug] ?? 0) + 1;
