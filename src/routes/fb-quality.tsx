@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getFbAdQuality } from "@/lib/analytics.functions";
+import { withFreshServerFnAuth } from "@/lib/supabase-retry";
 import { CountryFlag, COUNTRY_NAMES } from "@/components/brand-icons";
 
 type Search = { days: number; linkId: string };
@@ -90,9 +91,11 @@ function FbQualityPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await fetchQuality({
-        data: { days, linkId: linkId === "all" ? null : linkId, tzOffsetMinutes },
-      });
+      const res = await withFreshServerFnAuth(() =>
+        fetchQuality({
+          data: { days, linkId: linkId === "all" ? null : linkId, tzOffsetMinutes },
+        }),
+      );
       setData(res);
     } finally {
       setLoading(false);
