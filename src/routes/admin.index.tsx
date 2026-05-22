@@ -7,6 +7,7 @@ import {
   DollarSign, UserPlus, Ban, Flame, Globe, ExternalLink,
 } from "lucide-react";
 import { getAdminOverview, getAdminAdvancedStats } from "@/lib/admin-stats.functions";
+import { isRecoverableSessionError, withFreshServerFnAuth } from "@/lib/supabase-retry";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,13 +20,15 @@ function AdminDashboard() {
   const advFn = useServerFn(getAdminAdvancedStats);
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "overview"],
-    queryFn: () => fn(),
+    queryFn: () => withFreshServerFnAuth(() => fn()),
     staleTime: 5 * 60_000,
+    retry: (failureCount, error) => !isRecoverableSessionError(error) && failureCount < 1,
   });
   const { data: adv, isLoading: advLoading } = useQuery({
     queryKey: ["admin", "advanced"],
-    queryFn: () => advFn(),
+    queryFn: () => withFreshServerFnAuth(() => advFn()),
     staleTime: 5 * 60_000,
+    retry: (failureCount, error) => !isRecoverableSessionError(error) && failureCount < 1,
   });
 
   const c = data?.counts;
