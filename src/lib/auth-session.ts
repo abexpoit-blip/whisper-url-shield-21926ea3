@@ -3,10 +3,19 @@ import { supabase } from "@/integrations/supabase/client";
 const SUPPORTED_TOKEN_ALGORITHMS = new Set(["HS256", "ES256", "RS256"]);
 const REFRESH_LOCK_KEY = "sleepox.auth.refresh.lock";
 const REFRESH_LOCK_TTL_MS = 12_000;
+const SESSION_RESTORE_WAIT_MS = 10_000;
 
 let refreshPromise: Promise<string | null> | null = null;
+let restorePromise: Promise<string | null> | null = null;
 
 const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+export function isAuthStorageError(error: unknown) {
+  const message = error && typeof error === "object" && "message" in error
+    ? String((error as { message?: unknown }).message ?? "")
+    : String(error ?? "");
+  return /refresh_token_already_used|Invalid Refresh Token|Refresh Token Not Found|Auth session missing|session_not_found/i.test(message);
+}
 
 function readRefreshLock() {
   try {
@@ -53,8 +62,9 @@ export async function refreshSupabaseSessionOnce() {
   if (!refreshPromise) {
     refreshPromise = withRefreshLock(async () => {
       const { data, error } = await supabase.auth.refreshSession();
-        if (!error && data.session?.access_token) return data.session.access_token;
-        return supabase.auth.getSession().then(({ data: current }) => current.session?.access_token ?? null);
+      if (!error && data.session?.access_token) return data.session.access_token;
+      if (error && !isAuthStorageError(error)) return null;
+      return waitForStoredSession();
     }).finally(() => {
       refreshPromise = null;
     });
@@ -87,13 +97,53 @@ async function withRefreshLock(operation: () => Promise<string | null>) {
       }
     }
 
-    await wait(250);
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token ?? null;
-    if (token && token !== initialToken) return token;
+    const token = await waitForStoredSession(initialToken, 250);
+    if (token) return token;
   }
 
   return operation();
+}
+
+export async function waitForStoredSession(previousToken?: string | null, timeoutMs = SESSION_RESTORE_WAIT_MS) {
+  if (typeof window === "undefined") return null;
+
+  const startedAt = Date.now();
+  if (!restorePromise) {
+    restorePromise = new Promise<string | null>((resolve) => {
+      let settled = false;
+      let timeoutId: ReturnType<typeof window.setTimeout> | null = null;
+
+      const finish = (token: string | null) => {
+        if (settled) return;
+        settled = true;
+        if (timeoutId) window.clearTimeout(timeoutId);
+        subscription.unsubscribe();
+        resolve(token);
+      };
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const token = session?.access_token ?? null;
+        if (token && token !== previousToken) finish(token);
+      });
+
+      const poll = async () => {
+        while (!settled && Date.now() - startedAt < timeoutMs) {
+          const { data } = await supabase.auth.getSession();
+          const token = data.session?.access_token ?? null;
+          if (token && token !== previousToken) return finish(token);
+          await wait(250);
+        }
+        finish(null);
+      };
+
+      timeoutId = window.setTimeout(() => finish(null), timeoutMs);
+      void poll();
+    }).finally(() => {
+      restorePromise = null;
+    });
+  }
+
+  return restorePromise;
 }
 
 export function redirectToLoginPreservingPath() {
