@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { requireClientUser } from "@/lib/auth-guard";
-import { isSupabaseAuthTokenError, withFreshServerFnAuth, withFreshSupabaseAuth } from "@/lib/supabase-retry";
+import { isRecoverableSessionError, isSupabaseAuthTokenError, withFreshServerFnAuth, withFreshSupabaseAuth } from "@/lib/supabase-retry";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -191,7 +191,7 @@ function Dashboard() {
       .catch((error) => {
         const msg = error instanceof Error ? error.message : "Analytics failed to load";
         setRefreshError(msg);
-        toast.error(msg);
+        if (!isRecoverableSessionError(error)) toast.error(msg);
       })
       .finally(() => setAnalyticsLoading(false));
 
