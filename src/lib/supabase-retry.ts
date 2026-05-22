@@ -8,6 +8,16 @@ function isAuthTokenError(error: unknown) {
   return /Unauthorized: Invalid token|JWT expired|Invalid JWT/i.test(message);
 }
 
+export function isRecoverableSessionError(error: unknown) {
+  const message =
+    error && typeof error === "object" && "message" in error
+      ? String((error as { message?: unknown }).message ?? "")
+      : String(error ?? "");
+  return /Your session (?:expired|is loading)|No authorization header provided|Unauthorized: Invalid token|JWT expired|Invalid JWT/i.test(
+    message,
+  );
+}
+
 function isMissingAuthHeaderError(error: unknown) {
   const message =
     error && typeof error === "object" && "message" in error
@@ -39,7 +49,7 @@ export async function withFreshServerFnAuth<T>(operation: () => Promise<T>): Pro
     return await operation();
   } catch (error) {
     if (isMissingAuthHeaderError(error)) {
-      const restoredToken = await waitForStoredSession(null, 3_000);
+      const restoredToken = await waitForStoredSession(null, 10_000);
       if (restoredToken) return operation();
       throw new Error("Your session is loading. Please try again.");
     }
