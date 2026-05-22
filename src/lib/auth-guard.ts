@@ -16,14 +16,14 @@ export async function getVerifiedClientSession() {
     return null;
   }
 
-  if (tokenHasTimeLeft(sessionData.session.access_token, 5 * 60_000)) {
+  if (tokenHasTimeLeft(sessionData.session.access_token)) {
     return { session: sessionData.session, user: sessionData.session.user };
   }
 
   let { data, error } = await supabase.auth.getUser();
   if (!error && data.user) return { session: sessionData.session, user: data.user };
 
-  const accessToken = await refreshSupabaseSessionOnce();
+  const accessToken = await refreshSupabaseSessionOnce({ force: true });
   if (!accessToken) return null;
 
   ({ data: sessionData } = await supabase.auth.getSession());
@@ -48,7 +48,7 @@ export async function requireClientAdmin() {
 
   let { data, error } = await supabase.auth.getUser();
   if (error || !data.user) {
-    const accessToken = await refreshSupabaseSessionOnce();
+    const accessToken = await refreshSupabaseSessionOnce({ force: true });
     if (accessToken) {
       ({ data, error } = await supabase.auth.getUser());
     }
