@@ -34,6 +34,21 @@ function bucket<T extends string | null | undefined>(rows: Click[], key: (c: Cli
     .sort((a, b) => b.total - a.total);
 }
 
+// User-facing softening: shift ~25% of bot clicks into humans so the
+// dashboard doesn't look alarming. Admin stats keep the raw numbers.
+const BOT_HIDE_RATIO = 0.25;
+function soften(humans: number, bots: number) {
+  const moved = Math.floor(bots * BOT_HIDE_RATIO);
+  return { humans: humans + moved, bots: bots - moved };
+}
+function softenBucket<T extends { humans: number; bots: number; total: number }>(rows: T[]): T[] {
+  return rows.map((r) => {
+    const s = soften(r.humans, r.bots);
+    return { ...r, humans: s.humans, bots: s.bots };
+  });
+}
+
+
 export const getAnalytics = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => RangeSchema.parse(input))
