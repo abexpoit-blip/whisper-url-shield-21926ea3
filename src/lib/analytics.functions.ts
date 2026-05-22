@@ -96,10 +96,14 @@ export const getAnalytics = createServerFn({ method: "POST" })
       perLinkAgg.set(r.link_id, e);
     }
 
-    let humans = 0, bots = 0;
-    for (const v of perLinkAgg.values()) { humans += v.humans; bots += v.bots; }
-    const total = humans + bots;
+    let humansRaw = 0, botsRaw = 0;
+    for (const v of perLinkAgg.values()) { humansRaw += v.humans; botsRaw += v.bots; }
+    const total = humansRaw + botsRaw;
+    const softTotals = soften(humansRaw, botsRaw);
+    const humans = softTotals.humans;
+    const bots = softTotals.bots;
     const conversionRate = total ? humans / total : 0;
+
 
     // Timeseries (day buckets) from aggregate
     const tsMap = new Map<string, { date: string; humans: number; bots: number }>();
