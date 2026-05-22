@@ -1,16 +1,18 @@
 import { refreshSupabaseSessionOnce, waitForStoredSession } from "@/lib/auth-session";
 
 function isAuthTokenError(error: unknown) {
-  const message = error && typeof error === "object" && "message" in error
-    ? String((error as { message?: unknown }).message ?? "")
-    : String(error ?? "");
+  const message =
+    error && typeof error === "object" && "message" in error
+      ? String((error as { message?: unknown }).message ?? "")
+      : String(error ?? "");
   return /Unauthorized: Invalid token|JWT expired|Invalid JWT/i.test(message);
 }
 
 function isMissingAuthHeaderError(error: unknown) {
-  const message = error && typeof error === "object" && "message" in error
-    ? String((error as { message?: unknown }).message ?? "")
-    : String(error ?? "");
+  const message =
+    error && typeof error === "object" && "message" in error
+      ? String((error as { message?: unknown }).message ?? "")
+      : String(error ?? "");
   return /No authorization header provided/i.test(message);
 }
 

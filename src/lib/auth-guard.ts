@@ -1,6 +1,12 @@
 import { redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { refreshSupabaseSessionOnce, safeRedirectPath, tokenHasTimeLeft, tokenLooksUsable, waitForStoredSession } from "@/lib/auth-session";
+import {
+  refreshSupabaseSessionOnce,
+  safeRedirectPath,
+  tokenHasTimeLeft,
+  tokenLooksUsable,
+  waitForStoredSession,
+} from "@/lib/auth-session";
 
 export async function getVerifiedClientSession() {
   if (typeof window === "undefined") return null;

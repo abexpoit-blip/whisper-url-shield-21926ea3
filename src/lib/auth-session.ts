@@ -25,15 +25,21 @@ export function tokenHasTimeLeft(token: string, minMs = TOKEN_REFRESH_SKEW_MS) {
 }
 
 export function isAuthStorageError(error: unknown) {
-  const message = error && typeof error === "object" && "message" in error
-    ? String((error as { message?: unknown }).message ?? "")
-    : String(error ?? "");
-  return /refresh_token_already_used|Invalid Refresh Token|Refresh Token Not Found|Auth session missing|session_not_found/i.test(message);
+  const message =
+    error && typeof error === "object" && "message" in error
+      ? String((error as { message?: unknown }).message ?? "")
+      : String(error ?? "");
+  return /refresh_token_already_used|Invalid Refresh Token|Refresh Token Not Found|Auth session missing|session_not_found/i.test(
+    message,
+  );
 }
 
 function readRefreshLock() {
   try {
-    return JSON.parse(window.localStorage.getItem(REFRESH_LOCK_KEY) ?? "{}") as { id?: string; expiresAt?: number };
+    return JSON.parse(window.localStorage.getItem(REFRESH_LOCK_KEY) ?? "{}") as {
+      id?: string;
+      expiresAt?: number;
+    };
   } catch {
     window.localStorage.removeItem(REFRESH_LOCK_KEY);
     return {};
@@ -81,7 +87,10 @@ export async function refreshSupabaseSessionOnce(options: { force?: boolean } = 
         return currentToken;
       }
 
-      const restoredBeforeRefresh = await waitForStoredSession(currentToken, options.force ? 600 : SHORT_SESSION_RESTORE_WAIT_MS);
+      const restoredBeforeRefresh = await waitForStoredSession(
+        currentToken,
+        options.force ? 600 : SHORT_SESSION_RESTORE_WAIT_MS,
+      );
       if (restoredBeforeRefresh) return restoredBeforeRefresh;
 
       const { data, error } = await supabase.auth.refreshSession();
@@ -114,7 +123,10 @@ async function withRefreshLock(operation: () => Promise<string | null>) {
     const existing = readRefreshLock();
 
     if (!existing?.expiresAt || existing.expiresAt < now) {
-      window.localStorage.setItem(REFRESH_LOCK_KEY, JSON.stringify({ id: lockId, expiresAt: now + REFRESH_LOCK_TTL_MS }));
+      window.localStorage.setItem(
+        REFRESH_LOCK_KEY,
+        JSON.stringify({ id: lockId, expiresAt: now + REFRESH_LOCK_TTL_MS }),
+      );
       const confirmed = readRefreshLock();
       if (confirmed.id === lockId) {
         try {
@@ -133,7 +145,10 @@ async function withRefreshLock(operation: () => Promise<string | null>) {
   return operation();
 }
 
-export async function waitForStoredSession(previousToken?: string | null, timeoutMs = SESSION_RESTORE_WAIT_MS) {
+export async function waitForStoredSession(
+  previousToken?: string | null,
+  timeoutMs = SESSION_RESTORE_WAIT_MS,
+) {
   if (typeof window === "undefined") return null;
 
   const startedAt = Date.now();
