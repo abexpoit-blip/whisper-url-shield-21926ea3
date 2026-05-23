@@ -8,6 +8,7 @@ module.exports = {
         HOST: "0.0.0.0",
         PORT: "3000",
         NODE_ENV: "production",
+        WRANGLER_LOG_LEVEL: "warn",
       },
       autorestart: true,
       restart_delay: 5000,
