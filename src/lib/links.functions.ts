@@ -45,7 +45,7 @@ export const createLink = createServerFn({ method: "POST" })
     // Quota check
     const { data: profile } = await context.supabase
       .from("profiles").select("link_limit, links_used").eq("id", context.userId).single();
-    if (profile && profile.links_used >= profile.link_limit) {
+    if (profile && profile.link_limit !== null && profile.links_used >= profile.link_limit) {
       throw new Error(`Link limit reached (${profile.links_used}/${profile.link_limit}). Please upgrade.`);
     }
 
