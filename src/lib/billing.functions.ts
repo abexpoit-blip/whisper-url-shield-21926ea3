@@ -168,9 +168,9 @@ export const getMyClickStatus = createServerFn({ method: "GET" })
 
 // ---------- Upgrade requests ----------
 export const requestUpgrade = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => UpgradeRequestSchema.parse(i))
   .handler(async () => {
+    await requireSelfHostedUser();
     throw new Error("Manual upgrade requests are disabled. Please use automatic Plisio checkout.");
   });
 
@@ -451,10 +451,10 @@ export const updatePaymentSettings = createServerFn({ method: "POST" })
 
 // ---------- Admin: directly assign a plan to a user ----------
 export const adminAssignPlan = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => AssignPlanSchema.parse(i))
-  .handler(async ({ data, context }) => {
-    const { error } = await (context.supabase as any)
+  .handler(async ({ data }) => {
+    const { supabase } = await requireSelfHostedAdmin();
+    const { error } = await (supabase as any)
       .from("profiles")
       .update({ plan_slug: data.package_slug })
       .eq("id", data.user_id);
@@ -479,9 +479,8 @@ export const listActivePackages = createServerFn({ method: "GET" }).handler(asyn
 // Auto-expire any Plisio invoices older than 30 minutes that never completed.
 // Called from the upgrade page on load so the UI always reflects accurate state.
 export const expireStalePlisioRequests = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { supabase, userId } = context;
+  .handler(async () => {
+    const { supabase, userId } = await requireSelfHostedUser();
     const cutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
     const { data, error } = await (supabase as any)
       .from("upgrade_requests")
