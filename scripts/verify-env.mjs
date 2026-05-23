@@ -25,7 +25,7 @@ const env = { ...dotEnv, ...process.env };
 const errors = [];
 const warnings = [];
 
-const expectedProjectRef = env.VITE_SUPABASE_PROJECT_ID || "qnzwncleajzzwpauifnp";
+const expectedProjectRef = env.VITE_SUPABASE_PROJECT_ID || "sleepox";
 const fingerprint = (value) => createHash("sha256").update(value).digest("hex").slice(0, 16);
 
 for (const name of ["SUPABASE_URL", "VITE_SUPABASE_URL"]) {
