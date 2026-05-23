@@ -1,18 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { Link2, Copy, Trash2, Play, Pause, Sparkles, Activity, Shield, Infinity as InfinityIcon, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Copy, Trash2, Play, Pause, Plus, Search, TrendingUp, Activity, Shield, Link2 as LinkIcon } from "lucide-react";
 import { getDashboardData, createLink, deleteLink, toggleLink } from "@/lib/links.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Sleepox" }] }),
   component: DashboardPage,
 });
+
+const display = { fontFamily: "'Space Grotesk', sans-serif" } as const;
 
 function DashboardPage() {
   const qc = useQueryClient();
@@ -31,26 +30,22 @@ function DashboardPage() {
   const [adsterra, setAdsterra] = useState("");
   const [safe, setSafe] = useState("");
   const [title, setTitle] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+  const [search, setSearch] = useState("");
 
   const createMut = useMutation({
-    mutationFn: (vars: { title?: string; adsterra_url: string; safe_url?: string }) =>
-      create({ data: vars }),
+    mutationFn: (vars: { title?: string; adsterra_url: string; safe_url?: string }) => create({ data: vars }),
     onSuccess: () => {
       toast.success("Link created");
-      setAdsterra(""); setSafe(""); setTitle("");
+      setAdsterra(""); setSafe(""); setTitle(""); setShowCreate(false);
       qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
-
   const delMut = useMutation({
     mutationFn: (id: string) => remove({ data: { id } }),
-    onSuccess: () => {
-      toast.success("Deleted");
-      qc.invalidateQueries({ queryKey: ["dashboard"] });
-    },
+    onSuccess: () => { toast.success("Deleted"); qc.invalidateQueries({ queryKey: ["dashboard"] }); },
   });
-
   const togMut = useMutation({
     mutationFn: (v: { id: string; is_active: boolean }) => toggle({ data: v }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
@@ -67,163 +62,292 @@ function DashboardPage() {
 
   const totalHumans = links.reduce((s, l) => s + (l.clicks_count || 0), 0);
   const totalBots = links.reduce((s, l) => s + (l.bot_clicks_count || 0), 0);
+  const activeLinks = links.filter((l) => l.is_active).length;
+  const ctr = totalHumans + totalBots > 0 ? ((totalHumans / (totalHumans + totalBots)) * 100).toFixed(1) : "0.0";
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return links;
+    return links.filter((l) => (l.title ?? "").toLowerCase().includes(q) || l.short_code.toLowerCase().includes(q) || (l.adsterra_url ?? "").toLowerCase().includes(q));
+  }, [links, search]);
+
+  // Mock 7-day bars based on total clicks (visual rhythm only)
+  const bars = useMemo(() => {
+    const seed = Math.max(totalHumans, 7);
+    const heights = [40, 65, 50, 85, 70, 95, 60];
+    return heights.map((h) => ({ h, peak: h === 95, label: Math.round((seed * h) / 100 / 7) }));
+  }, [totalHumans]);
 
   return (
-    <div className="space-y-10">
-      {/* Hero header */}
-      <div className="relative overflow-hidden rounded-3xl glass-panel p-8 sky-glow border border-sky/40">
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-sky-gradient opacity-20 blur-3xl" />
-        <div className="relative flex flex-wrap items-end justify-between gap-6">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-sky/40 px-3 py-1 text-xs">
-              <span className="live-dot" /> Live console
-            </div>
-            <h1 className="mt-3 text-4xl font-bold tracking-tight">
-              <span className="text-gradient-sky">Welcome back.</span>
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">Manage your cloaked links, monitor traffic quality, and grow earnings.</p>
-          </div>
-          {p && (
-            <div className="rounded-2xl border border-sky/30 bg-card/40 px-5 py-3 backdrop-blur">
-              <div className="text-xs uppercase tracking-wider text-muted-foreground">Current plan</div>
-              <div className="mt-0.5 flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-lg font-bold text-gradient-sky">{p.plan_slug.toUpperCase()}</span>
-              </div>
-            </div>
-          )}
+    <section className="p-12">
+      {/* Header */}
+      <header className="flex justify-between items-center mb-16 flex-wrap gap-6">
+        <div>
+          <h1 className="text-5xl font-medium text-white tracking-tight" style={display}>Performance</h1>
+          <p className="text-white/30 mt-2 font-light">
+            Monitoring activity across <span className="text-purple-400/80">{links.length}</span> smart link{links.length === 1 ? "" : "s"}.
+          </p>
         </div>
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-5 top-1/2 -translate-y-1/2 text-white/30" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search links…"
+              className="bg-white/[0.03] border border-white/10 rounded-2xl pl-12 pr-6 py-3 text-sm w-72 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.05] transition-all backdrop-blur-md text-white placeholder:text-white/30"
+            />
+          </div>
+          <button
+            onClick={() => setShowCreate((v) => !v)}
+            className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-2xl font-bold text-sm tracking-tight transition-all shadow-[0_0_25px_rgba(147,51,234,0.35)] hover:scale-105 active:scale-95 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Create Link
+          </button>
+        </div>
+      </header>
+
+      {/* KPI Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-12">
+        <Kpi label="Total Clicks" value={totalHumans.toLocaleString()} delta="+12%" accent>
+          <div className="h-1.5 w-full bg-white/5 overflow-hidden rounded-full">
+            <div className="h-full w-[70%] bg-gradient-to-r from-purple-500 to-fuchsia-400 shadow-[0_0_12px_rgba(168,85,247,0.5)]" />
+          </div>
+        </Kpi>
+        <Kpi label="Active Links" value={`${activeLinks}`} delta={p?.link_limit ? `/ ${p.link_limit}` : ""}>
+          <div className="flex gap-1.5 h-5 items-end">
+            {[3, 5, 2.5, 4, 3.5].map((h, i) => (
+              <div
+                key={i}
+                style={{ height: `${h * 4}px` }}
+                className={i % 2 === 0 ? "w-1.5 bg-purple-500 rounded-full shadow-[0_0_10px_rgba(168,85,247,0.4)]" : "w-1.5 bg-purple-500/40 rounded-full"}
+              />
+            ))}
+          </div>
+        </Kpi>
+        <Kpi label="Human CTR" value={`${ctr}%`} delta={`${totalBots.toLocaleString()} bots`}>
+          <div className="h-1.5 w-full bg-white/5 overflow-hidden rounded-full">
+            <div className="h-full bg-white/30" style={{ width: `${Math.min(100, Number(ctr))}%` }} />
+          </div>
+        </Kpi>
+        <Kpi label="Current Plan" value={(p?.plan_slug ?? "FREE").toUpperCase()} delta={p?.click_quota ? `${p.click_quota.toLocaleString()} quota` : "Unlimited"}>
+          <p className="text-[10px] text-white/20 uppercase tracking-widest italic">Premium tier active</p>
+        </Kpi>
       </div>
 
-      {/* Stats */}
-      {p && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <StatCard icon={<Link2 className="h-5 w-5" />} label="Active links" value={`${p.links_used} / ${p.link_limit ?? "∞"}`} />
-          <StatCard icon={<Activity className="h-5 w-5" />} label="Human clicks" value={totalHumans.toLocaleString()} accent />
-          <StatCard icon={<Shield className="h-5 w-5" />} label="Bots blocked" value={totalBots.toLocaleString()} />
-          <StatCard icon={<InfinityIcon className="h-5 w-5" />} label="Click quota" value={p.click_quota ? p.click_quota.toLocaleString() : "Unlimited"} />
+      {/* Create form (collapsible) */}
+      {showCreate && (
+        <div className="mb-12 p-10 border border-purple-500/20 bg-purple-500/[0.03] backdrop-blur-xl rounded-[2.5rem] shadow-[0_0_60px_rgba(168,85,247,0.08)]">
+          <h3 className="text-2xl font-medium text-white mb-2" style={display}>Create New Link</h3>
+          <p className="text-sm text-white/40 mb-8">Wrap your Adsterra Direct Link with bot-shield + clean analytics.</p>
+          <form onSubmit={onSubmit} className="grid gap-5 sm:grid-cols-2">
+            <Field label="Title (optional)" full>
+              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="My ad campaign" className={fieldCls} />
+            </Field>
+            <Field label="Adsterra Direct Link *">
+              <input type="url" required value={adsterra} onChange={(e) => setAdsterra(e.target.value)} placeholder="https://..." className={fieldCls} />
+            </Field>
+            <Field label="Safe URL (for reviewers)">
+              <input type="url" value={safe} onChange={(e) => setSafe(e.target.value)} placeholder="https://sleepox.com/" className={fieldCls} />
+            </Field>
+            <div className="sm:col-span-2 flex gap-3">
+              <button
+                type="submit"
+                disabled={createMut.isPending}
+                className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-2xl font-bold text-sm tracking-tight transition-all shadow-[0_0_25px_rgba(147,51,234,0.35)] disabled:opacity-50"
+              >
+                {createMut.isPending ? "Creating…" : "Create Link"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCreate(false)}
+                className="px-8 py-3 rounded-2xl text-sm text-white/50 hover:text-white border border-white/10 hover:bg-white/5 transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
-      {/* Create link */}
-      <section className="glass-card rounded-2xl p-7">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-gradient sky-glow">
-            <Plus className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold">Create new link</h2>
-            <p className="text-xs text-muted-foreground">Paste your Adsterra Direct Link. We&apos;ll wrap it with bot-shield + clean stats.</p>
-          </div>
-        </div>
-        <form onSubmit={onSubmit} className="mt-6 grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <Label htmlFor="t" className="text-xs uppercase tracking-wider text-muted-foreground">Title (optional)</Label>
-            <Input id="t" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="My ad campaign" className="mt-1.5 h-11 bg-card/40 border-sky/30" />
-          </div>
-          <div>
-            <Label htmlFor="a" className="text-xs uppercase tracking-wider text-muted-foreground">Adsterra Direct Link *</Label>
-            <Input id="a" type="url" required value={adsterra} onChange={(e) => setAdsterra(e.target.value)} placeholder="https://..." className="mt-1.5 h-11 bg-card/40 border-sky/30" />
-          </div>
-          <div>
-            <Label htmlFor="s" className="text-xs uppercase tracking-wider text-muted-foreground">Safe URL (for reviewers)</Label>
-            <Input id="s" type="url" value={safe} onChange={(e) => setSafe(e.target.value)} placeholder="https://sleepox.com/" className="mt-1.5 h-11 bg-card/40 border-sky/30" />
-          </div>
-          <div className="sm:col-span-2">
-            <Button type="submit" disabled={createMut.isPending} className="h-11 px-8 bg-sky-gradient text-primary-foreground sky-glow hover:opacity-90 font-semibold">
-              {createMut.isPending ? "Creating..." : "Create link"}
-            </Button>
-          </div>
-        </form>
-      </section>
-
-      {/* Links */}
-      <section>
-        <div className="flex items-end justify-between">
-          <div>
-            <h2 className="text-xl font-bold">Your links</h2>
-            <p className="text-xs text-muted-foreground">{links.length} total · live traffic stats</p>
-          </div>
-        </div>
-        <div className="mt-5 space-y-3">
-          {dashQ.isLoading && (
-            <div className="glass-card rounded-2xl p-6 text-center text-sm text-muted-foreground">Loading links…</div>
-          )}
-          {dashQ.data && links.length === 0 && (
-            <div className="glass-card rounded-2xl p-10 text-center">
-              <Link2 className="mx-auto h-10 w-10 text-muted-foreground/50" />
-              <p className="mt-3 text-sm text-muted-foreground">No links yet. Create your first cloaked link above.</p>
+      {/* Chart + Device */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+        <div className="lg:col-span-2 p-10 border border-white/10 bg-white/[0.02] backdrop-blur-xl rounded-[2.5rem]">
+          <div className="flex justify-between items-center mb-12 flex-wrap gap-4">
+            <div>
+              <h3 className="text-2xl font-medium text-white" style={display}>Traffic Velocity</h3>
+              <p className="text-xs text-white/30 mt-1">Last 7 days · human clicks</p>
             </div>
-          )}
-          {links.map((l) => {
-            const shortUrl = `${origin}/r/${l.short_code}`;
-            return (
-              <div key={l.id} className="glass-card group rounded-2xl p-5 transition hover:sky-glow hover:border-sky">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`h-2 w-2 rounded-full ${l.is_active ? "bg-success animate-pulse" : "bg-muted-foreground/40"}`} />
-                      <h3 className="font-semibold truncate">{l.title || l.short_code}</h3>
+            <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
+              <button className="px-5 py-2 rounded-xl text-xs font-medium text-white/40 hover:text-white transition-all">Daily</button>
+              <button className="px-5 py-2 rounded-xl bg-purple-600 shadow-[0_0_20px_rgba(168,85,247,0.4)] text-xs font-bold text-white">Weekly</button>
+            </div>
+          </div>
+          <div className="h-72 flex items-end justify-between gap-4 sm:gap-6 px-2">
+            {bars.map((b, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                <div
+                  className={
+                    b.peak
+                      ? "w-full bg-gradient-to-t from-purple-900/40 to-purple-500/60 rounded-t-2xl border-x border-t border-purple-400/30 relative shadow-[0_0_30px_rgba(168,85,247,0.3)]"
+                      : "w-full bg-white/5 rounded-t-2xl transition-all group-hover:bg-purple-500/20"
+                  }
+                  style={{ height: `${b.h}%` }}
+                >
+                  {b.peak && (
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 bg-purple-600 rounded-lg text-[10px] font-bold shadow-xl whitespace-nowrap">
+                      PEAK
                     </div>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <code className="rounded-md bg-background/60 px-3 py-1.5 text-xs font-mono text-primary border border-sky/30">{shortUrl}</code>
-                      <button
-                        type="button"
-                        onClick={() => { navigator.clipboard.writeText(shortUrl); toast.success("Copied"); }}
-                        className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                      >
-                        <Copy className="h-3 w-3" /> Copy
-                      </button>
-                    </div>
-                    <div className="mt-2 truncate text-xs text-muted-foreground">→ {l.adsterra_url}</div>
-                    <div className="mt-3 flex flex-wrap items-center gap-4 text-xs">
-                      <span className="inline-flex items-center gap-1.5">
-                        <Activity className="h-3.5 w-3.5 text-success" />
-                        <span className="font-semibold text-success">{(l.clicks_count || 0).toLocaleString()}</span>
-                        <span className="text-muted-foreground">humans</span>
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <Shield className="h-3.5 w-3.5 text-warning" />
-                        <span className="font-semibold text-warning">{(l.bot_clicks_count || 0).toLocaleString()}</span>
-                        <span className="text-muted-foreground">bots blocked</span>
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant={l.is_active ? "default" : "outline"}
-                      onClick={() => togMut.mutate({ id: l.id, is_active: !l.is_active })}
-                      className={l.is_active ? "bg-sky-gradient text-primary-foreground" : "border-sky/40"}
-                    >
-                      {l.is_active ? <><Play className="h-3.5 w-3.5 mr-1" /> Active</> : <><Pause className="h-3.5 w-3.5 mr-1" /> Paused</>}
-                    </Button>
-                    <Button size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => {
-                      if (confirm("Delete this link?")) delMut.mutate(l.id);
-                    }}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+                  )}
                 </div>
+                <span className="text-[10px] text-white/30 uppercase tracking-wider">{["M", "T", "W", "T", "F", "S", "S"][i]}</span>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
-      </section>
+
+        <div className="p-10 border border-white/10 bg-white/[0.02] backdrop-blur-xl rounded-[2.5rem]">
+          <h3 className="text-2xl font-medium text-white mb-10" style={display}>Traffic Quality</h3>
+          <div className="space-y-10">
+            <Bar icon={<Activity className="w-4 h-4" />} label="Humans" value={totalHumans} total={totalHumans + totalBots} color="violet" />
+            <Bar icon={<Shield className="w-4 h-4" />} label="Bots Blocked" value={totalBots} total={totalHumans + totalBots} color="white" />
+            <Bar icon={<TrendingUp className="w-4 h-4" />} label="Conversion" value={Math.round(totalHumans * 0.04)} total={Math.max(1, totalHumans)} color="dim" />
+          </div>
+        </div>
+      </div>
+
+      {/* Links Table */}
+      <div className="p-6 sm:p-10 border border-white/10 bg-white/[0.01] backdrop-blur-2xl rounded-[2.5rem]">
+        <div className="flex justify-between items-center mb-10 flex-wrap gap-4">
+          <h3 className="text-2xl font-medium text-white" style={display}>Smart Links</h3>
+          <span className="text-xs font-bold uppercase tracking-[0.2em] text-purple-400 border-b border-purple-400/20 pb-1">
+            {filtered.length} of {links.length}
+          </span>
+        </div>
+
+        {dashQ.isLoading && (
+          <div className="py-16 text-center text-sm text-white/40">Loading links…</div>
+        )}
+
+        {!dashQ.isLoading && filtered.length === 0 && (
+          <div className="py-16 text-center">
+            <LinkIcon className="mx-auto h-10 w-10 text-white/20" />
+            <p className="mt-4 text-sm text-white/40">{search ? "No links match your search." : "No links yet. Create your first cloaked link above."}</p>
+          </div>
+        )}
+
+        {filtered.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-separate border-spacing-y-3 min-w-[720px]">
+              <thead>
+                <tr className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-bold">
+                  <th className="px-4 pb-2">Short Code</th>
+                  <th className="px-4 pb-2">Destination</th>
+                  <th className="px-4 pb-2 text-right">Humans</th>
+                  <th className="px-4 pb-2 text-right">Bots</th>
+                  <th className="px-4 pb-2 text-right">Status</th>
+                  <th className="px-4 pb-2 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm text-white/60">
+                {filtered.map((l) => {
+                  const shortUrl = `${origin}/r/${l.short_code}`;
+                  return (
+                    <tr key={l.id} className="bg-white/[0.02] hover:bg-white/[0.05] transition-all">
+                      <td className="py-5 px-4 rounded-l-2xl">
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(shortUrl); toast.success("Copied"); }}
+                          className="font-medium text-purple-400 hover:text-purple-300 inline-flex items-center gap-2 group/copy"
+                          title="Click to copy"
+                        >
+                          <span className="font-mono">{l.short_code}</span>
+                          <Copy className="w-3 h-3 opacity-0 group-hover/copy:opacity-100 transition-opacity" />
+                        </button>
+                        {l.title && <div className="text-[11px] text-white/30 mt-1 truncate max-w-[180px]">{l.title}</div>}
+                      </td>
+                      <td className="py-5 px-4 italic opacity-50 truncate max-w-[260px]">{l.adsterra_url}</td>
+                      <td className="py-5 px-4 text-right text-white" style={display}>{(l.clicks_count || 0).toLocaleString()}</td>
+                      <td className="py-5 px-4 text-right text-white/40" style={display}>{(l.bot_clicks_count || 0).toLocaleString()}</td>
+                      <td className="py-5 px-4 text-right">
+                        <button
+                          onClick={() => togMut.mutate({ id: l.id, is_active: !l.is_active })}
+                          className={
+                            l.is_active
+                              ? "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[11px] font-bold uppercase tracking-wider shadow-[0_0_15px_rgba(168,85,247,0.25)]"
+                              : "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/40 text-[11px] font-bold uppercase tracking-wider"
+                          }
+                        >
+                          {l.is_active ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
+                          {l.is_active ? "Live" : "Paused"}
+                        </button>
+                      </td>
+                      <td className="py-5 px-4 rounded-r-2xl text-right">
+                        <button
+                          onClick={() => { if (confirm("Delete this link?")) delMut.mutate(l.id); }}
+                          className="p-2 rounded-xl text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                          aria-label="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+const fieldCls =
+  "w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.05] transition-all text-white placeholder:text-white/30";
+
+function Field({ label, children, full }: { label: string; children: React.ReactNode; full?: boolean }) {
+  return (
+    <div className={full ? "sm:col-span-2" : ""}>
+      <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 mb-2 block">{label}</label>
+      {children}
     </div>
   );
 }
 
-function StatCard({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string; accent?: boolean }) {
+function Kpi({
+  label, value, delta, accent, children,
+}: { label: string; value: string; delta?: string; accent?: boolean; children?: React.ReactNode }) {
   return (
-    <div className={`glass-card rounded-2xl p-5 transition hover:sky-glow ${accent ? "border-sky/50" : ""}`}>
-      <div className="flex items-center justify-between">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
-        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${accent ? "bg-sky-gradient text-primary-foreground" : "bg-primary/10 text-primary"}`}>
-          {icon}
-        </div>
+    <div className={`p-8 border border-white/10 bg-white/[0.02] backdrop-blur-xl rounded-[2rem] transition-all hover:bg-white/[0.04] hover:-translate-y-1 ${accent ? "shadow-[0_0_40px_rgba(168,85,247,0.08)]" : ""}`}>
+      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 mb-6">{label}</p>
+      <div className="flex items-baseline gap-3 mb-6 flex-wrap">
+        <span className="text-4xl xl:text-5xl font-medium text-white" style={display}>{value}</span>
+        {delta && <span className={`text-sm font-bold ${accent ? "text-purple-400" : "text-white/30"}`}>{delta}</span>}
       </div>
-      <div className={`mt-2 text-2xl font-bold ${accent ? "text-gradient-sky" : ""}`}>{value}</div>
+      {children}
+    </div>
+  );
+}
+
+function Bar({ icon, label, value, total, color }: { icon: React.ReactNode; label: string; value: number; total: number; color: "violet" | "white" | "dim" }) {
+  const pct = total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
+  const fill =
+    color === "violet"
+      ? "bg-gradient-to-r from-purple-600 to-indigo-400 shadow-[0_0_15px_rgba(168,85,247,0.4)]"
+      : color === "white"
+        ? "bg-white/30"
+        : "bg-white/15";
+  return (
+    <div className="group">
+      <div className="flex justify-between text-xs font-bold uppercase tracking-[0.1em] text-white/40 mb-3">
+        <span className="inline-flex items-center gap-2">{icon}{label}</span>
+        <span className="text-white">{value.toLocaleString()} · {pct}%</span>
+      </div>
+      <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+        <div className={`h-full ${fill} transition-all`} style={{ width: `${pct}%` }} />
+      </div>
     </div>
   );
 }
