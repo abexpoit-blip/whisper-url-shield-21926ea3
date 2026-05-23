@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 
 function parseDotEnv(path = ".env") {
   if (!existsSync(path)) return {};
@@ -22,6 +23,10 @@ function parseDotEnv(path = ".env") {
 const dotEnv = parseDotEnv();
 const env = { ...dotEnv, ...process.env };
 const errors = [];
+const warnings = [];
+
+const expectedProjectRef = env.VITE_SUPABASE_PROJECT_ID || "qnzwncleajzzwpauifnp";
+const fingerprint = (value) => createHash("sha256").update(value).digest("hex").slice(0, 16);
 
 for (const name of ["SUPABASE_URL", "VITE_SUPABASE_URL"]) {
   const v = env[name];
@@ -35,6 +40,19 @@ if (env.SUPABASE_URL && env.VITE_SUPABASE_URL && env.SUPABASE_URL !== env.VITE_S
 
 for (const name of ["SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_PUBLISHABLE_KEY"]) {
   if (!env[name]) errors.push(`${name} is missing`);
+}
+
+if (!env.SUPABASE_SERVICE_ROLE_KEY && !env.SUPABASE_SECRET_KEY) {
+  warnings.push("SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY is missing; /r/* redirects need a server-side database key at runtime");
+}
+
+const serverKey = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SECRET_KEY || "";
+if (serverKey) {
+  const isLegacyJwt = serverKey.split(".").length === 3;
+  const isNewSecretKey = serverKey.startsWith("sb_secret_");
+  if (!isLegacyJwt && !isNewSecretKey) {
+    warnings.push("SUPABASE_SERVICE_ROLE_KEY should be a legacy service_role JWT or a new sb_secret_ key");
+  }
 }
 
 if (
@@ -51,4 +69,11 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log("Environment verification passed.");
+if (serverKey) {
+  console.log(
+    `Environment verification passed. Server key fingerprint=${fingerprint(serverKey)} project=${expectedProjectRef}`,
+  );
+} else {
+  console.log("Environment verification passed.");
+}
+for (const warning of warnings) console.warn(`Warning: ${warning}`);
