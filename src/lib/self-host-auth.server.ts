@@ -29,7 +29,7 @@ function createUserScopedClient(token: string) {
 
 export const requireSelfHostedAuth = createMiddleware({ type: "function" }).server(
   async ({ next, context }) => {
-    const token = bearerFromAuthHeader((context as AuthRequestContext).authHeader ?? "");
+    const token = bearerFromAuthHeader(((context as unknown as AuthRequestContext).authHeader) ?? "");
     const { data, error } = await supabaseAdmin.auth.getUser(token);
     if (error || !data.user?.id) {
       throw new Error(`Your session expired. Please sign in again. (${error?.message ?? "invalid token"})`);
