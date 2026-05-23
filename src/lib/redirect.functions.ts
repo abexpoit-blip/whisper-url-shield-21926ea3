@@ -66,9 +66,9 @@ export const resolveRedirect = createServerFn({ method: "GET" })
 
     // 4) Update counters (fire & forget)
     if (isBot) {
-      void supabaseAdmin.rpc("increment_link_bot_clicks" as never, { p_link_id: link.id });
+      void supabaseAdmin.from("links").update({ bot_clicks_count: (await supabaseAdmin.from("links").select("bot_clicks_count").eq("id", link.id).single()).data?.bot_clicks_count ?? 0 + 1 }).eq("id", link.id);
     } else {
-      void supabaseAdmin.rpc("increment_link_clicks" as never, { p_link_id: link.id });
+      void supabaseAdmin.from("links").update({ clicks_count: (await supabaseAdmin.from("links").select("clicks_count").eq("id", link.id).single()).data?.clicks_count ?? 0 + 1 }).eq("id", link.id);
     }
 
     return { url: target, routed };
