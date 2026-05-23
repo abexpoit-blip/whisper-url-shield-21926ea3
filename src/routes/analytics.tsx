@@ -18,25 +18,26 @@ import {
   RefreshCw,
   Sparkles,
 } from "lucide-react";
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { requireClientUser } from "@/lib/auth-guard";
 import { withFreshServerFnAuth } from "@/lib/supabase-retry";
 import { getAnalytics } from "@/lib/analytics.functions";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ChartSuspense,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "@/components/lazy-recharts";
 import {
   CountryFlag,
   BrandBadge,
