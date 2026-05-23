@@ -9,68 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UpgradeRouteImport } from './routes/upgrade'
-import { Route as TiktokAdsRouteImport } from './routes/tiktok-ads'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as InstagramAdsRouteImport } from './routes/instagram-ads'
-import { Route as GoogleAdsRouteImport } from './routes/google-ads'
-import { Route as FunnelRouteImport } from './routes/funnel'
-import { Route as FbQualityRouteImport } from './routes/fb-quality'
-import { Route as FacebookAdsRouteImport } from './routes/facebook-ads'
-import { Route as DomainsRouteImport } from './routes/domains'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as ControlPanelRouteImport } from './routes/control-panel'
-import { Route as BlogRouteImport } from './routes/blog'
-import { Route as AnalyticsRouteImport } from './routes/analytics'
-import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as RCodeRouteImport } from './routes/r.$code'
-import { Route as BlogSlugRouteImport } from './routes/blog_.$slug'
-import { Route as AnalyticsLinkIdRouteImport } from './routes/analytics.$linkId'
-import { Route as AdminVariantsRouteImport } from './routes/admin.variants'
-import { Route as AdminUsersRouteImport } from './routes/admin.users'
-import { Route as AdminScoresRouteImport } from './routes/admin.scores'
-import { Route as AdminRotationRouteImport } from './routes/admin.rotation'
-import { Route as AdminRefererRulesRouteImport } from './routes/admin.referer-rules'
-import { Route as AdminProtectionRouteImport } from './routes/admin.protection'
-import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
-import { Route as AdminPackagesRouteImport } from './routes/admin.packages'
-import { Route as AdminDomainsRouteImport } from './routes/admin.domains'
-import { Route as AdminDomainHealthRouteImport } from './routes/admin.domain-health'
-import { Route as AdminClicksRouteImport } from './routes/admin.clicks'
-import { Route as AdminAuditRouteImport } from './routes/admin.audit'
-import { Route as AdminAsnBlocklistRouteImport } from './routes/admin.asn-blocklist'
-import { Route as AdminAdsRouteImport } from './routes/admin.ads'
-import { Route as AdminActivityRouteImport } from './routes/admin.activity'
-import { Route as LinksLinkIdTimeRulesRouteImport } from './routes/links.$linkId.time-rules'
-import { Route as LinksLinkIdTargetingRouteImport } from './routes/links.$linkId.targeting'
-import { Route as LinksLinkIdSettingsRouteImport } from './routes/links.$linkId.settings'
-import { Route as ApiPublicPlisioWebhookRouteImport } from './routes/api/public/plisio-webhook'
-import { Route as ApiPublicPlisioCreateInvoiceRouteImport } from './routes/api/public/plisio-create-invoice'
-import { Route as ApiPublicHooksPlisioRetryQueueRouteImport } from './routes/api/public/hooks/plisio-retry-queue'
-import { Route as ApiPublicHooksDomainHealthRouteImport } from './routes/api/public/hooks/domain-health'
-import { Route as ApiPublicHooksBackfillClicksRouteImport } from './routes/api/public/hooks/backfill-clicks'
-import { Route as ApiPublicHooksAutopilotRouteImport } from './routes/api/public/hooks/autopilot'
+import { Route as AuthenticatedUpgradeRouteImport } from './routes/_authenticated/upgrade'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 
-const UpgradeRoute = UpgradeRouteImport.update({
-  id: '/upgrade',
-  path: '/upgrade',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TiktokAdsRoute = TiktokAdsRouteImport.update({
-  id: '/tiktok-ads',
-  path: '/tiktok-ads',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -86,59 +34,8 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const InstagramAdsRoute = InstagramAdsRouteImport.update({
-  id: '/instagram-ads',
-  path: '/instagram-ads',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GoogleAdsRoute = GoogleAdsRouteImport.update({
-  id: '/google-ads',
-  path: '/google-ads',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FunnelRoute = FunnelRouteImport.update({
-  id: '/funnel',
-  path: '/funnel',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FbQualityRoute = FbQualityRouteImport.update({
-  id: '/fb-quality',
-  path: '/fb-quality',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FacebookAdsRoute = FacebookAdsRouteImport.update({
-  id: '/facebook-ads',
-  path: '/facebook-ads',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DomainsRoute = DomainsRouteImport.update({
-  id: '/domains',
-  path: '/domains',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ControlPanelRoute = ControlPanelRouteImport.update({
-  id: '/control-panel',
-  path: '/control-panel',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogRoute = BlogRouteImport.update({
-  id: '/blog',
-  path: '/blog',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AnalyticsRoute = AnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -146,496 +43,104 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminIndexRoute = AdminIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AdminRoute,
-} as any)
 const RCodeRoute = RCodeRouteImport.update({
   id: '/r/$code',
   path: '/r/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BlogSlugRoute = BlogSlugRouteImport.update({
-  id: '/blog_/$slug',
-  path: '/blog/$slug',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedUpgradeRoute = AuthenticatedUpgradeRouteImport.update({
+  id: '/upgrade',
+  path: '/upgrade',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AnalyticsLinkIdRoute = AnalyticsLinkIdRouteImport.update({
-  id: '/$linkId',
-  path: '/$linkId',
-  getParentRoute: () => AnalyticsRoute,
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AdminVariantsRoute = AdminVariantsRouteImport.update({
-  id: '/variants',
-  path: '/variants',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminUsersRoute = AdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminScoresRoute = AdminScoresRouteImport.update({
-  id: '/scores',
-  path: '/scores',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminRotationRoute = AdminRotationRouteImport.update({
-  id: '/rotation',
-  path: '/rotation',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminRefererRulesRoute = AdminRefererRulesRouteImport.update({
-  id: '/referer-rules',
-  path: '/referer-rules',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminProtectionRoute = AdminProtectionRouteImport.update({
-  id: '/protection',
-  path: '/protection',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
-  id: '/payments',
-  path: '/payments',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminPackagesRoute = AdminPackagesRouteImport.update({
-  id: '/packages',
-  path: '/packages',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminDomainsRoute = AdminDomainsRouteImport.update({
-  id: '/domains',
-  path: '/domains',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminDomainHealthRoute = AdminDomainHealthRouteImport.update({
-  id: '/domain-health',
-  path: '/domain-health',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminClicksRoute = AdminClicksRouteImport.update({
-  id: '/clicks',
-  path: '/clicks',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAuditRoute = AdminAuditRouteImport.update({
-  id: '/audit',
-  path: '/audit',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAsnBlocklistRoute = AdminAsnBlocklistRouteImport.update({
-  id: '/asn-blocklist',
-  path: '/asn-blocklist',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAdsRoute = AdminAdsRouteImport.update({
-  id: '/ads',
-  path: '/ads',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminActivityRoute = AdminActivityRouteImport.update({
-  id: '/activity',
-  path: '/activity',
-  getParentRoute: () => AdminRoute,
-} as any)
-const LinksLinkIdTimeRulesRoute = LinksLinkIdTimeRulesRouteImport.update({
-  id: '/links/$linkId/time-rules',
-  path: '/links/$linkId/time-rules',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LinksLinkIdTargetingRoute = LinksLinkIdTargetingRouteImport.update({
-  id: '/links/$linkId/targeting',
-  path: '/links/$linkId/targeting',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LinksLinkIdSettingsRoute = LinksLinkIdSettingsRouteImport.update({
-  id: '/links/$linkId/settings',
-  path: '/links/$linkId/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicPlisioWebhookRoute = ApiPublicPlisioWebhookRouteImport.update({
-  id: '/api/public/plisio-webhook',
-  path: '/api/public/plisio-webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicPlisioCreateInvoiceRoute =
-  ApiPublicPlisioCreateInvoiceRouteImport.update({
-    id: '/api/public/plisio-create-invoice',
-    path: '/api/public/plisio-create-invoice',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksPlisioRetryQueueRoute =
-  ApiPublicHooksPlisioRetryQueueRouteImport.update({
-    id: '/api/public/hooks/plisio-retry-queue',
-    path: '/api/public/hooks/plisio-retry-queue',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksDomainHealthRoute =
-  ApiPublicHooksDomainHealthRouteImport.update({
-    id: '/api/public/hooks/domain-health',
-    path: '/api/public/hooks/domain-health',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksBackfillClicksRoute =
-  ApiPublicHooksBackfillClicksRouteImport.update({
-    id: '/api/public/hooks/backfill-clicks',
-    path: '/api/public/hooks/backfill-clicks',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksAutopilotRoute = ApiPublicHooksAutopilotRouteImport.update({
-  id: '/api/public/hooks/autopilot',
-  path: '/api/public/hooks/autopilot',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
-  '/analytics': typeof AnalyticsRouteWithChildren
-  '/blog': typeof BlogRoute
-  '/control-panel': typeof ControlPanelRoute
-  '/dashboard': typeof DashboardRoute
-  '/domains': typeof DomainsRoute
-  '/facebook-ads': typeof FacebookAdsRoute
-  '/fb-quality': typeof FbQualityRoute
-  '/funnel': typeof FunnelRoute
-  '/google-ads': typeof GoogleAdsRoute
-  '/instagram-ads': typeof InstagramAdsRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/tiktok-ads': typeof TiktokAdsRoute
-  '/upgrade': typeof UpgradeRoute
-  '/admin/activity': typeof AdminActivityRoute
-  '/admin/ads': typeof AdminAdsRoute
-  '/admin/asn-blocklist': typeof AdminAsnBlocklistRoute
-  '/admin/audit': typeof AdminAuditRoute
-  '/admin/clicks': typeof AdminClicksRoute
-  '/admin/domain-health': typeof AdminDomainHealthRoute
-  '/admin/domains': typeof AdminDomainsRoute
-  '/admin/packages': typeof AdminPackagesRoute
-  '/admin/payments': typeof AdminPaymentsRoute
-  '/admin/protection': typeof AdminProtectionRoute
-  '/admin/referer-rules': typeof AdminRefererRulesRoute
-  '/admin/rotation': typeof AdminRotationRoute
-  '/admin/scores': typeof AdminScoresRoute
-  '/admin/users': typeof AdminUsersRoute
-  '/admin/variants': typeof AdminVariantsRoute
-  '/analytics/$linkId': typeof AnalyticsLinkIdRoute
-  '/blog/$slug': typeof BlogSlugRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/upgrade': typeof AuthenticatedUpgradeRoute
   '/r/$code': typeof RCodeRoute
-  '/admin/': typeof AdminIndexRoute
-  '/api/public/plisio-create-invoice': typeof ApiPublicPlisioCreateInvoiceRoute
-  '/api/public/plisio-webhook': typeof ApiPublicPlisioWebhookRoute
-  '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
-  '/links/$linkId/targeting': typeof LinksLinkIdTargetingRoute
-  '/links/$linkId/time-rules': typeof LinksLinkIdTimeRulesRoute
-  '/api/public/hooks/autopilot': typeof ApiPublicHooksAutopilotRoute
-  '/api/public/hooks/backfill-clicks': typeof ApiPublicHooksBackfillClicksRoute
-  '/api/public/hooks/domain-health': typeof ApiPublicHooksDomainHealthRoute
-  '/api/public/hooks/plisio-retry-queue': typeof ApiPublicHooksPlisioRetryQueueRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/analytics': typeof AnalyticsRouteWithChildren
-  '/blog': typeof BlogRoute
-  '/control-panel': typeof ControlPanelRoute
-  '/dashboard': typeof DashboardRoute
-  '/domains': typeof DomainsRoute
-  '/facebook-ads': typeof FacebookAdsRoute
-  '/fb-quality': typeof FbQualityRoute
-  '/funnel': typeof FunnelRoute
-  '/google-ads': typeof GoogleAdsRoute
-  '/instagram-ads': typeof InstagramAdsRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/tiktok-ads': typeof TiktokAdsRoute
-  '/upgrade': typeof UpgradeRoute
-  '/admin/activity': typeof AdminActivityRoute
-  '/admin/ads': typeof AdminAdsRoute
-  '/admin/asn-blocklist': typeof AdminAsnBlocklistRoute
-  '/admin/audit': typeof AdminAuditRoute
-  '/admin/clicks': typeof AdminClicksRoute
-  '/admin/domain-health': typeof AdminDomainHealthRoute
-  '/admin/domains': typeof AdminDomainsRoute
-  '/admin/packages': typeof AdminPackagesRoute
-  '/admin/payments': typeof AdminPaymentsRoute
-  '/admin/protection': typeof AdminProtectionRoute
-  '/admin/referer-rules': typeof AdminRefererRulesRoute
-  '/admin/rotation': typeof AdminRotationRoute
-  '/admin/scores': typeof AdminScoresRoute
-  '/admin/users': typeof AdminUsersRoute
-  '/admin/variants': typeof AdminVariantsRoute
-  '/analytics/$linkId': typeof AnalyticsLinkIdRoute
-  '/blog/$slug': typeof BlogSlugRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/upgrade': typeof AuthenticatedUpgradeRoute
   '/r/$code': typeof RCodeRoute
-  '/admin': typeof AdminIndexRoute
-  '/api/public/plisio-create-invoice': typeof ApiPublicPlisioCreateInvoiceRoute
-  '/api/public/plisio-webhook': typeof ApiPublicPlisioWebhookRoute
-  '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
-  '/links/$linkId/targeting': typeof LinksLinkIdTargetingRoute
-  '/links/$linkId/time-rules': typeof LinksLinkIdTimeRulesRoute
-  '/api/public/hooks/autopilot': typeof ApiPublicHooksAutopilotRoute
-  '/api/public/hooks/backfill-clicks': typeof ApiPublicHooksBackfillClicksRoute
-  '/api/public/hooks/domain-health': typeof ApiPublicHooksDomainHealthRoute
-  '/api/public/hooks/plisio-retry-queue': typeof ApiPublicHooksPlisioRetryQueueRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
-  '/analytics': typeof AnalyticsRouteWithChildren
-  '/blog': typeof BlogRoute
-  '/control-panel': typeof ControlPanelRoute
-  '/dashboard': typeof DashboardRoute
-  '/domains': typeof DomainsRoute
-  '/facebook-ads': typeof FacebookAdsRoute
-  '/fb-quality': typeof FbQualityRoute
-  '/funnel': typeof FunnelRoute
-  '/google-ads': typeof GoogleAdsRoute
-  '/instagram-ads': typeof InstagramAdsRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/tiktok-ads': typeof TiktokAdsRoute
-  '/upgrade': typeof UpgradeRoute
-  '/admin/activity': typeof AdminActivityRoute
-  '/admin/ads': typeof AdminAdsRoute
-  '/admin/asn-blocklist': typeof AdminAsnBlocklistRoute
-  '/admin/audit': typeof AdminAuditRoute
-  '/admin/clicks': typeof AdminClicksRoute
-  '/admin/domain-health': typeof AdminDomainHealthRoute
-  '/admin/domains': typeof AdminDomainsRoute
-  '/admin/packages': typeof AdminPackagesRoute
-  '/admin/payments': typeof AdminPaymentsRoute
-  '/admin/protection': typeof AdminProtectionRoute
-  '/admin/referer-rules': typeof AdminRefererRulesRoute
-  '/admin/rotation': typeof AdminRotationRoute
-  '/admin/scores': typeof AdminScoresRoute
-  '/admin/users': typeof AdminUsersRoute
-  '/admin/variants': typeof AdminVariantsRoute
-  '/analytics/$linkId': typeof AnalyticsLinkIdRoute
-  '/blog_/$slug': typeof BlogSlugRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/upgrade': typeof AuthenticatedUpgradeRoute
   '/r/$code': typeof RCodeRoute
-  '/admin/': typeof AdminIndexRoute
-  '/api/public/plisio-create-invoice': typeof ApiPublicPlisioCreateInvoiceRoute
-  '/api/public/plisio-webhook': typeof ApiPublicPlisioWebhookRoute
-  '/links/$linkId/settings': typeof LinksLinkIdSettingsRoute
-  '/links/$linkId/targeting': typeof LinksLinkIdTargetingRoute
-  '/links/$linkId/time-rules': typeof LinksLinkIdTimeRulesRoute
-  '/api/public/hooks/autopilot': typeof ApiPublicHooksAutopilotRoute
-  '/api/public/hooks/backfill-clicks': typeof ApiPublicHooksBackfillClicksRoute
-  '/api/public/hooks/domain-health': typeof ApiPublicHooksDomainHealthRoute
-  '/api/public/hooks/plisio-retry-queue': typeof ApiPublicHooksPlisioRetryQueueRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/admin'
-    | '/analytics'
-    | '/blog'
-    | '/control-panel'
-    | '/dashboard'
-    | '/domains'
-    | '/facebook-ads'
-    | '/fb-quality'
-    | '/funnel'
-    | '/google-ads'
-    | '/instagram-ads'
     | '/login'
     | '/pricing'
     | '/signup'
-    | '/sitemap.xml'
-    | '/tiktok-ads'
+    | '/admin'
+    | '/dashboard'
     | '/upgrade'
-    | '/admin/activity'
-    | '/admin/ads'
-    | '/admin/asn-blocklist'
-    | '/admin/audit'
-    | '/admin/clicks'
-    | '/admin/domain-health'
-    | '/admin/domains'
-    | '/admin/packages'
-    | '/admin/payments'
-    | '/admin/protection'
-    | '/admin/referer-rules'
-    | '/admin/rotation'
-    | '/admin/scores'
-    | '/admin/users'
-    | '/admin/variants'
-    | '/analytics/$linkId'
-    | '/blog/$slug'
     | '/r/$code'
-    | '/admin/'
-    | '/api/public/plisio-create-invoice'
-    | '/api/public/plisio-webhook'
-    | '/links/$linkId/settings'
-    | '/links/$linkId/targeting'
-    | '/links/$linkId/time-rules'
-    | '/api/public/hooks/autopilot'
-    | '/api/public/hooks/backfill-clicks'
-    | '/api/public/hooks/domain-health'
-    | '/api/public/hooks/plisio-retry-queue'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/analytics'
-    | '/blog'
-    | '/control-panel'
-    | '/dashboard'
-    | '/domains'
-    | '/facebook-ads'
-    | '/fb-quality'
-    | '/funnel'
-    | '/google-ads'
-    | '/instagram-ads'
     | '/login'
     | '/pricing'
     | '/signup'
-    | '/sitemap.xml'
-    | '/tiktok-ads'
-    | '/upgrade'
-    | '/admin/activity'
-    | '/admin/ads'
-    | '/admin/asn-blocklist'
-    | '/admin/audit'
-    | '/admin/clicks'
-    | '/admin/domain-health'
-    | '/admin/domains'
-    | '/admin/packages'
-    | '/admin/payments'
-    | '/admin/protection'
-    | '/admin/referer-rules'
-    | '/admin/rotation'
-    | '/admin/scores'
-    | '/admin/users'
-    | '/admin/variants'
-    | '/analytics/$linkId'
-    | '/blog/$slug'
-    | '/r/$code'
     | '/admin'
-    | '/api/public/plisio-create-invoice'
-    | '/api/public/plisio-webhook'
-    | '/links/$linkId/settings'
-    | '/links/$linkId/targeting'
-    | '/links/$linkId/time-rules'
-    | '/api/public/hooks/autopilot'
-    | '/api/public/hooks/backfill-clicks'
-    | '/api/public/hooks/domain-health'
-    | '/api/public/hooks/plisio-retry-queue'
+    | '/dashboard'
+    | '/upgrade'
+    | '/r/$code'
   id:
     | '__root__'
     | '/'
-    | '/admin'
-    | '/analytics'
-    | '/blog'
-    | '/control-panel'
-    | '/dashboard'
-    | '/domains'
-    | '/facebook-ads'
-    | '/fb-quality'
-    | '/funnel'
-    | '/google-ads'
-    | '/instagram-ads'
+    | '/_authenticated'
     | '/login'
     | '/pricing'
     | '/signup'
-    | '/sitemap.xml'
-    | '/tiktok-ads'
-    | '/upgrade'
-    | '/admin/activity'
-    | '/admin/ads'
-    | '/admin/asn-blocklist'
-    | '/admin/audit'
-    | '/admin/clicks'
-    | '/admin/domain-health'
-    | '/admin/domains'
-    | '/admin/packages'
-    | '/admin/payments'
-    | '/admin/protection'
-    | '/admin/referer-rules'
-    | '/admin/rotation'
-    | '/admin/scores'
-    | '/admin/users'
-    | '/admin/variants'
-    | '/analytics/$linkId'
-    | '/blog_/$slug'
+    | '/_authenticated/admin'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/upgrade'
     | '/r/$code'
-    | '/admin/'
-    | '/api/public/plisio-create-invoice'
-    | '/api/public/plisio-webhook'
-    | '/links/$linkId/settings'
-    | '/links/$linkId/targeting'
-    | '/links/$linkId/time-rules'
-    | '/api/public/hooks/autopilot'
-    | '/api/public/hooks/backfill-clicks'
-    | '/api/public/hooks/domain-health'
-    | '/api/public/hooks/plisio-retry-queue'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRouteWithChildren
-  AnalyticsRoute: typeof AnalyticsRouteWithChildren
-  BlogRoute: typeof BlogRoute
-  ControlPanelRoute: typeof ControlPanelRoute
-  DashboardRoute: typeof DashboardRoute
-  DomainsRoute: typeof DomainsRoute
-  FacebookAdsRoute: typeof FacebookAdsRoute
-  FbQualityRoute: typeof FbQualityRoute
-  FunnelRoute: typeof FunnelRoute
-  GoogleAdsRoute: typeof GoogleAdsRoute
-  InstagramAdsRoute: typeof InstagramAdsRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   SignupRoute: typeof SignupRoute
-  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  TiktokAdsRoute: typeof TiktokAdsRoute
-  UpgradeRoute: typeof UpgradeRoute
-  BlogSlugRoute: typeof BlogSlugRoute
   RCodeRoute: typeof RCodeRoute
-  ApiPublicPlisioCreateInvoiceRoute: typeof ApiPublicPlisioCreateInvoiceRoute
-  ApiPublicPlisioWebhookRoute: typeof ApiPublicPlisioWebhookRoute
-  LinksLinkIdSettingsRoute: typeof LinksLinkIdSettingsRoute
-  LinksLinkIdTargetingRoute: typeof LinksLinkIdTargetingRoute
-  LinksLinkIdTimeRulesRoute: typeof LinksLinkIdTimeRulesRoute
-  ApiPublicHooksAutopilotRoute: typeof ApiPublicHooksAutopilotRoute
-  ApiPublicHooksBackfillClicksRoute: typeof ApiPublicHooksBackfillClicksRoute
-  ApiPublicHooksDomainHealthRoute: typeof ApiPublicHooksDomainHealthRoute
-  ApiPublicHooksPlisioRetryQueueRoute: typeof ApiPublicHooksPlisioRetryQueueRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/upgrade': {
-      id: '/upgrade'
-      path: '/upgrade'
-      fullPath: '/upgrade'
-      preLoaderRoute: typeof UpgradeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tiktok-ads': {
-      id: '/tiktok-ads'
-      path: '/tiktok-ads'
-      fullPath: '/tiktok-ads'
-      preLoaderRoute: typeof TiktokAdsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -657,81 +162,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/instagram-ads': {
-      id: '/instagram-ads'
-      path: '/instagram-ads'
-      fullPath: '/instagram-ads'
-      preLoaderRoute: typeof InstagramAdsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/google-ads': {
-      id: '/google-ads'
-      path: '/google-ads'
-      fullPath: '/google-ads'
-      preLoaderRoute: typeof GoogleAdsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/funnel': {
-      id: '/funnel'
-      path: '/funnel'
-      fullPath: '/funnel'
-      preLoaderRoute: typeof FunnelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/fb-quality': {
-      id: '/fb-quality'
-      path: '/fb-quality'
-      fullPath: '/fb-quality'
-      preLoaderRoute: typeof FbQualityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/facebook-ads': {
-      id: '/facebook-ads'
-      path: '/facebook-ads'
-      fullPath: '/facebook-ads'
-      preLoaderRoute: typeof FacebookAdsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/domains': {
-      id: '/domains'
-      path: '/domains'
-      fullPath: '/domains'
-      preLoaderRoute: typeof DomainsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/control-panel': {
-      id: '/control-panel'
-      path: '/control-panel'
-      fullPath: '/control-panel'
-      preLoaderRoute: typeof ControlPanelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog': {
-      id: '/blog'
-      path: '/blog'
-      fullPath: '/blog'
-      preLoaderRoute: typeof BlogRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/analytics': {
-      id: '/analytics'
-      path: '/analytics'
-      fullPath: '/analytics'
-      preLoaderRoute: typeof AnalyticsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -741,13 +176,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/': {
-      id: '/admin/'
-      path: '/'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/r/$code': {
       id: '/r/$code'
       path: '/r/$code'
@@ -755,273 +183,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/blog_/$slug': {
-      id: '/blog_/$slug'
-      path: '/blog/$slug'
-      fullPath: '/blog/$slug'
-      preLoaderRoute: typeof BlogSlugRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/upgrade': {
+      id: '/_authenticated/upgrade'
+      path: '/upgrade'
+      fullPath: '/upgrade'
+      preLoaderRoute: typeof AuthenticatedUpgradeRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/analytics/$linkId': {
-      id: '/analytics/$linkId'
-      path: '/$linkId'
-      fullPath: '/analytics/$linkId'
-      preLoaderRoute: typeof AnalyticsLinkIdRouteImport
-      parentRoute: typeof AnalyticsRoute
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/admin/variants': {
-      id: '/admin/variants'
-      path: '/variants'
-      fullPath: '/admin/variants'
-      preLoaderRoute: typeof AdminVariantsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/users': {
-      id: '/admin/users'
-      path: '/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AdminUsersRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/scores': {
-      id: '/admin/scores'
-      path: '/scores'
-      fullPath: '/admin/scores'
-      preLoaderRoute: typeof AdminScoresRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/rotation': {
-      id: '/admin/rotation'
-      path: '/rotation'
-      fullPath: '/admin/rotation'
-      preLoaderRoute: typeof AdminRotationRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/referer-rules': {
-      id: '/admin/referer-rules'
-      path: '/referer-rules'
-      fullPath: '/admin/referer-rules'
-      preLoaderRoute: typeof AdminRefererRulesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/protection': {
-      id: '/admin/protection'
-      path: '/protection'
-      fullPath: '/admin/protection'
-      preLoaderRoute: typeof AdminProtectionRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/payments': {
-      id: '/admin/payments'
-      path: '/payments'
-      fullPath: '/admin/payments'
-      preLoaderRoute: typeof AdminPaymentsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/packages': {
-      id: '/admin/packages'
-      path: '/packages'
-      fullPath: '/admin/packages'
-      preLoaderRoute: typeof AdminPackagesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/domains': {
-      id: '/admin/domains'
-      path: '/domains'
-      fullPath: '/admin/domains'
-      preLoaderRoute: typeof AdminDomainsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/domain-health': {
-      id: '/admin/domain-health'
-      path: '/domain-health'
-      fullPath: '/admin/domain-health'
-      preLoaderRoute: typeof AdminDomainHealthRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/clicks': {
-      id: '/admin/clicks'
-      path: '/clicks'
-      fullPath: '/admin/clicks'
-      preLoaderRoute: typeof AdminClicksRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/audit': {
-      id: '/admin/audit'
-      path: '/audit'
-      fullPath: '/admin/audit'
-      preLoaderRoute: typeof AdminAuditRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/asn-blocklist': {
-      id: '/admin/asn-blocklist'
-      path: '/asn-blocklist'
-      fullPath: '/admin/asn-blocklist'
-      preLoaderRoute: typeof AdminAsnBlocklistRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/ads': {
-      id: '/admin/ads'
-      path: '/ads'
-      fullPath: '/admin/ads'
-      preLoaderRoute: typeof AdminAdsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/activity': {
-      id: '/admin/activity'
-      path: '/activity'
-      fullPath: '/admin/activity'
-      preLoaderRoute: typeof AdminActivityRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/links/$linkId/time-rules': {
-      id: '/links/$linkId/time-rules'
-      path: '/links/$linkId/time-rules'
-      fullPath: '/links/$linkId/time-rules'
-      preLoaderRoute: typeof LinksLinkIdTimeRulesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/links/$linkId/targeting': {
-      id: '/links/$linkId/targeting'
-      path: '/links/$linkId/targeting'
-      fullPath: '/links/$linkId/targeting'
-      preLoaderRoute: typeof LinksLinkIdTargetingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/links/$linkId/settings': {
-      id: '/links/$linkId/settings'
-      path: '/links/$linkId/settings'
-      fullPath: '/links/$linkId/settings'
-      preLoaderRoute: typeof LinksLinkIdSettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/plisio-webhook': {
-      id: '/api/public/plisio-webhook'
-      path: '/api/public/plisio-webhook'
-      fullPath: '/api/public/plisio-webhook'
-      preLoaderRoute: typeof ApiPublicPlisioWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/plisio-create-invoice': {
-      id: '/api/public/plisio-create-invoice'
-      path: '/api/public/plisio-create-invoice'
-      fullPath: '/api/public/plisio-create-invoice'
-      preLoaderRoute: typeof ApiPublicPlisioCreateInvoiceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/plisio-retry-queue': {
-      id: '/api/public/hooks/plisio-retry-queue'
-      path: '/api/public/hooks/plisio-retry-queue'
-      fullPath: '/api/public/hooks/plisio-retry-queue'
-      preLoaderRoute: typeof ApiPublicHooksPlisioRetryQueueRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/domain-health': {
-      id: '/api/public/hooks/domain-health'
-      path: '/api/public/hooks/domain-health'
-      fullPath: '/api/public/hooks/domain-health'
-      preLoaderRoute: typeof ApiPublicHooksDomainHealthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/backfill-clicks': {
-      id: '/api/public/hooks/backfill-clicks'
-      path: '/api/public/hooks/backfill-clicks'
-      fullPath: '/api/public/hooks/backfill-clicks'
-      preLoaderRoute: typeof ApiPublicHooksBackfillClicksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/autopilot': {
-      id: '/api/public/hooks/autopilot'
-      path: '/api/public/hooks/autopilot'
-      fullPath: '/api/public/hooks/autopilot'
-      preLoaderRoute: typeof ApiPublicHooksAutopilotRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
-interface AdminRouteChildren {
-  AdminActivityRoute: typeof AdminActivityRoute
-  AdminAdsRoute: typeof AdminAdsRoute
-  AdminAsnBlocklistRoute: typeof AdminAsnBlocklistRoute
-  AdminAuditRoute: typeof AdminAuditRoute
-  AdminClicksRoute: typeof AdminClicksRoute
-  AdminDomainHealthRoute: typeof AdminDomainHealthRoute
-  AdminDomainsRoute: typeof AdminDomainsRoute
-  AdminPackagesRoute: typeof AdminPackagesRoute
-  AdminPaymentsRoute: typeof AdminPaymentsRoute
-  AdminProtectionRoute: typeof AdminProtectionRoute
-  AdminRefererRulesRoute: typeof AdminRefererRulesRoute
-  AdminRotationRoute: typeof AdminRotationRoute
-  AdminScoresRoute: typeof AdminScoresRoute
-  AdminUsersRoute: typeof AdminUsersRoute
-  AdminVariantsRoute: typeof AdminVariantsRoute
-  AdminIndexRoute: typeof AdminIndexRoute
+interface AuthenticatedRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedUpgradeRoute: typeof AuthenticatedUpgradeRoute
 }
 
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminActivityRoute: AdminActivityRoute,
-  AdminAdsRoute: AdminAdsRoute,
-  AdminAsnBlocklistRoute: AdminAsnBlocklistRoute,
-  AdminAuditRoute: AdminAuditRoute,
-  AdminClicksRoute: AdminClicksRoute,
-  AdminDomainHealthRoute: AdminDomainHealthRoute,
-  AdminDomainsRoute: AdminDomainsRoute,
-  AdminPackagesRoute: AdminPackagesRoute,
-  AdminPaymentsRoute: AdminPaymentsRoute,
-  AdminProtectionRoute: AdminProtectionRoute,
-  AdminRefererRulesRoute: AdminRefererRulesRoute,
-  AdminRotationRoute: AdminRotationRoute,
-  AdminScoresRoute: AdminScoresRoute,
-  AdminUsersRoute: AdminUsersRoute,
-  AdminVariantsRoute: AdminVariantsRoute,
-  AdminIndexRoute: AdminIndexRoute,
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedUpgradeRoute: AuthenticatedUpgradeRoute,
 }
 
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
-
-interface AnalyticsRouteChildren {
-  AnalyticsLinkIdRoute: typeof AnalyticsLinkIdRoute
-}
-
-const AnalyticsRouteChildren: AnalyticsRouteChildren = {
-  AnalyticsLinkIdRoute: AnalyticsLinkIdRoute,
-}
-
-const AnalyticsRouteWithChildren = AnalyticsRoute._addFileChildren(
-  AnalyticsRouteChildren,
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRouteWithChildren,
-  AnalyticsRoute: AnalyticsRouteWithChildren,
-  BlogRoute: BlogRoute,
-  ControlPanelRoute: ControlPanelRoute,
-  DashboardRoute: DashboardRoute,
-  DomainsRoute: DomainsRoute,
-  FacebookAdsRoute: FacebookAdsRoute,
-  FbQualityRoute: FbQualityRoute,
-  FunnelRoute: FunnelRoute,
-  GoogleAdsRoute: GoogleAdsRoute,
-  InstagramAdsRoute: InstagramAdsRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   SignupRoute: SignupRoute,
-  SitemapDotxmlRoute: SitemapDotxmlRoute,
-  TiktokAdsRoute: TiktokAdsRoute,
-  UpgradeRoute: UpgradeRoute,
-  BlogSlugRoute: BlogSlugRoute,
   RCodeRoute: RCodeRoute,
-  ApiPublicPlisioCreateInvoiceRoute: ApiPublicPlisioCreateInvoiceRoute,
-  ApiPublicPlisioWebhookRoute: ApiPublicPlisioWebhookRoute,
-  LinksLinkIdSettingsRoute: LinksLinkIdSettingsRoute,
-  LinksLinkIdTargetingRoute: LinksLinkIdTargetingRoute,
-  LinksLinkIdTimeRulesRoute: LinksLinkIdTimeRulesRoute,
-  ApiPublicHooksAutopilotRoute: ApiPublicHooksAutopilotRoute,
-  ApiPublicHooksBackfillClicksRoute: ApiPublicHooksBackfillClicksRoute,
-  ApiPublicHooksDomainHealthRoute: ApiPublicHooksDomainHealthRoute,
-  ApiPublicHooksPlisioRetryQueueRoute: ApiPublicHooksPlisioRetryQueueRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
