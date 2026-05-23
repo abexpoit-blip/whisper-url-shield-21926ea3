@@ -3,6 +3,7 @@ set -euo pipefail
 
 PORT="${PORT:-3001}"
 HOST="${HOST:-0.0.0.0}"
+LOG_LEVEL="${WRANGLER_LOG_LEVEL:-warn}"
 WRANGLER_CLI="node_modules/wrangler/wrangler-dist/cli.js"
 WRANGLER_CONFIG="dist/server/wrangler.json"
 ENV_FILE=".env"
@@ -45,4 +46,4 @@ exec node "${WRANGLER_CLI}" dev \
   --ip "${HOST}" \
   --local \
   --show-interactive-dev-session=false \
-  --log-level info
+  --log-level "${LOG_LEVEL}"
