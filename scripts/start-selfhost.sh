@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PORT="${PORT:-3001}"
+PORT="${PORT:-3000}"
 HOST="${HOST:-0.0.0.0}"
 LOG_LEVEL="${WRANGLER_LOG_LEVEL:-warn}"
 WRANGLER_CLI="node_modules/wrangler/wrangler-dist/cli.js"
