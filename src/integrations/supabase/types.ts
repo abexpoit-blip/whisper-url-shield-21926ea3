@@ -136,7 +136,7 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
-          link_limit: number
+          link_limit: number | null
           name: string
           price_usd: number
           slug: string
@@ -147,7 +147,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
-          link_limit?: number
+          link_limit?: number | null
           name: string
           price_usd?: number
           slug: string
@@ -158,7 +158,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
-          link_limit?: number
+          link_limit?: number | null
           name?: string
           price_usd?: number
           slug?: string
@@ -176,7 +176,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_banned: boolean
-          link_limit: number
+          link_limit: number | null
           links_used: number
           plan_slug: string
           updated_at: string
@@ -190,7 +190,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_banned?: boolean
-          link_limit?: number
+          link_limit?: number | null
           links_used?: number
           plan_slug?: string
           updated_at?: string
@@ -204,7 +204,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_banned?: boolean
-          link_limit?: number
+          link_limit?: number | null
           links_used?: number
           plan_slug?: string
           updated_at?: string
