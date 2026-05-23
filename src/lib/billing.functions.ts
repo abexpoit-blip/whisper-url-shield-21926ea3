@@ -345,9 +345,8 @@ export const listMyUpgradeRequests = createServerFn({ method: "GET" })
   });
 
 export const listAllUpgradeRequests = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { supabase } = context;
+  .handler(async () => {
+    const { supabase } = await requireSelfHostedAdmin();
     const { data, error } = await (supabase as any)
       .from("upgrade_requests")
       .select(
@@ -370,14 +369,13 @@ export const listAllUpgradeRequests = createServerFn({ method: "GET" })
   });
 
 export const getUpgradeRequestDetail = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => {
     const v: any = i;
     if (!v?.id || typeof v.id !== "string") throw new Error("id required");
     return { id: v.id as string };
   })
-  .handler(async ({ data, context }) => {
-    const { supabase } = context;
+  .handler(async ({ data }) => {
+    const { supabase } = await requireSelfHostedAdmin();
     const { data: req, error } = await (supabase as any)
       .from("upgrade_requests")
       .select("*")
@@ -404,10 +402,9 @@ export const getUpgradeRequestDetail = createServerFn({ method: "POST" })
   });
 
 export const reviewUpgradeRequest = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => ReviewSchema.parse(i))
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+  .handler(async ({ data }) => {
+    const { supabase, userId } = await requireSelfHostedAdmin();
     const { data: req, error: re } = await (supabase as any)
       .from("upgrade_requests")
       .select("id,user_id,package_slug,status")
