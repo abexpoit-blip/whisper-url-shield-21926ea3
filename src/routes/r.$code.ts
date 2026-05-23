@@ -50,7 +50,7 @@ async function recordRedirectClick(input: {
 
   if (!rpcError) return;
 
-  await supabaseAdmin.from("clicks").insert({
+  const { error: insertError } = await supabaseAdmin.from("clicks").insert({
     link_id: input.linkId,
     ip: input.ip,
     country: input.country,
@@ -58,7 +58,36 @@ async function recordRedirectClick(input: {
     is_bot: input.isBot,
     bot_reason: input.botReason,
     routed_to: input.routedTo,
+    utm_source: input.utm.utm_source,
+    utm_medium: input.utm.utm_medium,
+    utm_campaign: input.utm.utm_campaign,
+    utm_term: input.utm.utm_term,
+    utm_content: input.utm.utm_content,
+    referer_host: input.refererHost,
+    bot_score: input.botScore,
+    signals: input.signals,
+    challenge_passed: input.challengePassed,
   });
+
+  if (insertError) {
+    await supabaseAdmin.from("clicks").insert({
+      link_id: input.linkId,
+      ip_address: input.ip,
+      country: input.country,
+      user_agent: input.ua,
+      is_bot: input.isBot,
+      bot_reason: input.botReason,
+      utm_source: input.utm.utm_source,
+      utm_medium: input.utm.utm_medium,
+      utm_campaign: input.utm.utm_campaign,
+      utm_term: input.utm.utm_term,
+      utm_content: input.utm.utm_content,
+      referer_host: input.refererHost,
+      bot_score: input.botScore,
+      signals: input.signals,
+      challenge_passed: input.challengePassed,
+    } as never);
+  }
 
   const { data: cur } = await supabaseAdmin
     .from("links")
