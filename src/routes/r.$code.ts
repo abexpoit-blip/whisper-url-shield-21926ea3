@@ -111,7 +111,7 @@ async function recordRedirectClick(input: {
 export const Route = createFileRoute("/r/$code")({
   server: {
     handlers: {
-      HEAD: async ({ request, params }) => handleRedirect(request, params.code),
+      HEAD: async ({ request, params }) => handleRedirect(request, params.code, false),
       GET: async ({ request, params }) => {
         return handleRedirect(request, params.code);
       },
@@ -119,7 +119,7 @@ export const Route = createFileRoute("/r/$code")({
   },
 });
 
-async function handleRedirect(request: Request, code: string) {
+async function handleRedirect(request: Request, code: string, shouldRecordClick = true) {
         const url = new URL(request.url);
         const ua = request.headers.get("user-agent") || "";
         const referer = request.headers.get("referer") || "";
@@ -256,7 +256,8 @@ async function handleRedirect(request: Request, code: string) {
         }
 
         const botScore = isBot ? 100 : 0;
-        await recordRedirectClick({
+        if (shouldRecordClick) {
+          await recordRedirectClick({
           linkId: link.id,
           userId: link.user_id,
           ip: ip || null,
@@ -275,7 +276,8 @@ async function handleRedirect(request: Request, code: string) {
             device,
             referer_host: refererDomain || null,
           },
-        });
+          });
+        }
 
         return Response.redirect(target, 302);
 }
