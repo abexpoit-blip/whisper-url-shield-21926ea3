@@ -179,6 +179,7 @@ export type Database = {
           link_limit: number | null
           links_used: number
           plan_slug: string
+          telegram: string | null
           updated_at: string
         }
         Insert: {
@@ -193,6 +194,7 @@ export type Database = {
           link_limit?: number | null
           links_used?: number
           plan_slug?: string
+          telegram?: string | null
           updated_at?: string
         }
         Update: {
@@ -207,6 +209,7 @@ export type Database = {
           link_limit?: number | null
           links_used?: number
           plan_slug?: string
+          telegram?: string | null
           updated_at?: string
         }
         Relationships: [
