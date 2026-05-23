@@ -36,7 +36,7 @@ function AdminPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-semibold">Admin</h1>
+      <h1 className="text-2xl font-semibold">Control Panel</h1>
       <div className="grid grid-cols-3 gap-4">
         <Stat label="Users" value={stats.data?.users ?? "..."} />
         <Stat label="Links" value={stats.data?.links ?? "..."} />
