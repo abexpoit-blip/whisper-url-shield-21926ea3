@@ -39,25 +39,46 @@ function UpgradePage() {
     <div className="space-y-10">
       <div>
         <h1 className="text-3xl font-bold">Upgrade your plan</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Pay with crypto (USDT, BTC, LTC) via Plisio. Instant activation after confirmation.</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Pay with crypto (USDT, BTC, LTC) via Plisio. Instant activation after blockchain confirmation.
+        </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {packages?.map((p) => {
           const isFree = p.slug === "free";
+          const meta = PLAN_META[p.slug] ?? { blurb: "", features: [] };
           const highlight = p.slug === "monthly";
           return (
-            <div key={p.id} className={`relative rounded-2xl p-8 ${highlight ? "glass-panel sky-glow border border-sky" : "glass-card"}`}>
-              {highlight && <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-sky-gradient px-3 py-1 text-xs font-bold text-primary-foreground">MOST POPULAR</div>}
+            <div
+              key={p.id}
+              className={`relative rounded-2xl p-8 ${highlight ? "glass-panel sky-glow border border-sky scale-[1.02]" : "glass-card"}`}
+            >
+              {meta.badge && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-sky-gradient px-3 py-1 text-xs font-bold text-primary-foreground whitespace-nowrap">
+                  {meta.badge}
+                </div>
+              )}
               <h3 className="text-xl font-bold">{p.name}</h3>
+              {meta.blurb && <p className="mt-1 text-xs text-muted-foreground">{meta.blurb}</p>}
               <div className="mt-4 flex items-baseline gap-2">
                 <span className="text-5xl font-bold text-gradient-sky">${Number(p.price_usd).toFixed(0)}</span>
-                <span className="text-sm text-muted-foreground">{p.slug === "lifetime" ? "/ lifetime" : p.slug === "monthly" ? "/ month" : ""}</span>
+                <span className="text-sm text-muted-foreground">
+                  {p.slug === "lifetime" ? "/ lifetime" : p.slug === "monthly" ? "/ month" : ""}
+                </span>
               </div>
               <div className="mt-6 space-y-1 text-sm">
                 <div className="font-medium">{p.click_quota ? `${p.click_quota.toLocaleString()} clicks` : "Unlimited clicks"}</div>
                 <div className="text-muted-foreground">{p.link_limit === null ? "Unlimited links" : `${p.link_limit} link${p.link_limit > 1 ? "s" : ""}`}</div>
               </div>
+              <ul className="mt-5 space-y-2 text-sm">
+                {meta.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2">
+                    <span className="mt-0.5 text-success">✓</span>
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
               <button
                 disabled={isFree || buyMut.isPending}
                 onClick={() => buyMut.mutate(p.slug as "monthly" | "lifetime")}
@@ -69,6 +90,10 @@ function UpgradePage() {
           );
         })}
       </div>
+
+      <p className="text-center text-sm text-muted-foreground">
+        💡 Smart pick: <span className="font-semibold text-foreground">Lifetime Unlimited</span> pays for itself in 10 months vs Monthly Pro.
+      </p>
 
       {ordersList && ordersList.length > 0 && (
         <div>
