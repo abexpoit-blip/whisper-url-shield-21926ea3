@@ -6,11 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) {
+    // Use getSession() — reads from localStorage, no network round-trip (fast on slow VPS)
+    const { data } = await supabase.auth.getSession();
+    if (!data.session?.user) {
       throw redirect({ to: "/login" });
     }
-    return { user: data.user };
+    return { user: data.session.user };
   },
   component: AuthenticatedLayout,
 });
@@ -38,22 +39,22 @@ function AuthenticatedLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border">
+    <div className="min-h-screen bg-mesh text-foreground">
+      <header className="sticky top-0 z-50 border-b border-border/30 backdrop-blur-xl bg-background/60">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
           <Link to="/dashboard" className="flex items-center gap-2">
             <Wordmark />
           </Link>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link to="/dashboard" className="hover:underline">Dashboard</Link>
-            <Link to="/upgrade" className="hover:underline">Upgrade</Link>
-            {isAdmin && <Link to="/control-panel" className="hover:underline">Control Panel</Link>}
-            <span className="text-xs text-muted-foreground">{user.email}</span>
-            <Button size="sm" variant="outline" onClick={logout}>Logout</Button>
+          <nav className="flex items-center gap-5 text-sm">
+            <Link to="/dashboard" className="hover:text-primary transition">Dashboard</Link>
+            <Link to="/upgrade" className="hover:text-primary transition">Upgrade</Link>
+            {isAdmin && <Link to="/control-panel" className="text-primary font-medium hover:underline">Control Panel</Link>}
+            <span className="hidden sm:inline text-xs text-muted-foreground">{user.email}</span>
+            <Button size="sm" variant="outline" className="border-sky/40" onClick={logout}>Logout</Button>
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-6 py-8">
+      <main className="mx-auto max-w-6xl px-6 py-10">
         <Outlet />
       </main>
     </div>

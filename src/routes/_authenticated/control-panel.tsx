@@ -9,7 +9,7 @@ import { adminStats, adminListUsers, adminBanUser } from "@/lib/admin.functions"
 export const Route = createFileRoute("/_authenticated/control-panel")({
   beforeLoad: async ({ context }) => {
     const user = (context as { user?: { id: string } }).user;
-    if (!user) throw redirect({ to: "/login" });
+    if (!user) throw redirect({ to: "/admin-login" });
     const { data } = await supabase
       .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
     if (!data) throw redirect({ to: "/dashboard" });
