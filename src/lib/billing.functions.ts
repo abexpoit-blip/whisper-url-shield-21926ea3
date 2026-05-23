@@ -127,17 +127,10 @@ export const updatePackage = createServerFn({ method: "POST" })
   });
 
 export const deletePackage = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => IdSchema.parse(i))
-  .handler(async ({ data, context }) => {
-    const { data: role } = await (context.supabase as any)
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (!role) throw new Error("Unauthorized: Admin access required");
-    const { error } = await (context.supabase as any).from("packages").delete().eq("id", data.id);
+  .handler(async ({ data }) => {
+    const { supabase } = await requireSelfHostedAdmin();
+    const { error } = await (supabase as any).from("packages").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -422,9 +415,9 @@ export const reviewUpgradeRequest = createServerFn({ method: "POST" })
 
 // ---------- Payment settings ----------
 export const getPaymentSettings = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await (context.supabase as any)
+  .handler(async () => {
+    const { supabase } = await requireSelfHostedAdmin();
+    const { data, error } = await (supabase as any)
       .from("payment_settings")
       .select("plisio_enabled,plisio_api_key,plisio_webhook_secret,payment_instructions,updated_at")
       .eq("id", 1)
@@ -445,10 +438,10 @@ export const getPublicPaymentSettings = createServerFn({ method: "GET" }).handle
 });
 
 export const updatePaymentSettings = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => PaymentSettingsSchema.parse(i))
-  .handler(async ({ data, context }) => {
-    const { error } = await (context.supabase as any)
+  .handler(async ({ data }) => {
+    const { supabase } = await requireSelfHostedAdmin();
+    const { error } = await (supabase as any)
       .from("payment_settings")
       .update({ ...data, updated_at: new Date().toISOString() })
       .eq("id", 1);
