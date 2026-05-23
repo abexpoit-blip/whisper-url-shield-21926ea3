@@ -1139,9 +1139,9 @@ export type Database = {
       check_and_increment_user_clicks: {
         Args: { p_user_id: string }
         Returns: {
-          click_quota: number
-          clicks_used: number
           exceeded: boolean
+          quota: number
+          used: number
         }[]
       }
       clicks_breakdown: {

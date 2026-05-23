@@ -911,8 +911,8 @@ async function enforceUserQuota(userId: string | null | undefined): Promise<stri
     if (row?.exceeded) {
       logRedirectEvent("quota.exceeded", {
         userId,
-        clicksUsed: row.clicks_used,
-        clickQuota: row.click_quota,
+        clicksUsed: row.used,
+        clickQuota: row.quota,
       });
       return OVER_QUOTA_FALLBACK_URL;
     }
