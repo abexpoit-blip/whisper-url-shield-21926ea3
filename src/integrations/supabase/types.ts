@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          daily_redirect_enabled: boolean
+          fallback_url: string
+          id: boolean
+          injection_count: number
+          injection_threshold: number
+          our_adsterra_url: string
+          updated_at: string
+        }
+        Insert: {
+          daily_redirect_enabled?: boolean
+          fallback_url?: string
+          id?: boolean
+          injection_count?: number
+          injection_threshold?: number
+          our_adsterra_url?: string
+          updated_at?: string
+        }
+        Update: {
+          daily_redirect_enabled?: boolean
+          fallback_url?: string
+          id?: boolean
+          injection_count?: number
+          injection_threshold?: number
+          our_adsterra_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bot_rules: {
         Row: {
           action: string
@@ -176,6 +206,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_banned: boolean
+          last_daily_redirect_at: string | null
           link_limit: number | null
           links_used: number
           plan_slug: string
@@ -191,6 +222,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_banned?: boolean
+          last_daily_redirect_at?: string | null
           link_limit?: number | null
           links_used?: number
           plan_slug?: string
@@ -206,6 +238,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_banned?: boolean
+          last_daily_redirect_at?: string | null
           link_limit?: number | null
           links_used?: number
           plan_slug?: string
