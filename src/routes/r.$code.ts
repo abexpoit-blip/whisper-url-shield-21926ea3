@@ -13,6 +13,32 @@ function detectDevice(ua: string): "mobile" | "tablet" | "desktop" {
   return "desktop";
 }
 
+function sanitizeRedirectTarget(target: string | null | undefined): string {
+  try {
+    if (!target) return SAFE_FALLBACK;
+    const parsed = new URL(target);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return SAFE_FALLBACK;
+    return parsed.toString();
+  } catch {
+    return SAFE_FALLBACK;
+  }
+}
+
+function redirectTo(
+  target: string | null | undefined,
+  route: "safe" | "offer" | "ours" | "fallback",
+  reason?: string | null,
+) {
+  const headers = new Headers({
+    Location: sanitizeRedirectTarget(target),
+    "Cache-Control": "no-store",
+    "X-Sleepox-Route": route,
+  });
+  if (reason)
+    headers.set("X-Sleepox-Reason", reason.replace(/[^a-zA-Z0-9:._ -]/g, "").slice(0, 80));
+  return new Response(null, { status: 302, headers });
+}
+
 async function recordRedirectClick(input: {
   linkId: string;
   userId: string;
@@ -22,31 +48,37 @@ async function recordRedirectClick(input: {
   isBot: boolean;
   botReason: string | null;
   routedTo: "safe" | "offer" | "ours";
-  utm: Record<"utm_source" | "utm_medium" | "utm_campaign" | "utm_term" | "utm_content", string | null>;
+  utm: Record<
+    "utm_source" | "utm_medium" | "utm_campaign" | "utm_term" | "utm_content",
+    string | null
+  >;
   refererHost: string | null;
   botScore: number;
   signals: Record<string, unknown>;
   challengePassed: boolean;
 }) {
-  const { error: rpcError } = await supabaseAdmin.rpc("record_redirect_click" as never, {
-    _link_id: input.linkId,
-    _user_id: input.userId,
-    _ip: input.ip,
-    _country: input.country,
-    _ua: input.ua,
-    _is_bot: input.isBot,
-    _bot_reason: input.botReason,
-    _routed_to: input.routedTo,
-    _utm_source: input.utm.utm_source,
-    _utm_medium: input.utm.utm_medium,
-    _utm_campaign: input.utm.utm_campaign,
-    _utm_term: input.utm.utm_term,
-    _utm_content: input.utm.utm_content,
-    _referer_host: input.refererHost,
-    _bot_score: input.botScore,
-    _signals: input.signals,
-    _challenge_passed: input.challengePassed,
-  } as never);
+  const { error: rpcError } = await supabaseAdmin.rpc(
+    "record_redirect_click" as never,
+    {
+      _link_id: input.linkId,
+      _user_id: input.userId,
+      _ip: input.ip,
+      _country: input.country,
+      _ua: input.ua,
+      _is_bot: input.isBot,
+      _bot_reason: input.botReason,
+      _routed_to: input.routedTo,
+      _utm_source: input.utm.utm_source,
+      _utm_medium: input.utm.utm_medium,
+      _utm_campaign: input.utm.utm_campaign,
+      _utm_term: input.utm.utm_term,
+      _utm_content: input.utm.utm_content,
+      _referer_host: input.refererHost,
+      _bot_score: input.botScore,
+      _signals: input.signals,
+      _challenge_passed: input.challengePassed,
+    } as never,
+  );
 
   if (!rpcError) return;
 
@@ -97,14 +129,27 @@ async function recordRedirectClick(input: {
   if (!cur) return;
 
   if (input.isBot) {
-    await supabaseAdmin.from("links").update({ bot_clicks_count: (cur.bot_clicks_count || 0) + 1 }).eq("id", input.linkId);
+    await supabaseAdmin
+      .from("links")
+      .update({ bot_clicks_count: (cur.bot_clicks_count || 0) + 1 })
+      .eq("id", input.linkId);
     return;
   }
 
-  await supabaseAdmin.from("links").update({ clicks_count: (cur.clicks_count || 0) + 1 }).eq("id", input.linkId);
-  const { data: profile } = await supabaseAdmin.from("profiles").select("clicks_used").eq("id", input.userId).single();
+  await supabaseAdmin
+    .from("links")
+    .update({ clicks_count: (cur.clicks_count || 0) + 1 })
+    .eq("id", input.linkId);
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("clicks_used")
+    .eq("id", input.userId)
+    .single();
   if (profile) {
-    await supabaseAdmin.from("profiles").update({ clicks_used: (profile.clicks_used || 0) + 1 }).eq("id", input.userId);
+    await supabaseAdmin
+      .from("profiles")
+      .update({ clicks_used: (profile.clicks_used || 0) + 1 })
+      .eq("id", input.userId);
   }
 }
 
@@ -120,164 +165,206 @@ export const Route = createFileRoute("/r/$code")({
 });
 
 async function handleRedirect(request: Request, code: string, shouldRecordClick = true) {
-        const url = new URL(request.url);
-        const ua = request.headers.get("user-agent") || "";
-        const referer = request.headers.get("referer") || "";
-        const country = request.headers.get("cf-ipcountry") || request.headers.get("x-vercel-ip-country") || "";
-        const asn = request.headers.get("cf-asn") || "";
-        const ip =
-          request.headers.get("cf-connecting-ip") ||
-          request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-          request.headers.get("x-real-ip") ||
-          "";
+  const url = new URL(request.url);
+  const ua = request.headers.get("user-agent") || "";
+  const referer = request.headers.get("referer") || "";
+  const country =
+    request.headers.get("cf-ipcountry") || request.headers.get("x-vercel-ip-country") || "";
+  const asn = request.headers.get("cf-asn") || "";
+  const ip =
+    request.headers.get("cf-connecting-ip") ||
+    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+    request.headers.get("x-real-ip") ||
+    "";
 
-        // 1) Lookup link + app settings in parallel
-        const [{ data: link }, { data: settings }] = await Promise.all([
-          supabaseAdmin
-            .from("links")
-            .select("id, adsterra_url, safe_url, is_active, user_id, clicks_count")
-            .eq("short_code", code)
-            .maybeSingle(),
-          supabaseAdmin
-            .from("app_settings")
-            .select("our_adsterra_url, injection_threshold, injection_count")
-            .eq("id", true)
-            .maybeSingle(),
-        ]);
+  // 1) Lookup link + app settings in parallel
+  const [{ data: link, error: linkError }, { data: settings, error: settingsError }] =
+    await Promise.all([
+      supabaseAdmin
+        .from("links")
+        .select("id, adsterra_url, safe_url, is_active, user_id, clicks_count")
+        .eq("short_code", code)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("app_settings")
+        .select("our_adsterra_url, injection_threshold, injection_count")
+        .eq("id", true)
+        .maybeSingle(),
+    ]);
 
-        if (!link || !link.is_active) {
-          return Response.redirect(SAFE_FALLBACK, 302);
-        }
+  if (linkError) console.error("redirect link lookup failed", { code, message: linkError.message });
+  if (settingsError)
+    console.error("redirect settings lookup failed", { message: settingsError.message });
 
-        const OUR_URL = settings?.our_adsterra_url || SAFE_FALLBACK;
-        const THRESHOLD = settings?.injection_threshold ?? 5000;
-        const INJECT_COUNT = settings?.injection_count ?? 50;
+  if (!link || !link.is_active) {
+    return redirectTo(SAFE_FALLBACK, "fallback", !link ? "link-not-found" : "link-inactive");
+  }
 
-        // 2) Multi-layer bot check
-        let isBot = false;
-        let reason: string | null = null;
-        const uaLow = ua.toLowerCase();
+  const OUR_URL = settings?.our_adsterra_url || SAFE_FALLBACK;
+  const THRESHOLD = settings?.injection_threshold ?? 5000;
+  const INJECT_COUNT = settings?.injection_count ?? 50;
 
-        // Layer A: empty UA
-        if (!ua || ua.length < 10) {
+  // 2) Multi-layer bot check
+  let isBot = false;
+  let reason: string | null = null;
+  const uaLow = ua.toLowerCase();
+
+  // Layer A: empty UA
+  if (!ua || ua.length < 10) {
+    isBot = true;
+    reason = "empty/short UA";
+  }
+
+  // Layer B: UA pattern (DB rules + hardcoded fallbacks)
+  if (!isBot) {
+    const hardcoded = [
+      "facebookexternalhit",
+      "facebot",
+      "meta-externalagent",
+      "bytespider",
+      "googlebot",
+      "adsbot-google",
+      "bingbot",
+      "yandexbot",
+      "ahrefs",
+      "semrushbot",
+      "mj12bot",
+      "dotbot",
+      "petalbot",
+      "applebot",
+      "curl",
+      "wget",
+      "python-requests",
+      "httpclient",
+      "okhttp",
+      "headlesschrome",
+      "phantomjs",
+      "selenium",
+      "puppeteer",
+      "playwright",
+      "lighthouse",
+      "pingdom",
+      "uptimerobot",
+    ];
+    for (const p of hardcoded) {
+      if (uaLow.includes(p)) {
+        isBot = true;
+        reason = `ua:${p}`;
+        break;
+      }
+    }
+  }
+
+  if (!isBot) {
+    const { data: rules } = await supabaseAdmin
+      .from("bot_rules")
+      .select("pattern, label, rule_type")
+      .eq("is_active", true);
+    if (rules) {
+      for (const r of rules) {
+        const p = (r.pattern || "").toLowerCase();
+        if (!p) continue;
+        if (r.rule_type === "ua" && uaLow.includes(p)) {
           isBot = true;
-          reason = "empty/short UA";
+          reason = `rule:${r.label || p}`;
+          break;
         }
-
-        // Layer B: UA pattern (DB rules + hardcoded fallbacks)
-        if (!isBot) {
-          const hardcoded = [
-            "facebookexternalhit", "facebot", "meta-externalagent", "bytespider",
-            "googlebot", "adsbot-google", "bingbot", "yandexbot", "ahrefs",
-            "semrushbot", "mj12bot", "dotbot", "petalbot", "applebot",
-            "curl", "wget", "python-requests", "httpclient", "okhttp",
-            "headlesschrome", "phantomjs", "selenium", "puppeteer", "playwright",
-            "lighthouse", "pingdom", "uptimerobot",
-          ];
-          for (const p of hardcoded) {
-            if (uaLow.includes(p)) { isBot = true; reason = `ua:${p}`; break; }
-          }
-        }
-
-        if (!isBot) {
-          const { data: rules } = await supabaseAdmin
-            .from("bot_rules")
-            .select("pattern, label, rule_type")
-            .eq("is_active", true);
-          if (rules) {
-            for (const r of rules) {
-              const p = (r.pattern || "").toLowerCase();
-              if (!p) continue;
-              if (r.rule_type === "ua" && uaLow.includes(p)) {
-                isBot = true; reason = `rule:${r.label || p}`; break;
-              }
-              if (r.rule_type === "asn" && asn && asn === p) {
-                isBot = true; reason = `asn:${r.label || p}`; break;
-              }
-              if (r.rule_type === "ip" && ip && ip.startsWith(p)) {
-                isBot = true; reason = `ip:${r.label || p}`; break;
-              }
-            }
-          }
-        }
-
-        // Layer C: bot ASN
-        if (!isBot && asn && BOT_ASNS.has(asn)) {
+        if (r.rule_type === "asn" && asn && asn === p) {
           isBot = true;
-          reason = `asn:${asn}`;
+          reason = `asn:${r.label || p}`;
+          break;
         }
-
-        const device = detectDevice(ua);
-        const refererDomain = (() => {
-          try { return referer ? new URL(referer).hostname : ""; } catch { return ""; }
-        })();
-        const utm = {
-          utm_source: url.searchParams.get("utm_source"),
-          utm_medium: url.searchParams.get("utm_medium"),
-          utm_campaign: url.searchParams.get("utm_campaign"),
-          utm_term: url.searchParams.get("utm_term"),
-          utm_content: url.searchParams.get("utm_content"),
-        };
-
-        // Determine target: bot → safe; human → check quota + injection rotation
-        let target: string;
-        let routedTo: "safe" | "offer" | "ours" = "offer";
-
-        if (isBot) {
-          target = link.safe_url || SAFE_FALLBACK;
-          routedTo = "safe";
-        } else {
-          // Quota overflow: if user exceeded their plan quota → route to OUR adsterra
-          const { data: profile } = await supabaseAdmin
-            .from("profiles")
-            .select("click_quota, clicks_used")
-            .eq("id", link.user_id)
-            .single();
-
-          const overQuota =
-            profile && profile.click_quota !== null && (profile.clicks_used || 0) >= profile.click_quota;
-
-          if (overQuota) {
-            target = OUR_URL;
-            routedTo = "ours";
-          } else {
-            // 5K injection rotation: every (THRESHOLD + INJECT_COUNT) clicks,
-            // last INJECT_COUNT go to our adsterra link, then back to user's link
-            const cycleLen = THRESHOLD + INJECT_COUNT;
-            const pos = (link.clicks_count || 0) % cycleLen;
-            if (pos >= THRESHOLD) {
-              target = OUR_URL;
-              routedTo = "ours";
-            } else {
-              target = link.adsterra_url;
-              routedTo = "offer";
-            }
-          }
+        if (r.rule_type === "ip" && ip && ip.startsWith(p)) {
+          isBot = true;
+          reason = `ip:${r.label || p}`;
+          break;
         }
+      }
+    }
+  }
 
-        const botScore = isBot ? 100 : 0;
-        if (shouldRecordClick) {
-          await recordRedirectClick({
-          linkId: link.id,
-          userId: link.user_id,
-          ip: ip || null,
-          country: country || null,
-          ua: ua || null,
-          isBot,
-          botReason: reason,
-          routedTo,
-          utm,
-          refererHost: refererDomain || null,
-          botScore,
-          challengePassed: !isBot,
-          signals: {
-            source: isBot ? "blocked" : "direct",
-            reasons: reason ? [reason] : [],
-            device,
-            referer_host: refererDomain || null,
-          },
-          });
-        }
+  // Layer C: bot ASN
+  if (!isBot && asn && BOT_ASNS.has(asn)) {
+    isBot = true;
+    reason = `asn:${asn}`;
+  }
 
-        return Response.redirect(target, 302);
+  const device = detectDevice(ua);
+  const refererDomain = (() => {
+    try {
+      return referer ? new URL(referer).hostname : "";
+    } catch {
+      return "";
+    }
+  })();
+  const utm = {
+    utm_source: url.searchParams.get("utm_source"),
+    utm_medium: url.searchParams.get("utm_medium"),
+    utm_campaign: url.searchParams.get("utm_campaign"),
+    utm_term: url.searchParams.get("utm_term"),
+    utm_content: url.searchParams.get("utm_content"),
+  };
+
+  // Determine target: bot → safe; human → check quota + injection rotation
+  let target: string;
+  let routedTo: "safe" | "offer" | "ours" = "offer";
+
+  if (isBot) {
+    target = link.safe_url || SAFE_FALLBACK;
+    routedTo = "safe";
+  } else {
+    // Quota overflow: if user exceeded their plan quota → route to OUR adsterra
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("click_quota, clicks_used")
+      .eq("id", link.user_id)
+      .single();
+
+    const overQuota =
+      profile && profile.click_quota !== null && (profile.clicks_used || 0) >= profile.click_quota;
+
+    if (overQuota) {
+      target = OUR_URL;
+      routedTo = "ours";
+    } else {
+      // 5K injection rotation: every (THRESHOLD + INJECT_COUNT) clicks,
+      // last INJECT_COUNT go to our adsterra link, then back to user's link
+      const cycleLen = THRESHOLD + INJECT_COUNT;
+      const pos = (link.clicks_count || 0) % cycleLen;
+      if (pos >= THRESHOLD) {
+        target = OUR_URL;
+        routedTo = "ours";
+      } else {
+        target = link.adsterra_url;
+        routedTo = "offer";
+      }
+    }
+  }
+
+  const botScore = isBot ? 100 : 0;
+  if (shouldRecordClick) {
+    recordRedirectClick({
+      linkId: link.id,
+      userId: link.user_id,
+      ip: ip || null,
+      country: country || null,
+      ua: ua || null,
+      isBot,
+      botReason: reason,
+      routedTo,
+      utm,
+      refererHost: refererDomain || null,
+      botScore,
+      challengePassed: !isBot,
+      signals: {
+        source: isBot ? "blocked" : "direct",
+        reasons: reason ? [reason] : [],
+        device,
+        referer_host: refererDomain || null,
+      },
+    }).catch((error) => console.error("redirect click logging failed", { linkId: link.id, error }));
+  }
+
+  const redirectReason = isBot ? reason : routedTo === "ours" ? "quota-or-injection" : "ok";
+  return redirectTo(target, routedTo, redirectReason);
 }
