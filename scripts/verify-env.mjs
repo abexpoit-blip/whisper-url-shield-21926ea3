@@ -27,6 +27,17 @@ const warnings = [];
 
 const expectedProjectRef = env.VITE_SUPABASE_PROJECT_ID || "sleepox";
 const fingerprint = (value) => createHash("sha256").update(value).digest("hex").slice(0, 16);
+const isSelfHosted = /supabase\.sleepox\.com/i.test(env.SUPABASE_URL || env.VITE_SUPABASE_URL || "");
+
+function decodeJwtPayload(value) {
+  const parts = value.split(".");
+  if (parts.length !== 3) return null;
+  try {
+    return JSON.parse(Buffer.from(parts[1].replace(/-/g, "+").replace(/_/g, "/"), "base64url").toString("utf8"));
+  } catch {
+    return null;
+  }
+}
 
 for (const name of ["SUPABASE_URL", "VITE_SUPABASE_URL"]) {
   const v = env[name];
@@ -52,6 +63,24 @@ if (serverKey) {
   const isNewSecretKey = serverKey.startsWith("sb_secret_");
   if (!isLegacyJwt && !isNewSecretKey) {
     warnings.push("SUPABASE_SERVICE_ROLE_KEY should be a legacy service_role JWT or a new sb_secret_ key");
+  }
+  if (isSelfHosted && isNewSecretKey) {
+    errors.push("Self-hosted Supabase requires SUPABASE_SERVICE_ROLE_KEY to be a legacy JWT with role=service_role, not an sb_secret_ key");
+  }
+  if (isLegacyJwt) {
+    const payload = decodeJwtPayload(serverKey);
+    if (!payload) errors.push("SUPABASE_SERVICE_ROLE_KEY is not a readable JWT");
+    else if (payload.role !== "service_role") {
+      errors.push(`SUPABASE_SERVICE_ROLE_KEY must have role=service_role, got role=${payload.role || "missing"}`);
+    }
+  }
+}
+
+for (const name of ["SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_PUBLISHABLE_KEY"]) {
+  const key = env[name] || "";
+  const payload = decodeJwtPayload(key);
+  if (payload && payload.role !== "anon") {
+    errors.push(`${name} must have role=anon, got role=${payload.role || "missing"}`);
   }
 }
 
