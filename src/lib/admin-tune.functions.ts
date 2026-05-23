@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSelfHostedAuth } from "@/lib/self-host-auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function assertAdmin(supabase: any, userId: string) {
@@ -27,7 +27,7 @@ function suggestWeight(precision: number, samples: number): number {
 }
 
 export const analyzeSignalWeights = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) => AnalyzeSchema.parse(input ?? {}))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
@@ -111,7 +111,7 @@ const ApplySchema = z.object({
 });
 
 export const applyTunedWeights = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) => ApplySchema.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);

@@ -1,11 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSelfHostedAuth } from "@/lib/self-host-auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { auditAdminGate, writeAuditLog } from "./admin-audit.server";
 
 export const listMembers = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) =>
     z
       .object({
@@ -66,7 +66,7 @@ export const listMembers = createServerFn({ method: "POST" })
   });
 
 export const setMemberRole = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) =>
     z
       .object({
@@ -121,7 +121,7 @@ export const setMemberRole = createServerFn({ method: "POST" })
 
 // List active packages (for admin UI plan picker)
 export const listPackages = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .handler(async ({ context }) => {
     await auditAdminGate({ userId: context.userId, action: "users.packages.list" });
     const { data, error } = await supabaseAdmin
@@ -135,7 +135,7 @@ export const listPackages = createServerFn({ method: "POST" })
 
 // Update a member's plan (and optionally override quota)
 export const updateMemberPlan = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) =>
     z.object({
       userId: z.string().uuid(),
@@ -158,7 +158,7 @@ export const updateMemberPlan = createServerFn({ method: "POST" })
 
 // Top up (add) extra link quota to a member
 export const topUpMemberQuota = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) =>
     z.object({
       userId: z.string().uuid(),
@@ -183,7 +183,7 @@ export const topUpMemberQuota = createServerFn({ method: "POST" })
 
 // Change a member's password (admin reset)
 export const changeMemberPassword = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) =>
     z.object({
       userId: z.string().uuid(),
@@ -206,7 +206,7 @@ export const changeMemberPassword = createServerFn({ method: "POST" })
 // Generate a magic-link token so admin can impersonate (sign in as) a user.
 // Returns { email, hashedToken } — client verifies via supabase.auth.verifyOtp.
 export const impersonateMember = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) =>
     z.object({ userId: z.string().uuid() }).parse(input),
   )

@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSelfHostedAuth } from "@/lib/self-host-auth.server";
 
 const linkIdSchema = z.object({ linkId: z.string().uuid() });
 
@@ -19,7 +19,7 @@ async function assertOwner(supabase: any, linkId: string, userId: string) {
 // ---------- Read combined targeting state ----------
 
 export const getTargetingState = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) => linkIdSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -59,7 +59,7 @@ const geoInput = z.object({
 });
 
 export const upsertGeoRule = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) => geoInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -77,7 +77,7 @@ export const upsertGeoRule = createServerFn({ method: "POST" })
   });
 
 export const deleteGeoRule = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) =>
     z.object({ linkId: z.string().uuid(), ruleId: z.string().uuid() }).parse(input),
   )
@@ -103,7 +103,7 @@ const deviceInput = z.object({
 });
 
 export const upsertDeviceRule = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) => deviceInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -122,7 +122,7 @@ export const upsertDeviceRule = createServerFn({ method: "POST" })
   });
 
 export const deleteDeviceRule = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) =>
     z.object({ linkId: z.string().uuid(), ruleId: z.string().uuid() }).parse(input),
   )
@@ -140,7 +140,7 @@ export const deleteDeviceRule = createServerFn({ method: "POST" })
 // ---------- Duplicate-click toggle ----------
 
 export const setDuplicateProtection = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) =>
     z.object({
       linkId: z.string().uuid(),

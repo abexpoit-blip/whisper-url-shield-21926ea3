@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSelfHostedAuth } from "@/lib/self-host-auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function isAdmin(userId: string) {
@@ -49,7 +49,7 @@ async function probeDomain(domain: string, expectedTarget: string): Promise<{
 }
 
 export const runDomainHealthCheck = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) => z.object({ domainId: z.string().uuid().optional() }).parse(input))
   .handler(async ({ data, context }) => {
     const admin = await isAdmin(context.userId);
@@ -80,7 +80,7 @@ export const runDomainHealthCheck = createServerFn({ method: "POST" })
   });
 
 export const listDomainHealth = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .handler(async ({ context }) => {
     const admin = await isAdmin(context.userId);
     let q = supabaseAdmin

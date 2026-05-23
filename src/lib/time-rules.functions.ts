@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSelfHostedAuth } from "@/lib/self-host-auth.server";
 
 async function assertLinkOwner(supabase: any, userId: string, linkId: string) {
   const { data } = await supabase
@@ -13,7 +13,7 @@ async function assertLinkOwner(supabase: any, userId: string, linkId: string) {
 }
 
 export const listTimeRules = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) => z.object({ linkId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
@@ -39,7 +39,7 @@ const addInput = z.object({
 });
 
 export const addTimeRule = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) => addInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
@@ -59,7 +59,7 @@ export const addTimeRule = createServerFn({ method: "POST" })
   });
 
 export const toggleTimeRule = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid(), is_active: z.boolean() }).parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
@@ -71,7 +71,7 @@ export const toggleTimeRule = createServerFn({ method: "POST" })
   });
 
 export const deleteTimeRule = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("link_time_rules").delete().eq("id", data.id);

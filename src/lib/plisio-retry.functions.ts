@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSelfHostedAuth } from "@/lib/self-host-auth.server";
 
 const ListSchema = z.object({
   status: z.enum(["all", "queued", "processing", "done", "failed"]).optional().default("all"),
@@ -8,7 +8,7 @@ const ListSchema = z.object({
 });
 
 export const listPlisioRetryQueue = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((i: unknown) => ListSchema.parse(i ?? {}))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -32,7 +32,7 @@ export const listPlisioRetryQueue = createServerFn({ method: "POST" })
   });
 
 export const retryPlisioQueueItem = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

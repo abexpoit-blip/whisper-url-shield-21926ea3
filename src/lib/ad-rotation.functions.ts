@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSelfHostedAuth } from "@/lib/self-host-auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function assertAdmin(userId: string) {
@@ -14,7 +14,7 @@ async function assertAdmin(userId: string) {
 }
 
 export const getAdConfigPublic = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .handler(async () => {
     const { data } = await supabaseAdmin
       .from("ad_rotation_config")
@@ -29,7 +29,7 @@ export const getAdConfigPublic = createServerFn({ method: "GET" })
   });
 
 export const getAdConfigAdmin = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
     const { data, error } = await supabaseAdmin
@@ -42,7 +42,7 @@ export const getAdConfigAdmin = createServerFn({ method: "GET" })
   });
 
 export const updateAdConfig = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) =>
     z
       .object({
@@ -72,7 +72,7 @@ export const updateAdConfig = createServerFn({ method: "POST" })
   });
 
 export const shouldShowLoginAd = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
     const { data: cfg } = await supabaseAdmin

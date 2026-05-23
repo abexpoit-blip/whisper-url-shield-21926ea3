@@ -242,8 +242,8 @@ export const createPlisioInvoice = createServerFn({ method: "POST" })
         order_name: `${pkg.name} — ${data.package_slug}`,
         order_number: orderNumber,
         callback_url: `${origin}/api/public/plisio-webhook?json=true`,
-        success_url: `${origin}/upgrade?payment=success`,
-        fail_url: `${origin}/upgrade?payment=failed`,
+        success_invoice_url: `${origin}/upgrade?payment=success`,
+        fail_invoice_url: `${origin}/upgrade?payment=failed`,
         email: profile?.email ?? "",
         expire_min: "30",
       });

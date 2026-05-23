@@ -1,11 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSelfHostedAuth } from "@/lib/self-host-auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { auditAdminGate } from "./admin-audit.server";
 import { z } from "zod";
 
 export const listAuditLogs = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) =>
     z
       .object({

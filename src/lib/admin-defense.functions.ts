@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSelfHostedAuth } from "@/lib/self-host-auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function assertAdmin(userId: string) {
@@ -16,7 +16,7 @@ async function assertAdmin(userId: string) {
 // ---------- FB ASN / IP blocklist ----------
 
 export const listFbBlocklist = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
     const { data, error } = await supabaseAdmin
@@ -36,7 +36,7 @@ const blocklistInput = z.object({
 });
 
 export const addFbBlocklistEntry = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) => blocklistInput.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
@@ -52,7 +52,7 @@ export const addFbBlocklistEntry = createServerFn({ method: "POST" })
   });
 
 export const toggleFbBlocklistEntry = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) =>
     z.object({ id: z.string().uuid(), is_active: z.boolean() }).parse(input),
   )
@@ -66,7 +66,7 @@ export const toggleFbBlocklistEntry = createServerFn({ method: "POST" })
   });
 
 export const deleteFbBlocklistEntry = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
@@ -79,7 +79,7 @@ export const deleteFbBlocklistEntry = createServerFn({ method: "POST" })
 // ---------- Referer rules ----------
 
 export const listRefererRules = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
     const { data, error } = await supabaseAdmin
@@ -98,7 +98,7 @@ const refererInput = z.object({
 });
 
 export const addRefererRule = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) => refererInput.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
@@ -114,7 +114,7 @@ export const addRefererRule = createServerFn({ method: "POST" })
   });
 
 export const toggleRefererRule = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) =>
     z.object({ id: z.string().uuid(), is_active: z.boolean() }).parse(input),
   )
@@ -127,7 +127,7 @@ export const toggleRefererRule = createServerFn({ method: "POST" })
   });
 
 export const deleteRefererRule = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);

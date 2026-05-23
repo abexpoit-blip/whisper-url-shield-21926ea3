@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSelfHostedAuth } from "@/lib/self-host-auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { auditAdminGate } from "./admin-audit.server";
 import { z } from "zod";
@@ -17,7 +17,7 @@ const ConfigSchema = z.object({
 });
 
 export const getProtectionConfig = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId, "protection.config.view");
     const { data, error } = await supabaseAdmin
@@ -30,7 +30,7 @@ export const getProtectionConfig = createServerFn({ method: "GET" })
   });
 
 export const updateProtectionConfig = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) => ConfigSchema.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId, "protection.config.update", { ...data });
@@ -43,7 +43,7 @@ export const updateProtectionConfig = createServerFn({ method: "POST" })
   });
 
 export const getProtectionStats = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId, "protection.stats.view");
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();

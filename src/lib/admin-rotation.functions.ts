@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSelfHostedAuth } from "@/lib/self-host-auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { auditAdminGate } from "./admin-audit.server";
 import { z } from "zod";
@@ -31,7 +31,7 @@ const MIN_SAMPLE = 20;
 const CONFIDENT_SAMPLE = 100;
 
 export const getVariantLeaderboard = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) => WindowSchema.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId, "rotation.leaderboard.view", { window: data.window });
@@ -134,7 +134,7 @@ export const getVariantLeaderboard = createServerFn({ method: "POST" })
 // Promote a variant: deactivate all others (so rotation stops and only the
 // winner serves). Reversible — admin can re-enable variants in /admin/variants.
 export const promoteVariant = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) =>
     z.object({ slug: z.string().min(1).max(64) }).parse(input),
   )
@@ -158,7 +158,7 @@ export const promoteVariant = createServerFn({ method: "POST" })
 
 // Reset rotation — re-activate every variant.
 export const resetRotation = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId, "rotation.reset");
     const { error } = await supabaseAdmin

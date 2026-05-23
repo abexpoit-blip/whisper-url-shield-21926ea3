@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSelfHostedAuth } from "@/lib/self-host-auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { auditAdminGate } from "./admin-audit.server";
 import { z } from "zod";
@@ -29,7 +29,7 @@ const VariantInputSchema = z.object({
 // ----- isAdmin (quick check for client gating) -----
 
 export const isAdmin = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .handler(async ({ context }) => {
     const { data } = await supabaseAdmin.rpc("has_role", {
       _user_id: context.userId,
@@ -41,7 +41,7 @@ export const isAdmin = createServerFn({ method: "GET" })
 // ----- Variants: list/upsert/delete -----
 
 export const listVariantsAdmin = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId, "variants.list");
 
@@ -76,7 +76,7 @@ export const listVariantsAdmin = createServerFn({ method: "GET" })
   });
 
 export const upsertVariant = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) => VariantInputSchema.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId, "variants.upsert", { slug: data.slug, id: data.id ?? null });
@@ -110,7 +110,7 @@ export const upsertVariant = createServerFn({ method: "POST" })
   });
 
 export const deleteVariant = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) =>
     z.object({ id: z.string().uuid() }).parse(input),
   )
@@ -127,7 +127,7 @@ export const deleteVariant = createServerFn({ method: "POST" })
 // ----- Per-link overrides -----
 
 export const listLinksWithOverrides = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) =>
     z.object({ search: z.string().max(200).default("") }).parse(input ?? {}),
   )
@@ -169,7 +169,7 @@ export const listLinksWithOverrides = createServerFn({ method: "GET" })
   });
 
 export const setLinkOverride = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) =>
     z.object({
       link_id: z.string().uuid(),
@@ -192,7 +192,7 @@ export const setLinkOverride = createServerFn({ method: "POST" })
   });
 
 export const clearLinkOverride = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) =>
     z.object({ link_id: z.string().uuid() }).parse(input),
   )

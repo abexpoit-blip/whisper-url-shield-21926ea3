@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSelfHostedAuth } from "@/lib/self-host-auth.server";
 
 const DomainRe = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
 const IpRe = /^(?:\d{1,3}\.){3}\d{1,3}$/;
@@ -34,7 +34,7 @@ export type SharedDomain = {
 };
 
 export const listSharedDomains = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
     const { data, error } = await (supabase as any)
@@ -46,7 +46,7 @@ export const listSharedDomains = createServerFn({ method: "GET" })
   });
 
 export const addSharedDomain = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) => CreateSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -62,7 +62,7 @@ export const addSharedDomain = createServerFn({ method: "POST" })
   });
 
 export const updateSharedDomain = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) => UpdateSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
@@ -76,7 +76,7 @@ export const updateSharedDomain = createServerFn({ method: "POST" })
   });
 
 export const deleteSharedDomain = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) => IdSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase } = context;

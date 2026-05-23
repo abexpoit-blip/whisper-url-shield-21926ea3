@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSelfHostedAuth } from "@/lib/self-host-auth.server";
 
 const RangeSchema = z.object({
   days: z.number().int().min(1).max(90).default(7),
@@ -50,7 +50,7 @@ function softenBucket<T extends { humans: number; bots: number; total: number }>
 
 
 export const getAnalytics = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) => RangeSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -210,7 +210,7 @@ const CountrySchema = z.object({
 });
 
 export const getCountryDrilldown = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) => CountrySchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
@@ -349,7 +349,7 @@ type DiagFinding = {
 };
 
 export const getAdRejectDiagnostics = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) => DiagSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
@@ -605,7 +605,7 @@ function qualityScore(s: QStat): number {
 }
 
 export const getFbAdQuality = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input: unknown) => FbQualitySchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase } = context;

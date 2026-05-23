@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSelfHostedAuth } from "@/lib/self-host-auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function assertAdmin(userId: string) {
@@ -162,7 +162,7 @@ export async function recomputeVariantTestsAdmin() {
 // ============================================================
 
 export const runAutopilotNow = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
     const a = await computeScoresAdmin();
@@ -171,7 +171,7 @@ export const runAutopilotNow = createServerFn({ method: "POST" })
   });
 
 export const listLinkScores = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) =>
     z.object({ limit: z.number().int().min(1).max(200).default(100) }).parse(input ?? {}),
   )
@@ -201,7 +201,7 @@ export const listLinkScores = createServerFn({ method: "POST" })
   });
 
 export const listVariantTests = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSelfHostedAuth])
   .inputValidator((input) =>
     z.object({ limit: z.number().int().min(1).max(500).default(200) }).parse(input ?? {}),
   )
