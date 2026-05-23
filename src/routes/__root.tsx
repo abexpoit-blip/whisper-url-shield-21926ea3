@@ -80,6 +80,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  const { queryClient } = Route.useRouteContext();
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthSync />
+      <Outlet />
+      <Toaster richColors position="top-right" />
+    </QueryClientProvider>
+  );
+}
+
+function AuthSync() {
   const router = useRouter();
   const queryClient = useQueryClient();
   useEffect(() => {
@@ -89,10 +100,5 @@ function RootComponent() {
     });
     return () => subscription.unsubscribe();
   }, [router, queryClient]);
-  return (
-    <>
-      <Outlet />
-      <Toaster richColors position="top-right" />
-    </>
-  );
+  return null;
 }
