@@ -96,9 +96,30 @@ export const deleteLink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
+    const { data: link, error: lookupError } = await context.supabase
+      .from("links")
+      .select("id")
+      .eq("id", data.id)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (lookupError) throw new Error(lookupError.message);
+    if (!link) throw new Error("Link not found");
+
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("links_used")
+      .eq("id", context.userId)
+      .single();
+
     const { error } = await context.supabase.from("links").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
-    await context.supabase.rpc("decrement_link_count" as never).then(() => {}, () => {});
+
+    if (profile) {
+      await context.supabase
+        .from("profiles")
+        .update({ links_used: Math.max((profile.links_used || 0) - 1, 0) })
+        .eq("id", context.userId);
+    }
     return { ok: true };
   });
 
