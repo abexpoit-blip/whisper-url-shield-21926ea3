@@ -1,7 +1,9 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Link2, BarChart3, Globe, Settings, Crown, ShieldCheck, LogOut } from "lucide-react";
+import { LayoutDashboard, Link2, BarChart3, Globe, Settings, Crown, ShieldCheck, LogOut, Menu, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { consumeDailyRedirect } from "@/lib/app-settings.functions";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
@@ -26,18 +28,36 @@ function AuthenticatedLayout() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [isAdmin, setIsAdmin] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const dailyFn = useServerFn(consumeDailyRedirect);
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
+        .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
       setIsAdmin(!!data);
     })();
   }, [user.id]);
+
+  // Daily auto-redirect: first dashboard hit each UTC day → fallback URL, same tab
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await dailyFn();
+        if (!cancelled && res?.url) {
+          window.location.replace(res.url);
+        }
+      } catch {
+        /* silent */
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => { setMenuOpen(false); }, [pathname]);
 
   const logout = async () => {
     await supabase.auth.signOut();
@@ -46,110 +66,153 @@ function AuthenticatedLayout() {
 
   const initials = (user.email ?? "U").slice(0, 2).toUpperCase();
 
-  return (
-    <div
-      className="min-h-screen w-full flex bg-[#05050f] text-[#f0f0f5] overflow-hidden relative"
-      style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
-    >
-      {/* Ambient violet glows */}
-      <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-600/10 blur-[120px] rounded-full pointer-events-none" />
-      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full pointer-events-none" />
-
-      {/* Sidebar */}
-      <aside className="w-72 border-r border-white/5 flex flex-col p-8 backdrop-blur-3xl bg-white/[0.01] z-10 shrink-0">
-        <Link to="/dashboard" className="flex items-center gap-4 mb-14">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-400 to-fuchsia-600 shadow-[0_0_20px_rgba(168,85,247,0.4)] flex items-center justify-center">
+  const SidebarContent = (
+    <>
+      <div className="flex items-center justify-between mb-14">
+        <Link to="/dashboard" className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-400 via-purple-500 to-fuchsia-600 shadow-[0_0_25px_rgba(45,212,191,0.45)] flex items-center justify-center">
             <div className="w-5 h-5 border-2 border-white rounded-sm rotate-45" />
           </div>
           <span
-            className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent"
+            className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-teal-200 to-purple-300 bg-clip-text text-transparent"
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
             SLEEP OX
           </span>
         </Link>
+        <button
+          className="lg:hidden p-2 text-white/60 hover:text-white"
+          onClick={() => setMenuOpen(false)}
+          aria-label="Close menu"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
 
-        <nav className="flex-1 space-y-8">
-          <div className="space-y-1">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-bold mb-4 ml-3">Management</p>
-            {navMgmt.map((item, i) => {
-              const active = i === 0 && pathname === item.to;
-              return (
-                <Link
-                  key={item.label}
-                  to={item.to}
-                  className={
-                    active
-                      ? "flex items-center gap-3 px-4 py-3 text-white bg-white/5 rounded-2xl border border-white/10 shadow-[0_0_25px_rgba(168,85,247,0.15)] backdrop-blur-md transition-all"
-                      : "flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/80 hover:bg-white/[0.02] rounded-2xl transition-all"
-                  }
-                >
-                  <item.icon className="w-4 h-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-          <div className="space-y-1">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-bold mb-4 ml-3">Account</p>
-            <Link
-              to="/upgrade"
-              className={
-                pathname === "/upgrade"
-                  ? "flex items-center gap-3 px-4 py-3 text-purple-300 font-medium bg-purple-500/10 rounded-2xl border border-purple-500/20 shadow-[0_0_25px_rgba(168,85,247,0.2)]"
-                  : "flex items-center gap-3 px-4 py-3 text-purple-400 font-medium bg-purple-500/5 rounded-2xl border border-purple-500/10 hover:bg-purple-500/10 transition-all"
-              }
-            >
-              <Crown className="w-4 h-4" />
-              Upgrade Pro
-            </Link>
-            <button
-              onClick={() => { /* settings stub */ }}
-              className="w-full flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/80 hover:bg-white/[0.02] rounded-2xl transition-all"
-            >
-              <Settings className="w-4 h-4" />
-              Settings
-            </button>
-            {isAdmin && (
+      <nav className="flex-1 space-y-8">
+        <div className="space-y-1">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-bold mb-4 ml-3">Management</p>
+          {navMgmt.map((item, i) => {
+            const active = i === 0 && pathname === item.to;
+            return (
               <Link
-                to="/control-panel"
+                key={item.label}
+                to={item.to}
                 className={
-                  pathname === "/control-panel"
-                    ? "flex items-center gap-3 px-4 py-3 text-purple-300 bg-purple-500/10 rounded-2xl border border-purple-500/20"
+                  active
+                    ? "flex items-center gap-3 px-4 py-3 text-white bg-gradient-to-r from-teal-500/15 via-purple-500/10 to-transparent rounded-2xl border border-teal-400/20 shadow-[0_0_25px_rgba(45,212,191,0.18)] backdrop-blur-md transition-all"
                     : "flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/80 hover:bg-white/[0.02] rounded-2xl transition-all"
                 }
               >
-                <ShieldCheck className="w-4 h-4" />
-                Control Panel
+                <item.icon className="w-4 h-4" />
+                {item.label}
               </Link>
-            )}
-            <button
-              onClick={logout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/80 hover:bg-white/[0.02] rounded-2xl transition-all"
+            );
+          })}
+        </div>
+        <div className="space-y-1">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-bold mb-4 ml-3">Account</p>
+          <Link
+            to="/upgrade"
+            className={
+              pathname === "/upgrade"
+                ? "flex items-center gap-3 px-4 py-3 text-teal-200 font-medium bg-teal-500/10 rounded-2xl border border-teal-400/30 shadow-[0_0_25px_rgba(45,212,191,0.2)]"
+                : "flex items-center gap-3 px-4 py-3 text-teal-300 font-medium bg-teal-500/5 rounded-2xl border border-teal-400/10 hover:bg-teal-500/10 transition-all"
+            }
+          >
+            <Crown className="w-4 h-4" />
+            Upgrade Pro
+          </Link>
+          <button className="w-full flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/80 hover:bg-white/[0.02] rounded-2xl transition-all">
+            <Settings className="w-4 h-4" />
+            Settings
+          </button>
+          {isAdmin && (
+            <Link
+              to="/control-panel"
+              className={
+                pathname === "/control-panel"
+                  ? "flex items-center gap-3 px-4 py-3 text-teal-200 bg-teal-500/10 rounded-2xl border border-teal-400/30"
+                  : "flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/80 hover:bg-white/[0.02] rounded-2xl transition-all"
+              }
             >
-              <LogOut className="w-4 h-4" />
-              Logout
-            </button>
-          </div>
-        </nav>
+              <ShieldCheck className="w-4 h-4" />
+              Control Panel
+            </Link>
+          )}
+          <button
+            onClick={logout}
+            className="w-full flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/80 hover:bg-white/[0.02] rounded-2xl transition-all"
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </button>
+        </div>
+      </nav>
 
-        <div className="mt-auto pt-8 border-t border-white/5">
-          <div className="flex items-center gap-4 bg-white/5 p-3 rounded-2xl border border-white/5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-500 p-[1px]">
-              <div className="w-full h-full bg-[#05050f] rounded-[11px] flex items-center justify-center text-xs font-bold">
-                {initials}
-              </div>
+      <div className="mt-auto pt-8 border-t border-white/5">
+        <div className="flex items-center gap-4 bg-white/5 p-3 rounded-2xl border border-white/5">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-400 via-purple-500 to-indigo-500 p-[1px]">
+            <div className="w-full h-full bg-[#05050f] rounded-[11px] flex items-center justify-center text-xs font-bold">
+              {initials}
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-white truncate">{user.email}</p>
-              <p className="text-[10px] text-purple-400/60 uppercase tracking-wider">{isAdmin ? "Admin" : "Premium Tier"}</p>
-            </div>
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-white truncate">{user.email}</p>
+            <p className="text-[10px] text-teal-300/70 uppercase tracking-wider">{isAdmin ? "Admin" : "Premium Tier"}</p>
           </div>
         </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div
+      className="min-h-screen w-full flex bg-[#03060d] text-[#f0f0f5] overflow-hidden relative"
+      style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
+    >
+      {/* Aurora Glass ambient overlays — teal / purple / fuchsia */}
+      <div className="fixed top-[-15%] left-[-10%] w-[55%] h-[55%] bg-teal-500/15 blur-[140px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: "8s" }} />
+      <div className="fixed top-[10%] right-[-15%] w-[50%] h-[55%] bg-purple-600/15 blur-[140px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: "10s" }} />
+      <div className="fixed bottom-[-10%] left-[20%] w-[45%] h-[45%] bg-fuchsia-600/10 blur-[130px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: "12s" }} />
+
+      {/* Mobile top bar */}
+      <div className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between px-5 py-4 backdrop-blur-2xl bg-[#03060d]/80 border-b border-white/5">
+        <Link to="/dashboard" className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-teal-400 to-fuchsia-600 shadow-[0_0_15px_rgba(45,212,191,0.4)] flex items-center justify-center">
+            <div className="w-4 h-4 border-2 border-white rounded-sm rotate-45" />
+          </div>
+          <span className="font-bold text-white tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>SLEEP OX</span>
+        </Link>
+        <button
+          onClick={() => setMenuOpen(true)}
+          className="p-2 rounded-xl bg-white/5 border border-white/10 text-white"
+          aria-label="Open menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Mobile drawer overlay */}
+      {menuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          onClick={() => setMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={
+          "fixed lg:static inset-y-0 left-0 z-50 w-72 border-r border-white/5 flex flex-col p-8 backdrop-blur-3xl bg-[#05080f]/90 lg:bg-white/[0.01] shrink-0 transition-transform duration-300 " +
+          (menuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0")
+        }
+      >
+        {SidebarContent}
       </aside>
 
       {/* Main */}
-      <main className="flex-1 overflow-y-auto z-10">
+      <main className="flex-1 overflow-y-auto z-10 pt-16 lg:pt-0">
         <Outlet />
       </main>
     </div>
