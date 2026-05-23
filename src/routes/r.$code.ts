@@ -13,6 +13,27 @@ function detectDevice(ua: string): "mobile" | "tablet" | "desktop" {
   return "desktop";
 }
 
+function sanitizeRedirectTarget(target: string | null | undefined): string {
+  try {
+    if (!target) return SAFE_FALLBACK;
+    const parsed = new URL(target);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return SAFE_FALLBACK;
+    return parsed.toString();
+  } catch {
+    return SAFE_FALLBACK;
+  }
+}
+
+function redirectTo(target: string | null | undefined, route: "safe" | "offer" | "ours" | "fallback", reason?: string | null) {
+  const headers = new Headers({
+    Location: sanitizeRedirectTarget(target),
+    "Cache-Control": "no-store",
+    "X-Sleepox-Route": route,
+  });
+  if (reason) headers.set("X-Sleepox-Reason", reason.replace(/[^a-zA-Z0-9:._ -]/g, "").slice(0, 80));
+  return new Response(null, { status: 302, headers });
+}
+
 async function recordRedirectClick(input: {
   linkId: string;
   userId: string;
@@ -132,7 +153,7 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
           "";
 
         // 1) Lookup link + app settings in parallel
-        const [{ data: link }, { data: settings }] = await Promise.all([
+        const [{ data: link, error: linkError }, { data: settings, error: settingsError }] = await Promise.all([
           supabaseAdmin
             .from("links")
             .select("id, adsterra_url, safe_url, is_active, user_id, clicks_count")
@@ -145,8 +166,11 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
             .maybeSingle(),
         ]);
 
+        if (linkError) console.error("redirect link lookup failed", { code, message: linkError.message });
+        if (settingsError) console.error("redirect settings lookup failed", { message: settingsError.message });
+
         if (!link || !link.is_active) {
-          return Response.redirect(SAFE_FALLBACK, 302);
+          return redirectTo(SAFE_FALLBACK, "fallback", !link ? "link-not-found" : "link-inactive");
         }
 
         const OUR_URL = settings?.our_adsterra_url || SAFE_FALLBACK;
@@ -257,7 +281,7 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
 
         const botScore = isBot ? 100 : 0;
         if (shouldRecordClick) {
-          await recordRedirectClick({
+          recordRedirectClick({
           linkId: link.id,
           userId: link.user_id,
           ip: ip || null,
@@ -276,8 +300,9 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
             device,
             referer_host: refererDomain || null,
           },
-          });
+          }).catch((error) => console.error("redirect click logging failed", { linkId: link.id, error }));
         }
 
-        return Response.redirect(target, 302);
+        const redirectReason = isBot ? reason : routedTo === "ours" ? "quota-or-injection" : "ok";
+        return redirectTo(target, routedTo, redirectReason);
 }
