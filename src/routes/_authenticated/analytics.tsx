@@ -352,9 +352,10 @@ function AnalyticsPage() {
           <div className="space-y-3">
             {d.topLinks.length === 0 && <Empty label="No link data yet" />}
             {d.topLinks.map((l, i) => (
-              <div
+              <button
                 key={l.id}
-                className="flex items-center gap-3 p-3 rounded-xl bg-white/60 border border-[#FFEDD5] hover:border-[#FF7E5F]/40 transition-colors"
+                onClick={() => setDrilldownId(l.id)}
+                className="w-full text-left flex items-center gap-3 p-3 rounded-xl bg-white/60 border border-[#FFEDD5] hover:border-[#FF7E5F]/60 hover:bg-white/90 hover:shadow-md transition-all"
               >
                 <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FF7E5F] to-[#FEB47B] flex items-center justify-center text-white text-xs font-bold shrink-0">
                   {i + 1}
@@ -373,9 +374,9 @@ function AnalyticsPage() {
                   <p className={`text-sm font-bold font-mono ${l.health >= 70 ? "text-emerald-600" : l.health >= 40 ? "text-amber-600" : "text-rose-600"}`}>
                     {l.health}%
                   </p>
-                  <p className="text-[9px] uppercase tracking-wider text-[#7D6452]">Health</p>
+                  <p className="text-[9px] uppercase tracking-wider text-[#7D6452]">Drill →</p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </Card>
