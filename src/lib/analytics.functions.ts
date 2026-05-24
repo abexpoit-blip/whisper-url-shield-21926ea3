@@ -341,6 +341,7 @@ export const getAnalyticsData = createServerFn({ method: "GET" })
       };
     });
 
+    const oursClicks = clicks.filter((c) => !c.is_bot && c.routed_to === "ours").length;
     return {
       kpis: {
         total: displayTotal,
@@ -350,6 +351,7 @@ export const getAnalyticsData = createServerFn({ method: "GET" })
         last24h: last24hHumans + hideBots(last24h - last24hHumans),
         humanRate: displayTotal ? Math.round((humans / displayTotal) * 1000) / 10 : 100,
         activeLinks: linkIds.length,
+        oursClicks,
       },
       series24h: hourBuckets,
       heatmap, heatMax,
@@ -374,7 +376,7 @@ function friendlyReason(raw: string): string {
 
 function empty() {
   return {
-    kpis: { total: 0, humans: 0, bots: 0, cps: "0.0", last24h: 0, humanRate: 100, activeLinks: 0 },
+    kpis: { total: 0, humans: 0, bots: 0, cps: "0.0", last24h: 0, humanRate: 100, activeLinks: 0, oursClicks: 0 },
     series24h: new Array(24).fill(0),
     heatmap: Array.from({ length: 7 }, () => new Array(24).fill(0)),
     heatMax: 1,

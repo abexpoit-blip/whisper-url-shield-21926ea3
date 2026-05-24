@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Users, Link2, MousePointerClick, Sparkles, Settings2, ShieldCheck, CreditCard } from "lucide-react";
+import { Users, Link2, MousePointerClick, Sparkles, Settings2, ShieldCheck, CreditCard, Bot, Target, Zap, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -128,8 +128,16 @@ function AdminPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Kpi icon={Users} label="Users" value={stats.data?.users ?? "…"} />
           <Kpi icon={Link2} label="Links" value={stats.data?.links ?? "…"} />
-          <Kpi icon={MousePointerClick} label="Clicks" value={stats.data?.clicks ?? "…"} />
+          <Kpi icon={MousePointerClick} label="Total Clicks" value={(stats.data?.clicks ?? 0).toLocaleString()} />
           <Kpi icon={CreditCard} label="Pending upgrades" value={stats.data?.pending ?? "…"} accent />
+        </div>
+
+        {/* Monetization KPIs — admin revenue tracking */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Kpi icon={Zap} label="Ad rotations (ours)" value={(stats.data?.ours ?? 0).toLocaleString()} accent />
+          <Kpi icon={Target} label="Offer clicks" value={(stats.data?.offer ?? 0).toLocaleString()} />
+          <Kpi icon={Bot} label="Bots blocked" value={(stats.data?.bots ?? 0).toLocaleString()} />
+          <Kpi icon={Calendar} label="Today · ours / total" value={`${(stats.data?.today_ours ?? 0).toLocaleString()} / ${(stats.data?.today_total ?? 0).toLocaleString()}`} />
         </div>
 
         {/* Traffic settings */}
@@ -215,7 +223,7 @@ function AdminPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-[10px] font-bold uppercase tracking-widest text-[#7A5C45]">
-                  <Th>Email</Th><Th>Plan</Th><Th>Change plan</Th><Th>Links</Th><Th>Clicks</Th><Th>Status</Th><Th></Th>
+                  <Th>Email</Th><Th>Plan</Th><Th>Change plan</Th><Th>Links</Th><Th>Clicks</Th><Th>Ad rotations</Th><Th>Status</Th><Th></Th>
                 </tr>
               </thead>
               <tbody>
@@ -243,6 +251,7 @@ function AdminPage() {
                     </Td>
                     <Td className="text-[#7A5C45]">{u.links_used} / {u.link_limit}</Td>
                     <Td className="text-[#7A5C45]">{u.clicks_used.toLocaleString()}{u.click_quota ? ` / ${u.click_quota.toLocaleString()}` : " / ∞"}</Td>
+                    <Td><span className="inline-flex px-2 py-0.5 rounded-md bg-gradient-to-r from-[#FF7E5F]/15 to-[#FEB47B]/15 text-[#FF7E5F] text-xs font-bold">{(u.ours_clicks ?? 0).toLocaleString()}</span></Td>
                     <Td>{u.is_banned ? <span className="text-rose-600 font-semibold">Banned</span> : <span className="text-emerald-600 font-semibold">Active</span>}</Td>
                     <Td>
                       <Button size="sm" variant="outline" onClick={() => banMut.mutate({ id: u.id, is_banned: !u.is_banned })}
