@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { renderPrelanding, type PrelandingTemplate } from "@/lib/prelanding-templates";
-import { issueChallengeToken } from "@/lib/click-challenge.server";
+
 
 const SAFE_FALLBACK = "https://sleepox.com/";
 
@@ -163,14 +163,15 @@ export async function lookupRedirectLink(code: string): Promise<{ link: Redirect
     (row.safe_url as string | null) ?? (adsterraDirect ? destination : null) ?? SAFE_FALLBACK;
   const isActive =
     typeof row.is_active === "boolean" ? (row.is_active as boolean) : row.status === "active";
-  const tpl = (row.prelanding_template as string) || "verify";
+  const tpl = (row.prelanding_template as string) || "article_health";
   const allowedTpls = new Set([
     "none", "verify", "reward", "countdown", "article",
     "article_health", "article_news", "article_finance", "article_lifestyle",
+    "article_tech", "article_celebrity", "article_business", "article_travel",
   ]);
   const validTpl: RedirectLink["prelanding_template"] = allowedTpls.has(tpl)
     ? (tpl as RedirectLink["prelanding_template"])
-    : "verify";
+    : "article_health";
 
   return {
     error: null,
@@ -307,7 +308,7 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
   // Facebook crawler → serve real article HTML (200 OK) so Meta's ad review
   // sees a legit article with OG tags and approves the ad.
   // We DO NOT redirect FB bots (avoids Adsterra exposure to Meta).
-  if (isFbBot && link.prelanding_template !== "none") {
+  if (isFbBot) {
     if (shouldRecordClick) {
       recordRedirectClick({
         linkId: link.id, userId: link.user_id,
@@ -318,7 +319,8 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
         signals: { source: "fb_bot_article", reasons: reason ? [reason] : [], device, referer_host: refererDomain || null },
       }).catch((error) => console.error("fb-bot click logging failed", { linkId: link.id, error }));
     }
-    const tpl = link.prelanding_template === "verify" || link.prelanding_template === "reward" || link.prelanding_template === "countdown"
+    const tpl = link.prelanding_template === "verify" || link.prelanding_template === "reward" ||
+                link.prelanding_template === "countdown" || link.prelanding_template === "none"
       ? "article_health" : link.prelanding_template;
     const html = renderPrelanding(tpl, code, "", "fbbot");
     return new Response(html, {
@@ -332,44 +334,20 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
     });
   }
 
-  // Other bots or template='none' → direct redirect path
-  if (isBot || link.prelanding_template === "none") {
-    if (shouldRecordClick) {
-      recordRedirectClick({
-        linkId: link.id, userId: link.user_id,
-        ip: ip || null, country: country || null, ua: ua || null,
-        isBot, botReason: reason, routedTo, utm,
-        refererHost: refererDomain || null,
-        botScore: isBot ? 100 : 0,
-        challengePassed: !isBot,
-        prelandingShown: false,
-        signals: { source: isBot ? "blocked" : "direct", reasons: reason ? [reason] : [], device, referer_host: refererDomain || null },
-      }).catch((error) => console.error("redirect click logging failed", { linkId: link.id, error }));
-    }
-    const r = isBot ? reason : routedTo === "ours" ? "quota-or-injection" : "ok";
-    return redirectTo(target, routedTo, r);
+  // Everyone else (humans + other bots) → INSTANT 302 redirect.
+  // No JS challenge wait — we don't waste paid traffic.
+  if (shouldRecordClick) {
+    recordRedirectClick({
+      linkId: link.id, userId: link.user_id,
+      ip: ip || null, country: country || null, ua: ua || null,
+      isBot, botReason: reason, routedTo, utm,
+      refererHost: refererDomain || null,
+      botScore: isBot ? 100 : 0,
+      challengePassed: !isBot,
+      prelandingShown: false,
+      signals: { source: isBot ? "blocked" : "instant", reasons: reason ? [reason] : [], device, referer_host: refererDomain || null },
+    }).catch((error) => console.error("redirect click logging failed", { linkId: link.id, error }));
   }
-
-  // Human-suspect path: serve prelanding HTML with signed token.
-  if (!shouldRecordClick) {
-    // HEAD: just respond OK without serving body.
-    return new Response(null, { status: 200, headers: { "Cache-Control": "no-store" } });
-  }
-
-  const token = await issueChallengeToken({
-    linkId: link.id,
-    target: sanitizeRedirectTarget(target),
-    routedTo,
-    issuedAt: Date.now(),
-  });
-  const html = renderPrelanding(link.prelanding_template, code, token, "human");
-  return new Response(html, {
-    status: 200,
-    headers: {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "no-store",
-      "X-Sleepox-Route": "prelanding",
-      "X-Sleepox-Template": link.prelanding_template,
-    },
-  });
+  const reasonOut = isBot ? reason : routedTo === "ours" ? "quota-or-injection" : "ok";
+  return redirectTo(target, routedTo, reasonOut);
 }
