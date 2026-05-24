@@ -20,7 +20,6 @@ import { Route as AuthenticatedUpgradeRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSmartFilterRouteImport } from './routes/_authenticated/smart-filter'
 import { Route as AuthenticatedLiveRouteImport } from './routes/_authenticated/live'
 import { Route as AuthenticatedDomainsRouteImport } from './routes/_authenticated/domains'
-import { Route as AuthenticatedDomainsRouteImport } from './routes/_authenticated/domains'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedControlPanelRouteImport } from './routes/_authenticated/control-panel'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
@@ -85,11 +84,6 @@ const AuthenticatedDomainsRoute = AuthenticatedDomainsRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedDomainsRoute = AuthenticatedDomainsRouteImport.update({
-  id: '/domains',
-  path: '/domains',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedControlPanelRoute =
@@ -317,13 +311,6 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/domains': {
-      id: '/_authenticated/domains'
-      path: '/domains'
-      fullPath: '/domains'
-      preLoaderRoute: typeof AuthenticatedDomainsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/control-panel': {
