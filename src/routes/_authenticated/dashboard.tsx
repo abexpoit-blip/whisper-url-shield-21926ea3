@@ -52,6 +52,11 @@ function DashboardPage() {
     mutationFn: (v: { id: string; is_active: boolean }) => toggle({ data: v }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
   });
+  const tplMut = useMutation({
+    mutationFn: (v: { id: string; prelanding_template: PrelandingTemplate }) => updateTpl({ data: v }),
+    onSuccess: () => { toast.success("Cloak page updated"); qc.invalidateQueries({ queryKey: ["dashboard"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
