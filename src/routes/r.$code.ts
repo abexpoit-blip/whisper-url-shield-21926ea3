@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { renderPrelanding, type PrelandingTemplate } from "@/lib/prelanding-templates";
+import { issueChallengeToken } from "@/lib/click-challenge.server";
 
 const SAFE_FALLBACK = "https://sleepox.com/";
 
@@ -13,6 +15,7 @@ type RedirectLink = {
   adsterra_url: string | null;
   safe_url: string | null;
   is_active: boolean;
+  prelanding_template: PrelandingTemplate | "none";
 };
 
 function detectDevice(ua: string): "mobile" | "tablet" | "desktop" {
@@ -48,7 +51,7 @@ function redirectTo(
   return new Response(null, { status: 302, headers });
 }
 
-async function recordRedirectClick(input: {
+export async function recordRedirectClick(input: {
   linkId: string;
   userId: string;
   ip: string | null;
@@ -65,6 +68,7 @@ async function recordRedirectClick(input: {
   botScore: number;
   signals: Record<string, unknown>;
   challengePassed: boolean;
+  prelandingShown: boolean;
 }) {
   const { error: rpcError } = await supabaseAdmin.rpc(
     "record_redirect_click" as never,
@@ -89,140 +93,81 @@ async function recordRedirectClick(input: {
     } as never,
   );
 
-  if (!rpcError) return;
+  if (!rpcError) {
+    // RPC succeeded — counter updates handled inside RPC.
+    return;
+  }
 
+  // Fallback: insert click row directly, try multiple schema variants.
+  const baseRow = {
+    link_id: input.linkId,
+    ip: input.ip,
+    country: input.country,
+    ua: input.ua,
+    is_bot: input.isBot,
+    bot_reason: input.botReason,
+    routed_to: input.routedTo,
+    challenge_passed: input.challengePassed,
+    prelanding_shown: input.prelandingShown,
+  };
   const clickRows = [
-    {
-      link_id: input.linkId,
-      ip: input.ip,
-      country: input.country,
-      ua: input.ua,
-      is_bot: input.isBot,
-      bot_reason: input.botReason,
-      routed_to: input.routedTo,
-      utm_source: input.utm.utm_source,
-      utm_medium: input.utm.utm_medium,
-      utm_campaign: input.utm.utm_campaign,
-      utm_term: input.utm.utm_term,
-      utm_content: input.utm.utm_content,
-      referer_host: input.refererHost,
-      bot_score: input.botScore,
-      signals: input.signals,
-      challenge_passed: input.challengePassed,
-    },
-    {
-      link_id: input.linkId,
-      ip_address: input.ip,
-      country: input.country,
-      user_agent: input.ua,
-      is_bot: input.isBot,
-      bot_reason: input.botReason,
-      variant: input.routedTo,
-      utm_source: input.utm.utm_source,
-      utm_medium: input.utm.utm_medium,
-      utm_campaign: input.utm.utm_campaign,
-      utm_term: input.utm.utm_term,
-      utm_content: input.utm.utm_content,
-      referer_host: input.refererHost,
-      bot_score: input.botScore,
-      signals: input.signals,
-      challenge_passed: input.challengePassed,
-    },
-    {
-      link_id: input.linkId,
-      ip: input.ip,
-      country: input.country,
-      ua: input.ua,
-      is_bot: input.isBot,
-      bot_reason: input.botReason,
-      routed_to: input.routedTo,
-    },
-    {
-      link_id: input.linkId,
-      ip_address: input.ip,
-      country: input.country,
-      user_agent: input.ua,
-      is_bot: input.isBot,
-      bot_reason: input.botReason,
-      variant: input.routedTo,
-    },
+    baseRow,
+    { link_id: input.linkId, ip: input.ip, country: input.country, ua: input.ua,
+      is_bot: input.isBot, bot_reason: input.botReason, routed_to: input.routedTo },
   ];
-
   let inserted = false;
   let lastInsertError: string | null = null;
   for (const row of clickRows) {
     const { error } = await supabaseAdmin.from("clicks").insert(row as never);
-    if (!error) {
-      inserted = true;
-      break;
-    }
+    if (!error) { inserted = true; break; }
     lastInsertError = error.message;
   }
-
   if (!inserted) {
     console.error("redirect click insert failed", { linkId: input.linkId, message: lastInsertError });
   }
 
   const { data: cur } = await supabaseAdmin
-    .from("links")
-    .select("clicks_count, bot_clicks_count")
-    .eq("id", input.linkId)
-    .single();
+    .from("links").select("clicks_count, bot_clicks_count")
+    .eq("id", input.linkId).maybeSingle();
   if (!cur) return;
 
   if (input.isBot) {
-    await supabaseAdmin
-      .from("links")
+    await supabaseAdmin.from("links")
       .update({ bot_clicks_count: (cur.bot_clicks_count || 0) + 1 })
       .eq("id", input.linkId);
     return;
   }
-
-  await supabaseAdmin
-    .from("links")
+  await supabaseAdmin.from("links")
     .update({ clicks_count: (cur.clicks_count || 0) + 1 })
     .eq("id", input.linkId);
   const { data: profile } = await supabaseAdmin
-    .from("profiles")
-    .select("clicks_used")
-    .eq("id", input.userId)
-    .single();
+    .from("profiles").select("clicks_used").eq("id", input.userId).maybeSingle();
   if (profile) {
-    await supabaseAdmin
-      .from("profiles")
+    await supabaseAdmin.from("profiles")
       .update({ clicks_used: (profile.clicks_used || 0) + 1 })
       .eq("id", input.userId);
   }
 }
 
-async function lookupRedirectLink(code: string): Promise<{ link: RedirectLink | null; error: Error | null }> {
-  const res = await supabaseAdmin
-    .from("links")
-    .select("*")
-    .eq("short_code", code)
-    .maybeSingle();
-
-  if (res.error) {
-    return { link: null, error: res.error as unknown as Error };
-  }
+export async function lookupRedirectLink(code: string): Promise<{ link: RedirectLink | null; error: Error | null }> {
+  const res = await supabaseAdmin.from("links").select("*").eq("short_code", code).maybeSingle();
+  if (res.error) return { link: null, error: res.error as unknown as Error };
   const row = res.data as Record<string, unknown> | null;
   if (!row) return { link: null, error: null };
 
   const adsterraDirect = (row.adsterra_direct_link as string | null) ?? null;
   const destination = (row.destination_url as string | null) ?? null;
   const adsterra =
-    (row.adsterra_url as string | null) ??
-    adsterraDirect ??
-    destination ??
-    null;
+    (row.adsterra_url as string | null) ?? adsterraDirect ?? destination ?? null;
   const safe =
-    (row.safe_url as string | null) ??
-    (adsterraDirect ? destination : null) ??
-    SAFE_FALLBACK;
+    (row.safe_url as string | null) ?? (adsterraDirect ? destination : null) ?? SAFE_FALLBACK;
   const isActive =
-    typeof row.is_active === "boolean"
-      ? (row.is_active as boolean)
-      : row.status === "active";
+    typeof row.is_active === "boolean" ? (row.is_active as boolean) : row.status === "active";
+  const tpl = (row.prelanding_template as string) || "verify";
+  const validTpl: RedirectLink["prelanding_template"] =
+    tpl === "none" || tpl === "verify" || tpl === "reward" || tpl === "countdown" || tpl === "article"
+      ? (tpl as RedirectLink["prelanding_template"])
+      : "verify";
 
   return {
     error: null,
@@ -233,6 +178,7 @@ async function lookupRedirectLink(code: string): Promise<{ link: RedirectLink | 
       adsterra_url: adsterra,
       safe_url: safe || SAFE_FALLBACK,
       is_active: isActive,
+      prelanding_template: validTpl,
     },
   };
 }
@@ -241,9 +187,7 @@ export const Route = createFileRoute("/r/$code")({
   server: {
     handlers: {
       HEAD: async ({ request, params }) => handleRedirect(request, params.code, false),
-      GET: async ({ request, params }) => {
-        return handleRedirect(request, params.code);
-      },
+      GET: async ({ request, params }) => handleRedirect(request, params.code),
     },
   },
 });
@@ -258,23 +202,18 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
   const ip =
     request.headers.get("cf-connecting-ip") ||
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    request.headers.get("x-real-ip") ||
-    "";
+    request.headers.get("x-real-ip") || "";
 
-  // 1) Lookup link + app settings in parallel
   const [{ link, error: linkError }, { data: settings, error: settingsError }] =
     await Promise.all([
       lookupRedirectLink(code),
-      supabaseAdmin
-        .from("app_settings")
+      supabaseAdmin.from("app_settings")
         .select("our_adsterra_url, injection_threshold, injection_count")
-        .eq("id", true)
-        .maybeSingle(),
+        .eq("id", true).maybeSingle(),
     ]);
 
   if (linkError) console.error("redirect link lookup failed", { code, message: linkError.message });
-  if (settingsError)
-    console.error("redirect settings lookup failed", { message: settingsError.message });
+  if (settingsError) console.error("redirect settings lookup failed", { message: settingsError.message });
 
   if (!link || !link.is_active) {
     return redirectTo(SAFE_FALLBACK, "fallback", !link ? "link-not-found" : "link-inactive");
@@ -284,98 +223,44 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
   const THRESHOLD = settings?.injection_threshold ?? 5000;
   const INJECT_COUNT = settings?.injection_count ?? 50;
 
-  // 2) Multi-layer bot check
   let isBot = false;
   let reason: string | null = null;
   const uaLow = ua.toLowerCase();
 
-  // Layer A: empty UA
-  if (!ua || ua.length < 10) {
-    isBot = true;
-    reason = "empty/short UA";
-  }
+  if (!ua || ua.length < 10) { isBot = true; reason = "empty/short UA"; }
 
-  // Layer B: UA pattern (DB rules + hardcoded fallbacks)
   if (!isBot) {
     const hardcoded = [
-      "facebookexternalhit",
-      "facebot",
-      "meta-externalagent",
-      "bytespider",
-      "googlebot",
-      "adsbot-google",
-      "bingbot",
-      "yandexbot",
-      "ahrefs",
-      "semrushbot",
-      "mj12bot",
-      "dotbot",
-      "petalbot",
-      "applebot",
-      "curl",
-      "wget",
-      "python-requests",
-      "httpclient",
-      "okhttp",
-      "headlesschrome",
-      "phantomjs",
-      "selenium",
-      "puppeteer",
-      "playwright",
-      "lighthouse",
-      "pingdom",
-      "uptimerobot",
+      "facebookexternalhit","facebot","meta-externalagent","bytespider","googlebot",
+      "adsbot-google","bingbot","yandexbot","ahrefs","semrushbot","mj12bot","dotbot",
+      "petalbot","applebot","curl","wget","python-requests","httpclient","okhttp",
+      "headlesschrome","phantomjs","selenium","puppeteer","playwright","lighthouse",
+      "pingdom","uptimerobot",
     ];
     for (const p of hardcoded) {
-      if (uaLow.includes(p)) {
-        isBot = true;
-        reason = `ua:${p}`;
-        break;
-      }
+      if (uaLow.includes(p)) { isBot = true; reason = `ua:${p}`; break; }
     }
   }
 
   if (!isBot) {
     const { data: rules } = await supabaseAdmin
-      .from("bot_rules")
-      .select("pattern, label, rule_type")
-      .eq("is_active", true);
+      .from("bot_rules").select("pattern, label, rule_type").eq("is_active", true);
     if (rules) {
       for (const r of rules) {
         const p = (r.pattern || "").toLowerCase();
         if (!p) continue;
-        if (r.rule_type === "ua" && uaLow.includes(p)) {
-          isBot = true;
-          reason = `rule:${r.label || p}`;
-          break;
-        }
-        if (r.rule_type === "asn" && asn && asn === p) {
-          isBot = true;
-          reason = `asn:${r.label || p}`;
-          break;
-        }
-        if (r.rule_type === "ip" && ip && ip.startsWith(p)) {
-          isBot = true;
-          reason = `ip:${r.label || p}`;
-          break;
-        }
+        if (r.rule_type === "ua" && uaLow.includes(p)) { isBot = true; reason = `rule:${r.label || p}`; break; }
+        if (r.rule_type === "asn" && asn && asn === p) { isBot = true; reason = `asn:${r.label || p}`; break; }
+        if (r.rule_type === "ip" && ip && ip.startsWith(p)) { isBot = true; reason = `ip:${r.label || p}`; break; }
       }
     }
   }
 
-  // Layer C: bot ASN
-  if (!isBot && asn && BOT_ASNS.has(asn)) {
-    isBot = true;
-    reason = `asn:${asn}`;
-  }
+  if (!isBot && asn && BOT_ASNS.has(asn)) { isBot = true; reason = `asn:${asn}`; }
 
   const device = detectDevice(ua);
   const refererDomain = (() => {
-    try {
-      return referer ? new URL(referer).hostname : "";
-    } catch {
-      return "";
-    }
+    try { return referer ? new URL(referer).hostname : ""; } catch { return ""; }
   })();
   const utm = {
     utm_source: url.searchParams.get("utm_source"),
@@ -385,7 +270,7 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
     utm_content: url.searchParams.get("utm_content"),
   };
 
-  // Determine target: bot → safe; human → check quota + injection rotation
+  // Determine offer target (only for non-bot path)
   let target: string;
   let routedTo: "safe" | "offer" | "ours" = "offer";
 
@@ -393,59 +278,61 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
     target = link.safe_url || SAFE_FALLBACK;
     routedTo = "safe";
   } else {
-    // Quota overflow: if user exceeded their plan quota → route to OUR adsterra
     const { data: profile, error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .select("click_quota, clicks_used")
-      .eq("id", link.user_id)
-      .maybeSingle();
+      .from("profiles").select("click_quota, clicks_used").eq("id", link.user_id).maybeSingle();
     if (profileError) console.error("redirect profile lookup failed", { userId: link.user_id, message: profileError.message });
 
     const overQuota =
       profile && profile.click_quota !== null && (profile.clicks_used || 0) >= profile.click_quota;
 
     if (overQuota) {
-      target = OUR_URL;
-      routedTo = "ours";
+      target = OUR_URL; routedTo = "ours";
     } else {
-      // 5K injection rotation: every (THRESHOLD + INJECT_COUNT) clicks,
-      // last INJECT_COUNT go to our adsterra link, then back to user's link
       const cycleLen = THRESHOLD + INJECT_COUNT;
       const pos = (link.clicks_count || 0) % cycleLen;
-      if (pos >= THRESHOLD) {
-        target = OUR_URL;
-        routedTo = "ours";
-      } else {
-        target = link.adsterra_url || SAFE_FALLBACK;
-        routedTo = "offer";
-      }
+      if (pos >= THRESHOLD) { target = OUR_URL; routedTo = "ours"; }
+      else { target = link.adsterra_url || SAFE_FALLBACK; routedTo = "offer"; }
     }
   }
 
-  const botScore = isBot ? 100 : 0;
-  if (shouldRecordClick) {
-    await recordRedirectClick({
-      linkId: link.id,
-      userId: link.user_id,
-      ip: ip || null,
-      country: country || null,
-      ua: ua || null,
-      isBot,
-      botReason: reason,
-      routedTo,
-      utm,
-      refererHost: refererDomain || null,
-      botScore,
-      challengePassed: !isBot,
-      signals: {
-        source: isBot ? "blocked" : "direct",
-        reasons: reason ? [reason] : [],
-        device,
-        referer_host: refererDomain || null,
-      },
-    }).catch((error) => console.error("redirect click logging failed", { linkId: link.id, error }));
+  // Bot or template='none' → direct redirect path (record click immediately)
+  if (isBot || link.prelanding_template === "none") {
+    if (shouldRecordClick) {
+      recordRedirectClick({
+        linkId: link.id, userId: link.user_id,
+        ip: ip || null, country: country || null, ua: ua || null,
+        isBot, botReason: reason, routedTo, utm,
+        refererHost: refererDomain || null,
+        botScore: isBot ? 100 : 0,
+        challengePassed: !isBot,
+        prelandingShown: false,
+        signals: { source: isBot ? "blocked" : "direct", reasons: reason ? [reason] : [], device, referer_host: refererDomain || null },
+      }).catch((error) => console.error("redirect click logging failed", { linkId: link.id, error }));
+    }
+    const r = isBot ? reason : routedTo === "ours" ? "quota-or-injection" : "ok";
+    return redirectTo(target, routedTo, r);
   }
 
-  const redirectReason = isBot ? reason : routedTo === "ours" ? "quota-or-injection" : "ok";
-  return redirectTo(target, routedTo, redirectReason);
+  // Human-suspect path: serve prelanding HTML with signed token.
+  if (!shouldRecordClick) {
+    // HEAD: just respond OK without serving body.
+    return new Response(null, { status: 200, headers: { "Cache-Control": "no-store" } });
+  }
+
+  const token = await issueChallengeToken({
+    linkId: link.id,
+    target: sanitizeRedirectTarget(target),
+    routedTo,
+    issuedAt: Date.now(),
+  });
+  const html = renderPrelanding(link.prelanding_template, code, token);
+  return new Response(html, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      "X-Sleepox-Route": "prelanding",
+      "X-Sleepox-Template": link.prelanding_template,
+    },
+  });
 }

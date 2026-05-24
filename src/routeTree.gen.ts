@@ -20,6 +20,7 @@ import { Route as AuthenticatedUpgradeRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedControlPanelRouteImport } from './routes/_authenticated/control-panel'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as RCodeVerifyRouteImport } from './routes/r.$code.verify'
 import { Route as ApiPublicPlisioWebhookRouteImport } from './routes/api/public/plisio-webhook'
 
 const SignupRoute = SignupRouteImport.update({
@@ -77,6 +78,11 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const RCodeVerifyRoute = RCodeVerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
+  getParentRoute: () => RCodeRoute,
+} as any)
 const ApiPublicPlisioWebhookRoute = ApiPublicPlisioWebhookRouteImport.update({
   id: '/api/public/plisio-webhook',
   path: '/api/public/plisio-webhook',
@@ -93,8 +99,9 @@ export interface FileRoutesByFullPath {
   '/control-panel': typeof AuthenticatedControlPanelRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/upgrade': typeof AuthenticatedUpgradeRoute
-  '/r/$code': typeof RCodeRoute
+  '/r/$code': typeof RCodeRouteWithChildren
   '/api/public/plisio-webhook': typeof ApiPublicPlisioWebhookRoute
+  '/r/$code/verify': typeof RCodeVerifyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -106,8 +113,9 @@ export interface FileRoutesByTo {
   '/control-panel': typeof AuthenticatedControlPanelRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/upgrade': typeof AuthenticatedUpgradeRoute
-  '/r/$code': typeof RCodeRoute
+  '/r/$code': typeof RCodeRouteWithChildren
   '/api/public/plisio-webhook': typeof ApiPublicPlisioWebhookRoute
+  '/r/$code/verify': typeof RCodeVerifyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -121,8 +129,9 @@ export interface FileRoutesById {
   '/_authenticated/control-panel': typeof AuthenticatedControlPanelRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/upgrade': typeof AuthenticatedUpgradeRoute
-  '/r/$code': typeof RCodeRoute
+  '/r/$code': typeof RCodeRouteWithChildren
   '/api/public/plisio-webhook': typeof ApiPublicPlisioWebhookRoute
+  '/r/$code/verify': typeof RCodeVerifyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -138,6 +147,7 @@ export interface FileRouteTypes {
     | '/upgrade'
     | '/r/$code'
     | '/api/public/plisio-webhook'
+    | '/r/$code/verify'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
     | '/upgrade'
     | '/r/$code'
     | '/api/public/plisio-webhook'
+    | '/r/$code/verify'
   id:
     | '__root__'
     | '/'
@@ -165,6 +176,7 @@ export interface FileRouteTypes {
     | '/_authenticated/upgrade'
     | '/r/$code'
     | '/api/public/plisio-webhook'
+    | '/r/$code/verify'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -174,7 +186,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   SignupRoute: typeof SignupRoute
-  RCodeRoute: typeof RCodeRoute
+  RCodeRoute: typeof RCodeRouteWithChildren
   ApiPublicPlisioWebhookRoute: typeof ApiPublicPlisioWebhookRoute
 }
 
@@ -257,6 +269,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/r/$code/verify': {
+      id: '/r/$code/verify'
+      path: '/verify'
+      fullPath: '/r/$code/verify'
+      preLoaderRoute: typeof RCodeVerifyRouteImport
+      parentRoute: typeof RCodeRoute
+    }
     '/api/public/plisio-webhook': {
       id: '/api/public/plisio-webhook'
       path: '/api/public/plisio-webhook'
@@ -285,6 +304,16 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface RCodeRouteChildren {
+  RCodeVerifyRoute: typeof RCodeVerifyRoute
+}
+
+const RCodeRouteChildren: RCodeRouteChildren = {
+  RCodeVerifyRoute: RCodeVerifyRoute,
+}
+
+const RCodeRouteWithChildren = RCodeRoute._addFileChildren(RCodeRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
@@ -292,9 +321,19 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   SignupRoute: SignupRoute,
-  RCodeRoute: RCodeRoute,
+  RCodeRoute: RCodeRouteWithChildren,
   ApiPublicPlisioWebhookRoute: ApiPublicPlisioWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
