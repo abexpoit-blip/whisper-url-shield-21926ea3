@@ -279,6 +279,25 @@ function DashboardPage() {
                           </div>
                         </td>
                         <td className="px-6 py-5">
+                          <select
+                            value={(l as { prelanding_template?: string }).prelanding_template || "article_health"}
+                            onChange={(e) => tplMut.mutate({ id: l.id, prelanding_template: e.target.value as PrelandingTemplate })}
+                            disabled={tplMut.isPending}
+                            className="bg-slate-950/60 border border-slate-700 text-xs rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/40 hover:border-sky-500/50 transition-colors cursor-pointer max-w-[180px]"
+                          >
+                            <optgroup label="Article (FB-safe)">
+                              {TEMPLATE_OPTIONS.filter((t) => t.group.startsWith("Article")).map((t) => (
+                                <option key={t.value} value={t.value}>{t.label}</option>
+                              ))}
+                            </optgroup>
+                            <optgroup label="Legacy">
+                              {TEMPLATE_OPTIONS.filter((t) => t.group === "Legacy").map((t) => (
+                                <option key={t.value} value={t.value}>{t.label}</option>
+                              ))}
+                            </optgroup>
+                          </select>
+                        </td>
+                        <td className="px-6 py-5">
                           <button
                             onClick={() => togMut.mutate({ id: l.id, is_active: !l.is_active })}
                             className={
