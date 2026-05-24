@@ -416,6 +416,21 @@ function AnalyticsPage() {
         </Card>
       </section>
 
+      {/* Conversion Funnel */}
+      <section className="grid grid-cols-12 gap-6 pb-2">
+        <Card className="col-span-12" title="Conversion Funnel" right={<span className="text-[10px] text-[#7D6452] uppercase tracking-widest flex items-center gap-1"><TrendingDown className="w-3 h-3" /> Click → Landing</span>}>
+          <Funnel stages={d.funnel} />
+        </Card>
+      </section>
+
+      {/* Cohort Retention */}
+      <section className="grid grid-cols-12 gap-6 pb-10">
+        <Card className="col-span-12" title="Cohort Retention" right={<span className="text-[10px] text-[#7D6452] uppercase tracking-widest flex items-center gap-1"><Users className="w-3 h-3" /> Returning visitors by first-seen day</span>}>
+          <CohortGrid loading={cohortQ.isLoading} rows={cohortQ.data?.rows ?? []} />
+        </Card>
+      </section>
+
+      {drilldownId && <DrilldownModal linkId={drilldownId} onClose={() => setDrilldownId(null)} />}
     </div>
   );
 }
