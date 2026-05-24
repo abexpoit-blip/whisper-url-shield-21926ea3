@@ -378,7 +378,7 @@ export const getLiveFeed = createServerFn({ method: "GET" })
         short_code: linkLookup.get(c.link_id)?.short_code ?? "—",
         flag: COUNTRIES[cc]?.flag ?? "🌐",
         countryName: COUNTRIES[cc]?.name ?? cc,
-        ua: c.ua ?? c.user_agent ?? null,
+        ua: c.ua ?? null,
         is_bot: c.is_bot,
         referrer_source: c.referrer_source ?? null,
       };
