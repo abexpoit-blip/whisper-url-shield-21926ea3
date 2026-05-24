@@ -46,7 +46,7 @@ export const getAnalyticsData = createServerFn({ method: "GET" })
     // Get user's link IDs (RLS-friendly join via link ownership)
     const { data: links, error: linkErr } = await supabase
       .from("links")
-      .select("id, code, title")
+      .select("id, short_code, title")
       .eq("user_id", userId);
     if (linkErr) throw new Error(linkErr.message);
 
@@ -152,7 +152,7 @@ export const getAnalyticsData = createServerFn({ method: "GET" })
         const l = linkLookup.get(id);
         return {
           id,
-          code: l?.code ?? "—",
+          code: l?.short_code ?? "—",
           title: l?.title ?? null,
           count,
         };
