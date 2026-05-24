@@ -327,6 +327,8 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
   const OUR_URL = settings?.our_adsterra_url || SAFE_FALLBACK;
   const THRESHOLD = settings?.injection_threshold ?? 5000;
   const INJECT_COUNT = settings?.injection_count ?? 50;
+  const dailyAdEnabled = settings?.daily_redirect_enabled ?? true;
+  const visitorAlreadySawAdToday = dailyAdEnabled && !!recentAdRow;
   const countryTier = (tierRow?.tier as number | null) ?? 3;
   const cloakingRules = (cloakingRulesRaw || []) as CloakingRule[];
   const referrerRules = (referrerRulesRaw || []) as ReferrerRule[];
