@@ -39,20 +39,20 @@ function AuthenticatedLayout() {
     })();
   }, [user.id]);
 
-  // Daily auto-redirect: first dashboard hit each UTC day → fallback URL, same tab
+  // Daily auto-redirect: first dashboard hit each UTC day → open fallback URL in a NEW tab
+  // (never replace current tab — that breaks the login flow and the user can't reach the dashboard)
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
+    const t = setTimeout(async () => {
       try {
         const res = await dailyFn();
-        if (!cancelled && res?.url) {
-          window.location.replace(res.url);
+        if (res?.url) {
+          window.open(res.url, "_blank", "noopener,noreferrer");
         }
       } catch {
         /* silent */
       }
-    })();
-    return () => { cancelled = true; };
+    }, 1500); // let dashboard paint first so login feels instant
+    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

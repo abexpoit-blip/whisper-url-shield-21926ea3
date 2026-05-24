@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import logoSrc from "@/assets/sleepox-logo.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -47,9 +48,8 @@ function HomePage() {
 
       {/* Floating Nav Pill */}
       <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 px-4 sm:px-6 py-2.5 rounded-full bg-white/5 backdrop-blur-2xl border border-white/10 flex items-center gap-4 sm:gap-10 shadow-2xl">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded bg-gradient-to-br from-[#38BDF8] to-[#6366F1]" />
-          <span className="text-white font-extrabold tracking-tight text-lg">Sleepox</span>
+        <Link to="/" className="flex items-center">
+          <img src={logoSrc} alt="Sleepox" className="h-8 w-auto" />
         </Link>
         <div className="hidden md:flex gap-8 text-sm font-medium text-slate-400">
           <a href="#features" className="hover:text-[#38BDF8] transition-colors">Features</a>
