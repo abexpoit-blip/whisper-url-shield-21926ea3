@@ -126,6 +126,10 @@ function DashboardPage() {
     return arr;
   }, []);
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Morning" : hour < 18 ? "Afternoon" : "Evening";
+  const deltaPct = "+12.5";
+
   return (
     <div className="min-h-screen w-full text-[#4A3728]" style={display}>
       {/* TOP BAR */}
@@ -159,29 +163,51 @@ function DashboardPage() {
         </div>
       </div>
 
-      <div className="px-6 lg:px-10 pb-10 space-y-5">
-        {/* KPI ROW */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-          <Kpi label="TOTAL CLICKS"     value={fmtCompact(totalClicks)}    delta="18.6"  spark={sp1} />
-          <Kpi label="UNIQUE CLICKS"    value={fmtCompact(uniqueClicks)}   delta="22.4"  spark={sp2} />
-          <Kpi label="LINKS CREATED"    value={fmtCompact(linksCreated)}   delta="11.7"  spark={sp3} />
-          <Kpi label="BLOCKED THREATS"  value={fmtCompact(blockedThreats)} delta="39.8"  spark={sp4} />
+      <div className="px-6 lg:px-10 pb-10 space-y-6">
+        {/* HERO GREETING */}
+        <div className="flex items-end justify-between flex-wrap gap-4 pt-2">
+          <div>
+            <h1 className="text-4xl lg:text-5xl font-extrabold text-[#2D1B0D] tracking-tight" style={display}>
+              Good {greeting}, <span className="bg-gradient-to-r from-[#FF7E5F] to-[#FEB47B] bg-clip-text text-transparent">Operator</span>
+            </h1>
+            <p className="text-[#7D6452] text-sm mt-2">
+              Your links are performing <span className="text-emerald-600 font-bold">{deltaPct}%</span> better than yesterday.
+              <span className="ml-2 text-[#A38D7D]">·  {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="px-4 py-2.5 rounded-xl text-xs font-bold text-[#2D1B0D] bg-white/60 border border-white/80 backdrop-blur-md hover:bg-white/80 transition-all flex items-center gap-2">
+              <Download className="w-3.5 h-3.5" /> Export Report
+            </button>
+            <button onClick={() => setShowCreate((v) => !v)}
+              className="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#FF7E5F] to-[#FEB47B] shadow-lg shadow-orange-500/30 hover:scale-[1.02] transition-transform flex items-center gap-2">
+              <Plus className="w-3.5 h-3.5" /> New Smart Link
+            </button>
+          </div>
         </div>
 
-        {/* CLICK VELOCITY + LIVE THREAT FEED */}
+        {/* KPI ROW — 3 glass + 1 hero gradient */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          <Kpi label="TOTAL CLICKS"    value={fmtCompact(totalClicks)}  delta="18.6" spark={sp1} />
+          <Kpi label="UNIQUE CLICKS"   value={fmtCompact(uniqueClicks)} delta="22.4" spark={sp2} />
+          <Kpi label="LINKS CREATED"   value={fmtCompact(linksCreated)} delta="11.7" spark={sp3} />
+          <HeroKpi label="BOT SHIELD"  value="99.42%" delta="0.04" sub="threats neutralised" />
+        </div>
+
+        {/* CLICK VELOCITY + SHIELD INTEL (dark) */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
           <Panel className="xl:col-span-8 p-6">
             <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
-              <h4 className="text-[17px] font-bold text-[#2D1B0D]" style={display}>
-                Click Velocity <span className="text-[#A38D7D] font-normal">— Last 24h</span>
-              </h4>
+              <div>
+                <h4 className="text-[17px] font-bold text-[#2D1B0D]" style={display}>Click Velocity</h4>
+                <p className="text-xs text-[#A38D7D] mt-0.5">Requests processed per second · last 24h</p>
+              </div>
               <div className="flex items-center gap-2">
-                <select className="bg-white/70 border border-white/80 text-xs rounded-lg px-3 py-1.5 text-[#2D1B0D] focus:outline-none cursor-pointer">
-                  <option>Last 24h</option>
-                  <option>Last 7d</option>
-                  <option>Last 30d</option>
-                </select>
-                <IconBtn small><LineChart className="w-3.5 h-3.5" /></IconBtn>
+                <div className="flex gap-1 bg-[#FFEDD5]/50 p-1 rounded-xl">
+                  <button className="px-4 py-1.5 bg-white rounded-lg shadow-sm text-[11px] font-bold text-[#FF7E5F]">Realtime</button>
+                  <button className="px-4 py-1.5 text-[11px] font-bold text-[#A38D7D]">Hourly</button>
+                  <button className="px-4 py-1.5 text-[11px] font-bold text-[#A38D7D]">Daily</button>
+                </div>
                 <IconBtn small><Download className="w-3.5 h-3.5" /></IconBtn>
                 <IconBtn small><Maximize2 className="w-3.5 h-3.5" /></IconBtn>
               </div>
@@ -189,32 +215,41 @@ function DashboardPage() {
             <VelocityChart data={velocity} />
           </Panel>
 
-          <Panel className="xl:col-span-4 p-6 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-[15px] font-bold text-[#2D1B0D]" style={display}>Live Threat Feed</h4>
-              <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.9)] animate-pulse" />
-                Real-Time
-              </span>
+          {/* Dark Shield Intel panel */}
+          <div className="xl:col-span-4 relative rounded-3xl bg-[#2D1B0D] text-white p-6 shadow-2xl shadow-orange-950/30 overflow-hidden flex flex-col">
+            <div className="absolute -top-16 -right-16 w-48 h-48 bg-[#FF7E5F]/30 blur-[80px] rounded-full pointer-events-none" />
+            <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-[#FEB47B]/15 blur-[80px] rounded-full pointer-events-none" />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h4 className="text-[15px] font-bold" style={display}>Shield Intel</h4>
+                  <p className="text-[10px] text-white/40 uppercase tracking-[0.18em] mt-0.5">ML Engine v4.2.1</p>
+                </div>
+                <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse" />
+                  Live
+                </span>
+              </div>
+              <ThreatFeed dark />
+              <button className="mt-4 w-full py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[11px] font-bold tracking-wider uppercase transition-colors flex items-center justify-center gap-2">
+                Full Security Audit <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <ThreatFeed />
-            <button className="mt-3 pt-3 border-t border-[#FFEDD5] text-xs text-[#7D6452] hover:text-[#FF7E5F] flex items-center justify-between transition-colors">
-              View All Threats
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </Panel>
+          </div>
         </div>
 
-        {/* GLOBAL MAP + BOT SHIELD */}
+        {/* GLOBAL MAP + BOT SHIELD GAUGE */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
           <Panel className="xl:col-span-8 p-6">
             <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
-              <h4 className="text-[17px] font-bold text-[#2D1B0D]" style={display}>Global Click Map</h4>
+              <div>
+                <h4 className="text-[17px] font-bold text-[#2D1B0D]" style={display}>Global Click Map</h4>
+                <p className="text-xs text-[#A38D7D] mt-0.5">Active traffic across 182 countries</p>
+              </div>
               <div className="flex items-center gap-2">
                 <select className="bg-white/70 border border-white/80 text-xs rounded-lg px-3 py-1.5 text-[#2D1B0D] focus:outline-none cursor-pointer">
                   <option>All Countries</option>
                 </select>
-                <IconBtn small><Plus className="w-3.5 h-3.5" /></IconBtn>
                 <IconBtn small><MapPin className="w-3.5 h-3.5" /></IconBtn>
               </div>
             </div>
@@ -231,14 +266,17 @@ function DashboardPage() {
 
           <Panel className="xl:col-span-4 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-[15px] font-bold text-[#2D1B0D]" style={display}>Bot Shield Protection</h4>
-              <span className="text-[11px] text-[#A38D7D]">Last 24h</span>
+              <div>
+                <h4 className="text-[15px] font-bold text-[#2D1B0D]" style={display}>Bot Shield</h4>
+                <p className="text-[10px] text-[#A38D7D] uppercase tracking-[0.18em] mt-0.5">Last 24h</p>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-700 border border-emerald-500/30 uppercase tracking-wider">Optimal</span>
             </div>
             <BotGauge value={99.4} />
-            <div className="grid grid-cols-4 gap-2 mt-5 pt-4 border-t border-[#FFEDD5] text-center">
+            <div className="grid grid-cols-2 gap-2 mt-5 pt-4 border-t border-[#FFEDD5]">
               <GaugeStat value={fmtCompact(blockedThreats)} label="THREATS BLOCKED" />
-              <GaugeStat value="23.4K" label="CHALLENGES SOLVED" />
-              <GaugeStat value="142K" label="BOTS IDENTIFIED" />
+              <GaugeStat value="23.4K" label="CHALLENGES" />
+              <GaugeStat value="142K" label="BOTS ID'D" />
               <GaugeStat value="<1s" label="AVG RESPONSE" />
             </div>
           </Panel>
@@ -457,6 +495,34 @@ function Kpi({ label, value, delta, spark }: { label: string; value: string; del
   );
 }
 
+function HeroKpi({ label, value, delta, sub }: { label: string; value: string; delta: string; sub: string }) {
+  return (
+    <div className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-[#FF7E5F] to-[#FEB47B] text-white shadow-xl shadow-orange-500/30 hover:-translate-y-1 transition-all">
+      <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/15 blur-2xl rounded-full pointer-events-none" />
+      <div className="absolute top-4 right-4 opacity-25">
+        <ShieldCheck className="w-10 h-10" />
+      </div>
+      <div className="relative">
+        <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/80">{label}</div>
+        <h3 className="text-[42px] leading-[1.1] mt-2 font-extrabold tabular-nums" style={display}>{value}</h3>
+        <div className="mt-1 flex items-center gap-2 text-[12px]">
+          <span className="text-white font-bold flex items-center gap-0.5">
+            <TrendingUp className="w-3 h-3" /> +{delta}%
+          </span>
+          <span className="text-white/70">{sub}</span>
+        </div>
+        <div className="mt-4 flex gap-1">
+          {[35, 60, 45, 80, 55, 90, 70, 95, 75, 100].map((h, i) => (
+            <div key={i} className="flex-1 bg-white/20 rounded-sm overflow-hidden" style={{ height: 28 }}>
+              <div className="w-full bg-white/70 rounded-sm" style={{ height: `${h}%`, marginTop: `${100 - h}%` }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function VelocityChart({ data }: { data: number[] }) {
   const w = 1000, h = 300;
   const max = 1.25;
@@ -534,24 +600,33 @@ const THREATS = [
   { flag: "🇳🇱", title: "Automated Scan Detected", ip: "45.77.123.201", time: "12:39:16", tag: "SCAN",       tone: "amber" },
 ] as const;
 
-function ThreatFeed() {
-  const toneCls: Record<string, string> = {
+function ThreatFeed({ dark = false }: { dark?: boolean }) {
+  const toneCls: Record<string, string> = dark ? {
+    rose:   "bg-rose-500/15 text-rose-300 border-rose-400/30",
+    amber:  "bg-amber-500/15 text-amber-300 border-amber-400/30",
+    violet: "bg-violet-500/15 text-violet-300 border-violet-400/30",
+  } : {
     rose:   "bg-rose-500/15 text-rose-700 border-rose-400/40",
     amber:  "bg-amber-500/15 text-amber-700 border-amber-400/40",
     violet: "bg-violet-500/15 text-violet-700 border-violet-400/40",
   };
+  const hoverBg = dark ? "hover:bg-white/5" : "hover:bg-[#FF7E5F]/[0.06]";
+  const flagBg = dark ? "bg-white/5 border-white/10" : "bg-white/70 border-white/80";
+  const titleCls = dark ? "text-white" : "text-[#2D1B0D]";
+  const ipCls = dark ? "text-white/40" : "text-[#7D6452]";
+  const timeCls = dark ? "text-white/30" : "text-[#A38D7D]";
   return (
-    <div className="flex-1 space-y-2 max-h-[380px] overflow-y-auto pr-1">
+    <div className="flex-1 space-y-2 max-h-[340px] overflow-y-auto pr-1">
       {THREATS.map((t, i) => (
-        <div key={i} className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#FF7E5F]/[0.06] transition-colors">
-          <div className="w-8 h-6 rounded bg-white/70 border border-white/80 flex items-center justify-center text-sm">{t.flag}</div>
+        <div key={i} className={`flex items-center gap-3 p-2 rounded-xl ${hoverBg} transition-colors`}>
+          <div className={`w-8 h-6 rounded border flex items-center justify-center text-sm ${flagBg}`}>{t.flag}</div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-[12.5px] font-semibold text-[#2D1B0D] truncate">{t.title}</p>
-              <span className="text-[10px] text-[#A38D7D] font-mono shrink-0">{t.time}</span>
+              <p className={`text-[12.5px] font-semibold truncate ${titleCls}`}>{t.title}</p>
+              <span className={`text-[10px] font-mono shrink-0 ${timeCls}`}>{t.time}</span>
             </div>
             <div className="flex items-center justify-between gap-2 mt-0.5">
-              <p className="text-[11px] text-[#7D6452] font-mono truncate">{t.ip}</p>
+              <p className={`text-[11px] font-mono truncate ${ipCls}`}>{t.ip}</p>
               <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${toneCls[t.tone]} tracking-wider shrink-0`}>{t.tag}</span>
             </div>
           </div>
