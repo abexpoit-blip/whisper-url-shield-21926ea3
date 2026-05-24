@@ -17,8 +17,10 @@ function AnalyticsPage() {
   const q = useQuery({
     queryKey: ["analytics"],
     queryFn: () => fn(),
-    refetchInterval: 15_000,
-    staleTime: 5_000,
+    refetchInterval: 60_000, // 60s — was 15s, way too aggressive for high-traffic VPS
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   const d = q.data;
@@ -34,6 +36,18 @@ function AnalyticsPage() {
     return `M ${pts.join(" L ")}`;
   }, [d, maxSeries]);
 
+  if (q.isError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-center p-6">
+        <p className="text-white/70 text-sm">Couldn't load analytics.</p>
+        <p className="text-white/40 text-xs max-w-md">{(q.error as Error)?.message ?? "Unknown error"}</p>
+        <button onClick={() => q.refetch()} className="mt-2 px-4 py-2 rounded-xl bg-sky-500/20 border border-sky-400/30 text-sky-200 text-xs font-bold hover:bg-sky-500/30 transition">
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   if (q.isLoading || !d) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white/50">
@@ -41,6 +55,7 @@ function AnalyticsPage() {
       </div>
     );
   }
+
 
   return (
     <div className="p-6 lg:p-10 space-y-8 max-w-[1600px] mx-auto">
