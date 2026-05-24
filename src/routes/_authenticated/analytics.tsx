@@ -124,6 +124,7 @@ function AnalyticsPage() {
               <Stat label="Last 24h" value={d.kpis.last24h.toLocaleString()} />
               <Stat label="Total (7d)" value={d.kpis.total.toLocaleString()} />
               <Stat label="Human rate" value={`${d.kpis.humanRate}%`} accent="emerald" />
+              <Stat label="Sent to ads" value={(d.kpis.oursClicks ?? 0).toLocaleString()} accent="orange" />
               <Stat label="Active links" value={d.kpis.activeLinks.toString()} />
             </div>
           </div>
