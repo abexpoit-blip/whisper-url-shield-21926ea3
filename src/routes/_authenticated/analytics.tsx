@@ -75,7 +75,7 @@ function AnalyticsPage() {
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
             <span className="text-xs text-emerald-600 font-bold tracking-wider uppercase">Live</span>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-[#2D1B0D] text-sm font-bold shadow-lg shadow-sky-500/30 hover:scale-[1.02] transition-transform">
+          <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#FF7E5F] to-[#FEB47B] text-white text-sm font-bold shadow-lg shadow-orange-500/30 hover:scale-[1.02] transition-transform">
             <Download className="w-4 h-4" /> Export CSV
           </button>
         </div>
@@ -83,7 +83,7 @@ function AnalyticsPage() {
 
       {/* HERO — Live ticker + total card */}
       <section className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 lg:col-span-8 p-8 rounded-3xl bg-white/70 border border-white/80 backdrop-blur-2xl shadow-[0_8px_30px_rgba(255,126,95,0.08)] relative overflow-hidden">
+        <div className="col-span-12 lg:col-span-8 p-8 rounded-3xl bg-white/80 border border-white/90 backdrop-blur-2xl shadow-[0_8px_30px_rgba(255,126,95,0.08)] relative overflow-hidden">
           <div className="absolute -top-20 -right-20 w-72 h-72 bg-[#FF7E5F]/10 blur-[100px] rounded-full" />
           <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-indigo-600/10 blur-[100px] rounded-full" />
           <div className="relative z-10">
@@ -102,12 +102,12 @@ function AnalyticsPage() {
                 <svg viewBox="0 0 1000 100" preserveAspectRatio="none" className="w-full h-full">
                   <defs>
                     <linearGradient id="aGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.5" />
-                      <stop offset="100%" stopColor="#38BDF8" stopOpacity="0" />
+                      <stop offset="0%" stopColor="#FF7E5F" stopOpacity="0.5" />
+                      <stop offset="100%" stopColor="#FF7E5F" stopOpacity="0" />
                     </linearGradient>
                   </defs>
                   <path d={`${sparkPath} L 1000,100 L 0,100 Z`} fill="url(#aGrad)" />
-                  <path d={sparkPath} fill="none" stroke="#38BDF8" strokeWidth="2.5" strokeLinecap="round" />
+                  <path d={sparkPath} fill="none" stroke="#FF7E5F" strokeWidth="2.5" strokeLinecap="round" />
                 </svg>
               </div>
             </div>
@@ -141,13 +141,13 @@ function AnalyticsPage() {
       {/* Geo + Top countries */}
       <section className="grid grid-cols-12 gap-6">
         <Card className="col-span-12 xl:col-span-7" title="Geographic Heatmap" right={<span className="text-[10px] text-[#A38D7D] uppercase tracking-widest">Updates every 15s</span>}>
-          <div className="relative h-72 rounded-2xl bg-[#020617] border border-[#FFEDD5] overflow-hidden">
+          <div className="relative h-72 rounded-2xl bg-gradient-to-br from-[#2D1B0D] to-[#1A0E07] border border-[#FFEDD5] overflow-hidden">
             {/* SVG abstract world dots */}
             <svg viewBox="0 0 1000 500" className="absolute inset-0 w-full h-full opacity-20">
               {Array.from({ length: 280 }).map((_, i) => {
                 const x = ((i * 37) % 1000);
                 const y = ((i * 53) % 500);
-                return <circle key={i} cx={x} cy={y} r="1.2" fill="#38BDF8" />;
+                return <circle key={i} cx={x} cy={y} r="1.2" fill="#FEB47B" />;
               })}
             </svg>
             {/* Country pins */}
@@ -161,13 +161,13 @@ function AnalyticsPage() {
               return (
                 <div
                   key={c.code}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-400 shadow-[0_0_20px_rgba(56,189,248,0.8)]"
+                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#FF7E5F] shadow-[0_0_20px_rgba(255,126,95,0.9)]"
                   style={{ left: `${p.x}%`, top: `${p.y}%`, width: size, height: size }}
                   title={`${c.code}: ${c.count}`}
                 />
               );
             })}
-            <div className="absolute bottom-3 left-4 flex items-center gap-2 text-[10px] text-[#A38D7D] uppercase tracking-widest">
+            <div className="absolute bottom-3 left-4 flex items-center gap-2 text-[10px] text-white/60 uppercase tracking-widest">
               <Globe2 className="w-3 h-3" /> {d.topCountries.length} countries
             </div>
           </div>
@@ -191,7 +191,7 @@ function AnalyticsPage() {
                 </div>
                 <div className="h-1.5 bg-white/70 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-sky-400 to-indigo-500 rounded-full shadow-[0_0_6px_rgba(56,189,248,0.4)]"
+                    className="h-full bg-gradient-to-r from-[#FF7E5F] to-[#FEB47B] rounded-full shadow-[0_0_6px_rgba(255,126,95,0.4)]"
                     style={{ width: `${Math.max(c.pct, 2)}%` }}
                   />
                 </div>
@@ -220,9 +220,9 @@ function AnalyticsPage() {
                         style={{
                           backgroundColor:
                             v === 0
-                              ? "rgba(255,255,255,0.03)"
-                              : `rgba(56, 189, 248, ${0.15 + intensity * 0.85})`,
-                          boxShadow: intensity > 0.7 ? "0 0 4px rgba(56,189,248,0.6)" : undefined,
+                              ? "rgba(45,27,13,0.05)"
+                              : `rgba(255, 126, 95, ${0.18 + intensity * 0.82})`,
+                          boxShadow: intensity > 0.7 ? "0 0 6px rgba(255,126,95,0.5)" : undefined,
                         }}
                         title={`${v} clicks @ ${hi}:00`}
                       />
@@ -275,7 +275,7 @@ function AnalyticsPage() {
             <Donut
               data={d.devices.map((dv, i) => ({
                 value: dv.count,
-                color: ["#38BDF8", "#6366F1", "#A78BFA", "#475569"][i % 4],
+                color: ["#FF7E5F", "#FEB47B", "#F59E0B", "#A38D7D"][i % 4],
               }))}
               centerLabel={d.devices[0]?.name ?? "—"}
               centerValue={`${d.devices[0]?.pct ?? 0}%`}
@@ -288,7 +288,7 @@ function AnalyticsPage() {
                 <span className="flex items-center gap-2.5 text-[#3D2818]">
                   <span
                     className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: ["#38BDF8", "#6366F1", "#A78BFA", "#475569"][i % 4] }}
+                    style={{ backgroundColor: ["#FF7E5F", "#FEB47B", "#F59E0B", "#A38D7D"][i % 4] }}
                   />
                   <DeviceIcon name={dv.name} />
                   <span className="font-medium">{dv.name}</span>
@@ -376,7 +376,7 @@ function AnalyticsPage() {
                 key={l.id}
                 className="flex items-center gap-3 p-3 rounded-xl bg-white/60 border border-[#FFEDD5] hover:border-[#FF7E5F]/40 transition-colors"
               >
-                <div className="w-9 h-9 rounded-lg bg-[#FF7E5F]/10 border border-[#FF7E5F]/30 flex items-center justify-center text-[#FF7E5F] text-xs font-bold shrink-0">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FF7E5F] to-[#FEB47B] flex items-center justify-center text-white text-xs font-bold shrink-0">
                   {i + 1}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -418,7 +418,7 @@ function Card({
   className?: string;
 }) {
   return (
-    <div className={`p-6 rounded-3xl bg-white/70 border border-white/80 backdrop-blur-2xl shadow-[0_8px_30px_rgba(255,126,95,0.08)] ${className}`}>
+    <div className={`p-6 rounded-3xl bg-white/80 border border-white/90 backdrop-blur-2xl shadow-[0_8px_30px_rgba(255,126,95,0.08)] ${className}`}>
       <div className="flex items-center justify-between mb-5">
         <h3 className="text-sm font-bold text-[#2D1B0D] tracking-wide" style={display}>
           {title}
@@ -453,7 +453,7 @@ function MiniCard({
     ? "from-amber-500/20 to-orange-500/10 text-amber-600 border-amber-400/40"
     : "from-sky-500/20 to-indigo-500/10 text-[#FF7E5F] border-[#FF7E5F]/30";
   return (
-    <div className="p-6 rounded-3xl bg-white/70 border border-white/80 backdrop-blur-2xl shadow-[0_8px_30px_rgba(255,126,95,0.08)]">
+    <div className="p-6 rounded-3xl bg-white/80 border border-white/90 backdrop-blur-2xl shadow-[0_8px_30px_rgba(255,126,95,0.08)]">
       <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r ${toneClasses} border text-[10px] uppercase tracking-[0.2em] font-bold mb-4`}>
         {icon}
         {label}
@@ -489,7 +489,7 @@ function Donut({
   return (
     <div className="relative w-36 h-36">
       <svg className="w-full h-full -rotate-90" viewBox="0 0 140 140">
-        <circle cx="70" cy="70" r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="14" />
+        <circle cx="70" cy="70" r={R} fill="none" stroke="rgba(45,27,13,0.08)" strokeWidth="14" />
         {data.map((d, i) => {
           const len = (d.value / total) * C;
           const seg = (
