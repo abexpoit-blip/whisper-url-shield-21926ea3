@@ -189,7 +189,7 @@ function AnalyticsPage() {
                     <p className="text-[10px] font-mono text-[#FF7E5F]">{c.pct}%</p>
                   </div>
                 </div>
-                <div className="h-1.5 bg-white/70 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-[#FFEDD5] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-[#FF7E5F] to-[#FEB47B] rounded-full shadow-[0_0_6px_rgba(255,126,95,0.4)]"
                     style={{ width: `${Math.max(c.pct, 2)}%` }}
@@ -311,7 +311,7 @@ function AnalyticsPage() {
                   </div>
                   <span className="font-mono text-xs text-[#7D6452]">{b.count.toLocaleString()} · {b.pct}%</span>
                 </div>
-                <div className="h-1.5 bg-white/70 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-[#FFEDD5] rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full"
                     style={{ width: `${Math.max(b.pct, 2)}%`, background: `linear-gradient(90deg, #${b.color}, #${b.color}88)` }}
@@ -334,7 +334,7 @@ function AnalyticsPage() {
                   </div>
                   <span className="font-mono text-xs text-[#7D6452]">{o.count.toLocaleString()} · {o.pct}%</span>
                 </div>
-                <div className="h-1.5 bg-white/70 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-[#FFEDD5] rounded-full overflow-hidden">
                   <div className="h-full bg-gradient-to-r from-slate-300 to-slate-500 rounded-full" style={{ width: `${Math.max(o.pct, 2)}%` }} />
                 </div>
               </div>
@@ -360,7 +360,7 @@ function AnalyticsPage() {
                   <span className="font-mono text-xs text-amber-600">{r.count.toLocaleString()}</span>
                   <span className="font-mono text-[10px] text-[#A38D7D] w-12 text-right">{r.pct}%</span>
                 </div>
-                <div className="h-1.5 bg-white/70 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-[#FFEDD5] rounded-full overflow-hidden">
                   <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full" style={{ width: `${Math.max(r.pct, 2)}%` }} />
                 </div>
               </div>
@@ -451,7 +451,7 @@ function MiniCard({
 }) {
   const toneClasses = tone === "amber"
     ? "from-amber-500/20 to-orange-500/10 text-amber-600 border-amber-400/40"
-    : "from-sky-500/20 to-indigo-500/10 text-[#FF7E5F] border-[#FF7E5F]/30";
+    : "from-[#FF7E5F]/15 to-[#FEB47B]/10 text-[#FF7E5F] border-[#FF7E5F]/30";
   return (
     <div className="p-6 rounded-3xl bg-white/80 border border-white/90 backdrop-blur-2xl shadow-[0_8px_30px_rgba(255,126,95,0.08)]">
       <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r ${toneClasses} border text-[10px] uppercase tracking-[0.2em] font-bold mb-4`}>
