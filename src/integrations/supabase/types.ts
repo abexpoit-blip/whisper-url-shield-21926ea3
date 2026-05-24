@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      ab_variants: {
+        Row: {
+          clicks_count: number
+          conversions_count: number
+          created_at: string
+          id: string
+          is_active: boolean
+          link_id: string
+          offer_url: string
+          updated_at: string
+          variant_label: string
+          weight_pct: number
+        }
+        Insert: {
+          clicks_count?: number
+          conversions_count?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          link_id: string
+          offer_url: string
+          updated_at?: string
+          variant_label: string
+          weight_pct?: number
+        }
+        Update: {
+          clicks_count?: number
+          conversions_count?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          link_id?: string
+          offer_url?: string
+          updated_at?: string
+          variant_label?: string
+          weight_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ab_variants_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           daily_redirect_enabled: boolean
@@ -41,6 +88,42 @@ export type Database = {
           injection_threshold?: number
           our_adsterra_url?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      bot_fingerprints: {
+        Row: {
+          auto_blocked: boolean
+          bot_hits: number
+          fingerprint_hash: string
+          first_seen: string
+          hit_count: number
+          last_seen: string
+          sample_country: string | null
+          sample_ip: string | null
+          sample_ua: string | null
+        }
+        Insert: {
+          auto_blocked?: boolean
+          bot_hits?: number
+          fingerprint_hash: string
+          first_seen?: string
+          hit_count?: number
+          last_seen?: string
+          sample_country?: string | null
+          sample_ip?: string | null
+          sample_ua?: string | null
+        }
+        Update: {
+          auto_blocked?: boolean
+          bot_hits?: number
+          fingerprint_hash?: string
+          first_seen?: string
+          hit_count?: number
+          last_seen?: string
+          sample_country?: string | null
+          sample_ip?: string | null
+          sample_ua?: string | null
         }
         Relationships: []
       }
@@ -76,47 +159,160 @@ export type Database = {
       }
       clicks: {
         Row: {
+          ab_variant: string | null
           bot_reason: string | null
           challenge_passed: boolean
           country: string | null
+          country_tier: number | null
           created_at: string
+          fingerprint_hash: string | null
           id: string
           ip: string | null
           is_bot: boolean
+          ja3_hash: string | null
           link_id: string
           prelanding_shown: boolean
+          referrer_source: string | null
           routed_to: string
           ua: string | null
         }
         Insert: {
+          ab_variant?: string | null
           bot_reason?: string | null
           challenge_passed?: boolean
           country?: string | null
+          country_tier?: number | null
           created_at?: string
+          fingerprint_hash?: string | null
           id?: string
           ip?: string | null
           is_bot?: boolean
+          ja3_hash?: string | null
           link_id: string
           prelanding_shown?: boolean
+          referrer_source?: string | null
           routed_to?: string
           ua?: string | null
         }
         Update: {
+          ab_variant?: string | null
           bot_reason?: string | null
           challenge_passed?: boolean
           country?: string | null
+          country_tier?: number | null
           created_at?: string
+          fingerprint_hash?: string | null
           id?: string
           ip?: string | null
           is_bot?: boolean
+          ja3_hash?: string | null
           link_id?: string
           prelanding_shown?: boolean
+          referrer_source?: string | null
           routed_to?: string
           ua?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "clicks_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cloaking_rules: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          pattern: string
+          priority: number
+          rule_type: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          pattern: string
+          priority?: number
+          rule_type: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          pattern?: string
+          priority?: number
+          rule_type?: string
+        }
+        Relationships: []
+      }
+      country_tiers: {
+        Row: {
+          country_code: string
+          country_name: string | null
+          tier: number
+          updated_at: string
+        }
+        Insert: {
+          country_code: string
+          country_name?: string | null
+          tier: number
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string
+          country_name?: string | null
+          tier?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      geo_offers: {
+        Row: {
+          country_codes: string[] | null
+          created_at: string
+          id: string
+          is_active: boolean
+          link_id: string
+          offer_url: string
+          tier: number | null
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          country_codes?: string[] | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          link_id: string
+          offer_url: string
+          tier?: number | null
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          country_codes?: string[] | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          link_id?: string
+          offer_url?: string
+          tier?: number | null
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_offers_link_id_fkey"
             columns: ["link_id"]
             isOneToOne: false
             referencedRelation: "links"
@@ -264,6 +460,36 @@ export type Database = {
           },
         ]
       }
+      referrer_rules: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          pattern: string
+          trust_score: number
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          pattern: string
+          trust_score?: number
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          pattern?: string
+          trust_score?: number
+        }
+        Relationships: []
+      }
       upgrade_requests: {
         Row: {
           amount: number
@@ -331,13 +557,46 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      cohort_stats: {
+        Row: {
+          bot_clicks: number | null
+          bot_pct: number | null
+          countries: number | null
+          first_click: string | null
+          human_clicks: number | null
+          last_click: string | null
+          source: string | null
+          total_clicks: number | null
+          unique_fps: number | null
+        }
+        Relationships: []
+      }
+      country_stats_24h: {
+        Row: {
+          bots: number | null
+          clicks: number | null
+          country: string | null
+          humans: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
+        }
+        Returns: boolean
+      }
+      record_bot_fingerprint: {
+        Args: {
+          _block_threshold?: number
+          _country: string
+          _hash: string
+          _ip: string
+          _is_bot: boolean
+          _ua: string
         }
         Returns: boolean
       }
