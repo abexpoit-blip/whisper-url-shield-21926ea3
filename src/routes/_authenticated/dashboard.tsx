@@ -126,6 +126,10 @@ function DashboardPage() {
     return arr;
   }, []);
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Morning" : hour < 18 ? "Afternoon" : "Evening";
+  const deltaPct = "+12.5";
+
   return (
     <div className="min-h-screen w-full text-[#4A3728]" style={display}>
       {/* TOP BAR */}
@@ -159,29 +163,51 @@ function DashboardPage() {
         </div>
       </div>
 
-      <div className="px-6 lg:px-10 pb-10 space-y-5">
-        {/* KPI ROW */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-          <Kpi label="TOTAL CLICKS"     value={fmtCompact(totalClicks)}    delta="18.6"  spark={sp1} />
-          <Kpi label="UNIQUE CLICKS"    value={fmtCompact(uniqueClicks)}   delta="22.4"  spark={sp2} />
-          <Kpi label="LINKS CREATED"    value={fmtCompact(linksCreated)}   delta="11.7"  spark={sp3} />
-          <Kpi label="BLOCKED THREATS"  value={fmtCompact(blockedThreats)} delta="39.8"  spark={sp4} />
+      <div className="px-6 lg:px-10 pb-10 space-y-6">
+        {/* HERO GREETING */}
+        <div className="flex items-end justify-between flex-wrap gap-4 pt-2">
+          <div>
+            <h1 className="text-4xl lg:text-5xl font-extrabold text-[#2D1B0D] tracking-tight" style={display}>
+              Good {greeting}, <span className="bg-gradient-to-r from-[#FF7E5F] to-[#FEB47B] bg-clip-text text-transparent">Operator</span>
+            </h1>
+            <p className="text-[#7D6452] text-sm mt-2">
+              Your links are performing <span className="text-emerald-600 font-bold">{deltaPct}%</span> better than yesterday.
+              <span className="ml-2 text-[#A38D7D]">·  {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="px-4 py-2.5 rounded-xl text-xs font-bold text-[#2D1B0D] bg-white/60 border border-white/80 backdrop-blur-md hover:bg-white/80 transition-all flex items-center gap-2">
+              <Download className="w-3.5 h-3.5" /> Export Report
+            </button>
+            <button onClick={() => setShowCreate((v) => !v)}
+              className="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#FF7E5F] to-[#FEB47B] shadow-lg shadow-orange-500/30 hover:scale-[1.02] transition-transform flex items-center gap-2">
+              <Plus className="w-3.5 h-3.5" /> New Smart Link
+            </button>
+          </div>
         </div>
 
-        {/* CLICK VELOCITY + LIVE THREAT FEED */}
+        {/* KPI ROW — 3 glass + 1 hero gradient */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          <Kpi label="TOTAL CLICKS"    value={fmtCompact(totalClicks)}  delta="18.6" spark={sp1} />
+          <Kpi label="UNIQUE CLICKS"   value={fmtCompact(uniqueClicks)} delta="22.4" spark={sp2} />
+          <Kpi label="LINKS CREATED"   value={fmtCompact(linksCreated)} delta="11.7" spark={sp3} />
+          <HeroKpi label="BOT SHIELD"  value="99.42%" delta="0.04" sub="threats neutralised" />
+        </div>
+
+        {/* CLICK VELOCITY + SHIELD INTEL (dark) */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
           <Panel className="xl:col-span-8 p-6">
             <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
-              <h4 className="text-[17px] font-bold text-[#2D1B0D]" style={display}>
-                Click Velocity <span className="text-[#A38D7D] font-normal">— Last 24h</span>
-              </h4>
+              <div>
+                <h4 className="text-[17px] font-bold text-[#2D1B0D]" style={display}>Click Velocity</h4>
+                <p className="text-xs text-[#A38D7D] mt-0.5">Requests processed per second · last 24h</p>
+              </div>
               <div className="flex items-center gap-2">
-                <select className="bg-white/70 border border-white/80 text-xs rounded-lg px-3 py-1.5 text-[#2D1B0D] focus:outline-none cursor-pointer">
-                  <option>Last 24h</option>
-                  <option>Last 7d</option>
-                  <option>Last 30d</option>
-                </select>
-                <IconBtn small><LineChart className="w-3.5 h-3.5" /></IconBtn>
+                <div className="flex gap-1 bg-[#FFEDD5]/50 p-1 rounded-xl">
+                  <button className="px-4 py-1.5 bg-white rounded-lg shadow-sm text-[11px] font-bold text-[#FF7E5F]">Realtime</button>
+                  <button className="px-4 py-1.5 text-[11px] font-bold text-[#A38D7D]">Hourly</button>
+                  <button className="px-4 py-1.5 text-[11px] font-bold text-[#A38D7D]">Daily</button>
+                </div>
                 <IconBtn small><Download className="w-3.5 h-3.5" /></IconBtn>
                 <IconBtn small><Maximize2 className="w-3.5 h-3.5" /></IconBtn>
               </div>
@@ -189,32 +215,41 @@ function DashboardPage() {
             <VelocityChart data={velocity} />
           </Panel>
 
-          <Panel className="xl:col-span-4 p-6 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-[15px] font-bold text-[#2D1B0D]" style={display}>Live Threat Feed</h4>
-              <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.9)] animate-pulse" />
-                Real-Time
-              </span>
+          {/* Dark Shield Intel panel */}
+          <div className="xl:col-span-4 relative rounded-3xl bg-[#2D1B0D] text-white p-6 shadow-2xl shadow-orange-950/30 overflow-hidden flex flex-col">
+            <div className="absolute -top-16 -right-16 w-48 h-48 bg-[#FF7E5F]/30 blur-[80px] rounded-full pointer-events-none" />
+            <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-[#FEB47B]/15 blur-[80px] rounded-full pointer-events-none" />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h4 className="text-[15px] font-bold" style={display}>Shield Intel</h4>
+                  <p className="text-[10px] text-white/40 uppercase tracking-[0.18em] mt-0.5">ML Engine v4.2.1</p>
+                </div>
+                <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse" />
+                  Live
+                </span>
+              </div>
+              <ThreatFeed dark />
+              <button className="mt-4 w-full py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[11px] font-bold tracking-wider uppercase transition-colors flex items-center justify-center gap-2">
+                Full Security Audit <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <ThreatFeed />
-            <button className="mt-3 pt-3 border-t border-[#FFEDD5] text-xs text-[#7D6452] hover:text-[#FF7E5F] flex items-center justify-between transition-colors">
-              View All Threats
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </Panel>
+          </div>
         </div>
 
-        {/* GLOBAL MAP + BOT SHIELD */}
+        {/* GLOBAL MAP + BOT SHIELD GAUGE */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
           <Panel className="xl:col-span-8 p-6">
             <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
-              <h4 className="text-[17px] font-bold text-[#2D1B0D]" style={display}>Global Click Map</h4>
+              <div>
+                <h4 className="text-[17px] font-bold text-[#2D1B0D]" style={display}>Global Click Map</h4>
+                <p className="text-xs text-[#A38D7D] mt-0.5">Active traffic across 182 countries</p>
+              </div>
               <div className="flex items-center gap-2">
                 <select className="bg-white/70 border border-white/80 text-xs rounded-lg px-3 py-1.5 text-[#2D1B0D] focus:outline-none cursor-pointer">
                   <option>All Countries</option>
                 </select>
-                <IconBtn small><Plus className="w-3.5 h-3.5" /></IconBtn>
                 <IconBtn small><MapPin className="w-3.5 h-3.5" /></IconBtn>
               </div>
             </div>
@@ -231,14 +266,17 @@ function DashboardPage() {
 
           <Panel className="xl:col-span-4 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-[15px] font-bold text-[#2D1B0D]" style={display}>Bot Shield Protection</h4>
-              <span className="text-[11px] text-[#A38D7D]">Last 24h</span>
+              <div>
+                <h4 className="text-[15px] font-bold text-[#2D1B0D]" style={display}>Bot Shield</h4>
+                <p className="text-[10px] text-[#A38D7D] uppercase tracking-[0.18em] mt-0.5">Last 24h</p>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-700 border border-emerald-500/30 uppercase tracking-wider">Optimal</span>
             </div>
             <BotGauge value={99.4} />
-            <div className="grid grid-cols-4 gap-2 mt-5 pt-4 border-t border-[#FFEDD5] text-center">
+            <div className="grid grid-cols-2 gap-2 mt-5 pt-4 border-t border-[#FFEDD5]">
               <GaugeStat value={fmtCompact(blockedThreats)} label="THREATS BLOCKED" />
-              <GaugeStat value="23.4K" label="CHALLENGES SOLVED" />
-              <GaugeStat value="142K" label="BOTS IDENTIFIED" />
+              <GaugeStat value="23.4K" label="CHALLENGES" />
+              <GaugeStat value="142K" label="BOTS ID'D" />
               <GaugeStat value="<1s" label="AVG RESPONSE" />
             </div>
           </Panel>
