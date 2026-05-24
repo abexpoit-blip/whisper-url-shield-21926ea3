@@ -600,24 +600,33 @@ const THREATS = [
   { flag: "🇳🇱", title: "Automated Scan Detected", ip: "45.77.123.201", time: "12:39:16", tag: "SCAN",       tone: "amber" },
 ] as const;
 
-function ThreatFeed() {
-  const toneCls: Record<string, string> = {
+function ThreatFeed({ dark = false }: { dark?: boolean }) {
+  const toneCls: Record<string, string> = dark ? {
+    rose:   "bg-rose-500/15 text-rose-300 border-rose-400/30",
+    amber:  "bg-amber-500/15 text-amber-300 border-amber-400/30",
+    violet: "bg-violet-500/15 text-violet-300 border-violet-400/30",
+  } : {
     rose:   "bg-rose-500/15 text-rose-700 border-rose-400/40",
     amber:  "bg-amber-500/15 text-amber-700 border-amber-400/40",
     violet: "bg-violet-500/15 text-violet-700 border-violet-400/40",
   };
+  const hoverBg = dark ? "hover:bg-white/5" : "hover:bg-[#FF7E5F]/[0.06]";
+  const flagBg = dark ? "bg-white/5 border-white/10" : "bg-white/70 border-white/80";
+  const titleCls = dark ? "text-white" : "text-[#2D1B0D]";
+  const ipCls = dark ? "text-white/40" : "text-[#7D6452]";
+  const timeCls = dark ? "text-white/30" : "text-[#A38D7D]";
   return (
-    <div className="flex-1 space-y-2 max-h-[380px] overflow-y-auto pr-1">
+    <div className="flex-1 space-y-2 max-h-[340px] overflow-y-auto pr-1">
       {THREATS.map((t, i) => (
-        <div key={i} className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#FF7E5F]/[0.06] transition-colors">
-          <div className="w-8 h-6 rounded bg-white/70 border border-white/80 flex items-center justify-center text-sm">{t.flag}</div>
+        <div key={i} className={`flex items-center gap-3 p-2 rounded-xl ${hoverBg} transition-colors`}>
+          <div className={`w-8 h-6 rounded border flex items-center justify-center text-sm ${flagBg}`}>{t.flag}</div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-[12.5px] font-semibold text-[#2D1B0D] truncate">{t.title}</p>
-              <span className="text-[10px] text-[#A38D7D] font-mono shrink-0">{t.time}</span>
+              <p className={`text-[12.5px] font-semibold truncate ${titleCls}`}>{t.title}</p>
+              <span className={`text-[10px] font-mono shrink-0 ${timeCls}`}>{t.time}</span>
             </div>
             <div className="flex items-center justify-between gap-2 mt-0.5">
-              <p className="text-[11px] text-[#7D6452] font-mono truncate">{t.ip}</p>
+              <p className={`text-[11px] font-mono truncate ${ipCls}`}>{t.ip}</p>
               <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${toneCls[t.tone]} tracking-wider shrink-0`}>{t.tag}</span>
             </div>
           </div>
