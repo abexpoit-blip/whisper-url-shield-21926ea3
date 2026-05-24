@@ -633,6 +633,28 @@ export type Database = {
         }
         Returns: boolean
       }
+      record_redirect_click: {
+        Args: {
+          _bot_reason: string
+          _bot_score: number
+          _challenge_passed: boolean
+          _country: string
+          _ip: string
+          _is_bot: boolean
+          _link_id: string
+          _referer_host: string
+          _routed_to: string
+          _signals: Json
+          _ua: string
+          _user_id: string
+          _utm_campaign: string
+          _utm_content: string
+          _utm_medium: string
+          _utm_source: string
+          _utm_term: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "user" | "admin"
