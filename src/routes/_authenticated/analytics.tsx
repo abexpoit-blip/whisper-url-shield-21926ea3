@@ -174,18 +174,20 @@ function AnalyticsPage() {
         </Card>
 
         <Card className="col-span-12 xl:col-span-5" title="Top Countries">
-          <div className="space-y-4">
+          <div className="space-y-3">
             {d.topCountries.length === 0 && <Empty label="No clicks yet" />}
             {d.topCountries.map((c) => (
               <div key={c.code} className="space-y-1.5">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="flex items-center gap-2 text-white/80">
-                    <span className="text-lg">{c.flag}</span>
-                    <span className="font-medium">{c.code}</span>
-                  </span>
-                  <span className="text-white/40 text-xs font-mono">
-                    {c.count.toLocaleString()} · {c.pct}%
-                  </span>
+                <div className="flex items-center gap-3">
+                  <Flag code={c.code} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white/90 font-medium truncate">{c.name}</p>
+                    <p className="text-[10px] text-white/40 uppercase tracking-wider font-mono">{c.code}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-mono text-white">{c.count.toLocaleString()}</p>
+                    <p className="text-[10px] font-mono text-sky-300">{c.pct}%</p>
+                  </div>
                 </div>
                 <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
                   <div
