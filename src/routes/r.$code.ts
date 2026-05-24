@@ -187,27 +187,24 @@ export async function recordRedirectClick(input: {
 
   // A/B variant click counter
   if (input.abVariant && !input.isBot) {
-    await supabaseAdmin.rpc("increment_ab_clicks" as never, {
-      _link_id: input.linkId,
-      _variant: input.abVariant,
-    } as never).catch(() => {
-      // Fallback raw update
-      supabaseAdmin
+    const variantLabel = input.abVariant;
+    try {
+      const { data } = await supabaseAdmin
         .from("ab_variants")
         .select("clicks_count")
         .eq("link_id", input.linkId)
-        .eq("variant_label", input.abVariant)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data) {
-            supabaseAdmin
-              .from("ab_variants")
-              .update({ clicks_count: (data.clicks_count || 0) + 1 })
-              .eq("link_id", input.linkId)
-              .eq("variant_label", input.abVariant!);
-          }
-        });
-    });
+        .eq("variant_label", variantLabel)
+        .maybeSingle();
+      if (data) {
+        await supabaseAdmin
+          .from("ab_variants")
+          .update({ clicks_count: (data.clicks_count || 0) + 1 })
+          .eq("link_id", input.linkId)
+          .eq("variant_label", variantLabel);
+      }
+    } catch (e) {
+      console.error("ab variant click increment failed", e);
+    }
   }
 }
 
