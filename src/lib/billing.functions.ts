@@ -23,13 +23,16 @@ export const createInvoice = createServerFn({ method: "POST" })
     if (pkgErr || !pkg) throw new Error("Package not found");
     if (Number(pkg.price_usd) <= 0) throw new Error("This package does not require payment");
 
+    // Add 2% network/processing fee so customer pays it ($5 -> $5.10, $50 -> $51.00)
+    const chargeAmount = (Number(pkg.price_usd) * 1.02).toFixed(2);
+
     // Create local order first
     const { data: req, error: reqErr } = await supabaseAdmin
       .from("upgrade_requests")
       .insert({
         user_id: context.userId,
         package_slug: pkg.slug,
-        amount: pkg.price_usd,
+        amount: chargeAmount,
         status: "pending",
       })
       .select()
@@ -42,7 +45,7 @@ export const createInvoice = createServerFn({ method: "POST" })
       api_key: apiKey,
       order_number: req.id,
       order_name: `${pkg.name} — Sleepox`,
-      source_amount: String(pkg.price_usd),
+      source_amount: chargeAmount,
       source_currency: "USD",
       currency: "USDT_TRX",
       callback_url: `${origin}/api/public/plisio-webhook?json=true`,
