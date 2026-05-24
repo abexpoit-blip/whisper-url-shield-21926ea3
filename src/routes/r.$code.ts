@@ -304,7 +304,35 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
     }
   }
 
-  // Bot or template='none' → direct redirect path (record click immediately)
+  // Facebook crawler → serve real article HTML (200 OK) so Meta's ad review
+  // sees a legit article with OG tags and approves the ad.
+  // We DO NOT redirect FB bots (avoids Adsterra exposure to Meta).
+  if (isFbBot && link.prelanding_template !== "none") {
+    if (shouldRecordClick) {
+      recordRedirectClick({
+        linkId: link.id, userId: link.user_id,
+        ip: ip || null, country: country || null, ua: ua || null,
+        isBot: true, botReason: reason, routedTo: "safe", utm,
+        refererHost: refererDomain || null,
+        botScore: 100, challengePassed: false, prelandingShown: true,
+        signals: { source: "fb_bot_article", reasons: reason ? [reason] : [], device, referer_host: refererDomain || null },
+      }).catch((error) => console.error("fb-bot click logging failed", { linkId: link.id, error }));
+    }
+    const tpl = link.prelanding_template === "verify" || link.prelanding_template === "reward" || link.prelanding_template === "countdown"
+      ? "article_health" : link.prelanding_template;
+    const html = renderPrelanding(tpl, code, "", "fbbot");
+    return new Response(html, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "public, max-age=300",
+        "X-Sleepox-Route": "fb-article",
+        "X-Sleepox-Template": tpl,
+      },
+    });
+  }
+
+  // Other bots or template='none' → direct redirect path
   if (isBot || link.prelanding_template === "none") {
     if (shouldRecordClick) {
       recordRedirectClick({
