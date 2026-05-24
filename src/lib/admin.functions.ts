@@ -13,13 +13,39 @@ export const adminStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
-    const [{ count: users }, { count: links }, { count: clicks }, { count: pending }] = await Promise.all([
+    const todayISO = new Date(Date.now() - 86_400_000).toISOString();
+    const [
+      { count: users },
+      { count: links },
+      { count: clicks },
+      { count: pending },
+      { count: ours },
+      { count: offer },
+      { count: bots },
+      { count: todayTotal },
+      { count: todayOurs },
+    ] = await Promise.all([
       supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("links").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("clicks").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("upgrade_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
+      supabaseAdmin.from("clicks").select("*", { count: "exact", head: true }).eq("routed_to", "ours"),
+      supabaseAdmin.from("clicks").select("*", { count: "exact", head: true }).eq("routed_to", "offer"),
+      supabaseAdmin.from("clicks").select("*", { count: "exact", head: true }).eq("is_bot", true),
+      supabaseAdmin.from("clicks").select("*", { count: "exact", head: true }).gte("created_at", todayISO),
+      supabaseAdmin.from("clicks").select("*", { count: "exact", head: true }).eq("routed_to", "ours").gte("created_at", todayISO),
     ]);
-    return { users: users ?? 0, links: links ?? 0, clicks: clicks ?? 0, pending: pending ?? 0 };
+    return {
+      users: users ?? 0,
+      links: links ?? 0,
+      clicks: clicks ?? 0,
+      pending: pending ?? 0,
+      ours: ours ?? 0,
+      offer: offer ?? 0,
+      bots: bots ?? 0,
+      today_total: todayTotal ?? 0,
+      today_ours: todayOurs ?? 0,
+    };
   });
 
 export const adminListUsers = createServerFn({ method: "GET" })
@@ -29,7 +55,20 @@ export const adminListUsers = createServerFn({ method: "GET" })
     const { data, error } = await supabaseAdmin
       .from("profiles").select("*").order("created_at", { ascending: false }).limit(500);
     if (error) throw new Error(error.message);
-    return data;
+
+    // Build map: user_id -> total "ours" clicks (admin monetization revenue)
+    const oursByUser: Record<string, number> = {};
+    const { data: linkRows } = await supabaseAdmin.from("links").select("id, user_id");
+    const linkToUser: Record<string, string> = {};
+    (linkRows ?? []).forEach((l) => { linkToUser[l.id] = l.user_id; });
+    const { data: oursRows } = await supabaseAdmin
+      .from("clicks").select("link_id").eq("routed_to", "ours").limit(100000);
+    (oursRows ?? []).forEach((r) => {
+      const uid = linkToUser[r.link_id];
+      if (uid) oursByUser[uid] = (oursByUser[uid] ?? 0) + 1;
+    });
+
+    return (data ?? []).map((u) => ({ ...u, ours_clicks: oursByUser[u.id] ?? 0 }));
   });
 
 export const adminBanUser = createServerFn({ method: "POST" })
