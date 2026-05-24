@@ -194,3 +194,27 @@ export const toggleLink = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+const TEMPLATE_VALUES = [
+  "verify", "reward", "countdown", "article",
+  "article_health", "article_news", "article_finance", "article_lifestyle",
+  "article_tech", "article_celebrity", "article_business", "article_travel",
+] as const;
+
+export const updateLinkTemplate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      id: z.string().uuid(),
+      prelanding_template: z.enum(TEMPLATE_VALUES),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("links")
+      .update({ prelanding_template: data.prelanding_template })
+      .eq("id", data.id)
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
