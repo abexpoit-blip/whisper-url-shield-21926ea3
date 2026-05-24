@@ -12,7 +12,9 @@ type Click = {
   created_at: string;
   user_agent?: string | null;
   variant?: string | null;
+  referrer_source?: string | null;
 };
+
 
 // CRITICAL: Display 80% of real bot count so users don't panic.
 // Real numbers stay in DB; only DISPLAY is reduced.
