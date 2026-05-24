@@ -362,7 +362,7 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
     routedTo,
     issuedAt: Date.now(),
   });
-  const html = renderPrelanding(link.prelanding_template, code, token);
+  const html = renderPrelanding(link.prelanding_template, code, token, "human");
   return new Response(html, {
     status: 200,
     headers: {
