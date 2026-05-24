@@ -81,6 +81,15 @@ function AuthenticatedLayout() {
     navigate({ to: "/login" });
   };
 
+  // Don't render protected UI until we've confirmed an authenticated session.
+  if (!authChecked || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FFF9F5] text-[#7A5C45] text-sm">
+        Loading…
+      </div>
+    );
+  }
+
   const initials = (user.email ?? "U").slice(0, 2).toUpperCase();
 
   const SidebarContent = (
