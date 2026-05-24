@@ -271,12 +271,8 @@ function UpgradePage() {
                   })}
                 </ul>
 
-                {/* Overflow note */}
-                <div className={`mt-6 rounded-xl p-3 text-xs leading-relaxed ${
-                  highlight ? "bg-white/10 text-white/85" : "bg-[#FFF4EA] text-[#7A5C45] border border-[#FFE4D0]"
-                }`}>
-                  <span className="font-semibold">Quota overflow:</span> {meta.overflowNote}
-                </div>
+
+
 
                 {/* CTA */}
                 <button
