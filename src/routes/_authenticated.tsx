@@ -1,6 +1,7 @@
-import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { LayoutDashboard, BarChart3, Crown, ShieldCheck, LogOut, Menu, X, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { consumeDailyRedirect } from "@/lib/app-settings.functions";
@@ -14,11 +15,8 @@ export const Route = createFileRoute("/_authenticated")({
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" },
     ],
   }),
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session?.user) throw redirect({ to: "/login" });
-    return { user: data.session.user };
-  },
+  // Auth check is client-only — SSR has no localStorage so getSession() would
+  // always be null and bounce users to /login on every hard refresh.
   component: AuthenticatedLayout,
 });
 
@@ -29,20 +27,41 @@ const navMgmt = [
 ] as const;
 
 function AuthenticatedLayout() {
-  const { user } = Route.useRouteContext();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [user, setUser] = useState<User | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const dailyFn = useServerFn(consumeDailyRedirect);
 
+  // Client-only auth gate. Wait for session restore before deciding to redirect.
   useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      const u = data.session?.user ?? null;
+      setUser(u);
+      setAuthChecked(true);
+      if (!u) navigate({ to: "/login" });
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      const u = session?.user ?? null;
+      setUser(u);
+      if (!u) navigate({ to: "/login" });
+    });
+    return () => { mounted = false; subscription.unsubscribe(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
     (async () => {
       const { data } = await supabase
         .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
       setIsAdmin(!!data);
     })();
-  }, [user.id]);
+  }, [user]);
 
   useEffect(() => {
     const t = setTimeout(async () => {
