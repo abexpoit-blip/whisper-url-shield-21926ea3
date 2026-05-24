@@ -523,7 +523,7 @@ function HeroKpi({ label, value, delta, sub }: { label: string; value: string; d
   );
 }
 
-
+function VelocityChart({ data }: { data: number[] }) {
   const w = 1000, h = 300;
   const max = 1.25;
   const pts = data.map((v, i) => {
