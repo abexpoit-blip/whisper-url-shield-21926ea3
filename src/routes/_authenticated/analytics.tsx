@@ -39,9 +39,9 @@ function AnalyticsPage() {
   if (q.isError) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-center p-6">
-        <p className="text-white/70 text-sm">Couldn't load analytics.</p>
-        <p className="text-white/40 text-xs max-w-md">{(q.error as Error)?.message ?? "Unknown error"}</p>
-        <button onClick={() => q.refetch()} className="mt-2 px-4 py-2 rounded-xl bg-sky-500/20 border border-sky-400/30 text-sky-200 text-xs font-bold hover:bg-sky-500/30 transition">
+        <p className="text-[#5D4538] text-sm">Couldn't load analytics.</p>
+        <p className="text-[#A38D7D] text-xs max-w-md">{(q.error as Error)?.message ?? "Unknown error"}</p>
+        <button onClick={() => q.refetch()} className="mt-2 px-4 py-2 rounded-xl bg-[#FF7E5F]/15 border border-[#FF7E5F]/40 text-[#FF7E5F] text-xs font-bold hover:bg-[#FF7E5F]/25 transition">
           Retry
         </button>
       </div>
@@ -50,7 +50,7 @@ function AnalyticsPage() {
 
   if (q.isLoading || !d) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white/50">
+      <div className="min-h-screen flex items-center justify-center text-[#7D6452]">
         <Activity className="w-5 h-5 animate-pulse mr-2" /> Loading analytics…
       </div>
     );
@@ -62,20 +62,20 @@ function AnalyticsPage() {
       {/* Header */}
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-sky-300/70 font-bold mb-2">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-[#FF7E5F]/80 font-bold mb-2">
             Real-time Command
           </p>
-          <h1 className="text-3xl lg:text-4xl font-bold text-white tracking-tight" style={display}>
+          <h1 className="text-3xl lg:text-4xl font-bold text-[#2D1B0D] tracking-tight" style={display}>
             Advanced Analytics
           </h1>
-          <p className="text-white/40 text-sm mt-1">Live performance signals across all your smart links — last 7 days.</p>
+          <p className="text-[#A38D7D] text-sm mt-1">Live performance signals across all your smart links — last 7 days.</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/70 border border-white/80 backdrop-blur-md">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-            <span className="text-xs text-emerald-300 font-bold tracking-wider uppercase">Live</span>
+            <span className="text-xs text-emerald-600 font-bold tracking-wider uppercase">Live</span>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white text-sm font-bold shadow-lg shadow-sky-500/30 hover:scale-[1.02] transition-transform">
+          <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#FF7E5F] to-[#FEB47B] text-white text-sm font-bold shadow-lg shadow-orange-500/30 hover:scale-[1.02] transition-transform">
             <Download className="w-4 h-4" /> Export CSV
           </button>
         </div>
@@ -83,35 +83,35 @@ function AnalyticsPage() {
 
       {/* HERO — Live ticker + total card */}
       <section className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 lg:col-span-8 p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl relative overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-72 h-72 bg-sky-500/10 blur-[100px] rounded-full" />
+        <div className="col-span-12 lg:col-span-8 p-8 rounded-3xl bg-white/80 border border-white/90 backdrop-blur-2xl shadow-[0_8px_30px_rgba(255,126,95,0.08)] relative overflow-hidden">
+          <div className="absolute -top-20 -right-20 w-72 h-72 bg-[#FF7E5F]/10 blur-[100px] rounded-full" />
           <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-indigo-600/10 blur-[100px] rounded-full" />
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-3">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] uppercase tracking-[0.3em] text-emerald-300 font-bold">Live Traffic</span>
+              <span className="text-[10px] uppercase tracking-[0.3em] text-emerald-600 font-bold">Live Traffic</span>
             </div>
             <div className="flex flex-wrap items-end gap-8">
               <div>
-                <h2 className="text-6xl lg:text-7xl font-bold text-white tracking-tighter" style={display}>
+                <h2 className="text-6xl lg:text-7xl font-bold text-[#2D1B0D] tracking-tighter" style={display}>
                   {d.kpis.cps}
                 </h2>
-                <p className="text-white/40 text-xs uppercase tracking-[0.25em] mt-2 font-bold">Clicks per second</p>
+                <p className="text-[#A38D7D] text-xs uppercase tracking-[0.25em] mt-2 font-bold">Clicks per second</p>
               </div>
               <div className="flex-1 min-w-[280px] h-24 relative">
                 <svg viewBox="0 0 1000 100" preserveAspectRatio="none" className="w-full h-full">
                   <defs>
                     <linearGradient id="aGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.5" />
-                      <stop offset="100%" stopColor="#38BDF8" stopOpacity="0" />
+                      <stop offset="0%" stopColor="#FF7E5F" stopOpacity="0.5" />
+                      <stop offset="100%" stopColor="#FF7E5F" stopOpacity="0" />
                     </linearGradient>
                   </defs>
                   <path d={`${sparkPath} L 1000,100 L 0,100 Z`} fill="url(#aGrad)" />
-                  <path d={sparkPath} fill="none" stroke="#38BDF8" strokeWidth="2.5" strokeLinecap="round" />
+                  <path d={sparkPath} fill="none" stroke="#FF7E5F" strokeWidth="2.5" strokeLinecap="round" />
                 </svg>
               </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/10">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/80">
               <Stat label="Last 24h" value={d.kpis.last24h.toLocaleString()} />
               <Stat label="Total (7d)" value={d.kpis.total.toLocaleString()} />
               <Stat label="Human rate" value={`${d.kpis.humanRate}%`} accent="emerald" />
@@ -140,14 +140,14 @@ function AnalyticsPage() {
 
       {/* Geo + Top countries */}
       <section className="grid grid-cols-12 gap-6">
-        <Card className="col-span-12 xl:col-span-7" title="Geographic Heatmap" right={<span className="text-[10px] text-white/40 uppercase tracking-widest">Updates every 15s</span>}>
-          <div className="relative h-72 rounded-2xl bg-[#020617] border border-white/5 overflow-hidden">
+        <Card className="col-span-12 xl:col-span-7" title="Geographic Heatmap" right={<span className="text-[10px] text-[#A38D7D] uppercase tracking-widest">Updates every 15s</span>}>
+          <div className="relative h-72 rounded-2xl bg-gradient-to-br from-[#2D1B0D] to-[#1A0E07] border border-[#FFEDD5] overflow-hidden">
             {/* SVG abstract world dots */}
             <svg viewBox="0 0 1000 500" className="absolute inset-0 w-full h-full opacity-20">
               {Array.from({ length: 280 }).map((_, i) => {
                 const x = ((i * 37) % 1000);
                 const y = ((i * 53) % 500);
-                return <circle key={i} cx={x} cy={y} r="1.2" fill="#38BDF8" />;
+                return <circle key={i} cx={x} cy={y} r="1.2" fill="#FEB47B" />;
               })}
             </svg>
             {/* Country pins */}
@@ -161,13 +161,13 @@ function AnalyticsPage() {
               return (
                 <div
                   key={c.code}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-400 shadow-[0_0_20px_rgba(56,189,248,0.8)]"
+                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#FF7E5F] shadow-[0_0_20px_rgba(255,126,95,0.9)]"
                   style={{ left: `${p.x}%`, top: `${p.y}%`, width: size, height: size }}
                   title={`${c.code}: ${c.count}`}
                 />
               );
             })}
-            <div className="absolute bottom-3 left-4 flex items-center gap-2 text-[10px] text-white/40 uppercase tracking-widest">
+            <div className="absolute bottom-3 left-4 flex items-center gap-2 text-[10px] text-white/60 uppercase tracking-widest">
               <Globe2 className="w-3 h-3" /> {d.topCountries.length} countries
             </div>
           </div>
@@ -181,17 +181,17 @@ function AnalyticsPage() {
                 <div className="flex items-center gap-3">
                   <Flag code={c.code} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white/90 font-medium truncate">{c.name}</p>
-                    <p className="text-[10px] text-white/40 uppercase tracking-wider font-mono">{c.code}</p>
+                    <p className="text-sm text-[#2D1B0D] font-medium truncate">{c.name}</p>
+                    <p className="text-[10px] text-[#A38D7D] uppercase tracking-wider font-mono">{c.code}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-mono text-white">{c.count.toLocaleString()}</p>
-                    <p className="text-[10px] font-mono text-sky-300">{c.pct}%</p>
+                    <p className="text-sm font-mono text-[#2D1B0D]">{c.count.toLocaleString()}</p>
+                    <p className="text-[10px] font-mono text-[#FF7E5F]">{c.pct}%</p>
                   </div>
                 </div>
-                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-[#FFEDD5] rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-sky-400 to-indigo-500 rounded-full shadow-[0_0_6px_rgba(56,189,248,0.4)]"
+                    className="h-full bg-gradient-to-r from-[#FF7E5F] to-[#FEB47B] rounded-full shadow-[0_0_6px_rgba(255,126,95,0.4)]"
                     style={{ width: `${Math.max(c.pct, 2)}%` }}
                   />
                 </div>
@@ -207,7 +207,7 @@ function AnalyticsPage() {
           <div className="space-y-1">
             {d.heatmap.map((row, di) => (
               <div key={di} className="flex items-center gap-2">
-                <span className="w-8 text-[9px] text-white/30 font-mono">
+                <span className="w-8 text-[9px] text-[#BFA899] font-mono">
                   {dayLabel(6 - di)}
                 </span>
                 <div className="flex-1 grid grid-cols-24 gap-[3px]">
@@ -220,9 +220,9 @@ function AnalyticsPage() {
                         style={{
                           backgroundColor:
                             v === 0
-                              ? "rgba(255,255,255,0.03)"
-                              : `rgba(56, 189, 248, ${0.15 + intensity * 0.85})`,
-                          boxShadow: intensity > 0.7 ? "0 0 4px rgba(56,189,248,0.6)" : undefined,
+                              ? "rgba(45,27,13,0.05)"
+                              : `rgba(255, 126, 95, ${0.18 + intensity * 0.82})`,
+                          boxShadow: intensity > 0.7 ? "0 0 6px rgba(255,126,95,0.5)" : undefined,
                         }}
                         title={`${v} clicks @ ${hi}:00`}
                       />
@@ -231,7 +231,7 @@ function AnalyticsPage() {
                 </div>
               </div>
             ))}
-            <div className="flex justify-between pl-10 pt-2 text-[9px] text-white/30 font-mono">
+            <div className="flex justify-between pl-10 pt-2 text-[9px] text-[#BFA899] font-mono">
               <span>00</span><span>06</span><span>12</span><span>18</span><span>23</span>
             </div>
           </div>
@@ -242,23 +242,23 @@ function AnalyticsPage() {
             {d.liveEvents.length === 0 && <Empty label="Waiting for events…" />}
             {d.liveEvents.map((e, i) => {
               const color = e.isBot
-                ? "border-amber-400/60 text-amber-300"
+                ? "border-amber-500/50 text-amber-600"
                 : e.routed === "safe"
-                ? "border-indigo-400/60 text-indigo-300"
-                : "border-emerald-400/60 text-emerald-300";
+                ? "border-[#6366F1]/50 text-[#6366F1]"
+                : "border-emerald-500/50 text-emerald-600";
               return (
                 <div
                   key={e.id}
-                  className={`flex items-center gap-2 text-xs border-l-2 ${color} pl-2 py-2 bg-white/[0.02] rounded-r-md`}
+                  className={`flex items-center gap-2 text-xs border-l-2 ${color} pl-2 py-2 bg-white/60 rounded-r-md`}
                   style={{ opacity: 1 - i * 0.03 }}
                 >
-                  <span className="font-mono text-[10px] text-white/40 w-14 shrink-0">
+                  <span className="font-mono text-[10px] text-[#A38D7D] w-14 shrink-0">
                     {new Date(e.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                   </span>
                   <Flag code={e.country} small />
                   <DeviceIcon name={e.device} />
                   <BrowserIcon slug={e.browserSlug} color={e.browserColor} title={e.browser} />
-                  <span className="text-white/80 truncate flex-1 text-[11px]">
+                  <span className="text-[#3D2818] truncate flex-1 text-[11px]">
                     {e.isBot ? "🛡 Bot blocked" : e.routed === "safe" ? "↪ Safe redirect" : "✓ Offer click"}
                   </span>
                 </div>
@@ -275,7 +275,7 @@ function AnalyticsPage() {
             <Donut
               data={d.devices.map((dv, i) => ({
                 value: dv.count,
-                color: ["#38BDF8", "#6366F1", "#A78BFA", "#475569"][i % 4],
+                color: ["#FF7E5F", "#FEB47B", "#F59E0B", "#A38D7D"][i % 4],
               }))}
               centerLabel={d.devices[0]?.name ?? "—"}
               centerValue={`${d.devices[0]?.pct ?? 0}%`}
@@ -285,15 +285,15 @@ function AnalyticsPage() {
             {d.devices.length === 0 && <Empty label="No device data" />}
             {d.devices.map((dv, i) => (
               <div key={dv.name} className="flex items-center justify-between text-xs">
-                <span className="flex items-center gap-2.5 text-white/80">
+                <span className="flex items-center gap-2.5 text-[#3D2818]">
                   <span
                     className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: ["#38BDF8", "#6366F1", "#A78BFA", "#475569"][i % 4] }}
+                    style={{ backgroundColor: ["#FF7E5F", "#FEB47B", "#F59E0B", "#A38D7D"][i % 4] }}
                   />
                   <DeviceIcon name={dv.name} />
                   <span className="font-medium">{dv.name}</span>
                 </span>
-                <span className="font-mono text-white/50">{dv.count.toLocaleString()} · {dv.pct}%</span>
+                <span className="font-mono text-[#7D6452]">{dv.count.toLocaleString()} · {dv.pct}%</span>
               </div>
             ))}
           </div>
@@ -307,11 +307,11 @@ function AnalyticsPage() {
                 <div className="flex items-center gap-3">
                   <BrowserIcon slug={b.slug} color={b.color} title={b.name} large />
                   <div className="flex-1">
-                    <p className="text-sm text-white/90 font-medium">{b.name}</p>
+                    <p className="text-sm text-[#2D1B0D] font-medium">{b.name}</p>
                   </div>
-                  <span className="font-mono text-xs text-white/60">{b.count.toLocaleString()} · {b.pct}%</span>
+                  <span className="font-mono text-xs text-[#7D6452]">{b.count.toLocaleString()} · {b.pct}%</span>
                 </div>
-                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-[#FFEDD5] rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full"
                     style={{ width: `${Math.max(b.pct, 2)}%`, background: `linear-gradient(90deg, #${b.color}, #${b.color}88)` }}
@@ -330,11 +330,11 @@ function AnalyticsPage() {
                 <div className="flex items-center gap-3">
                   <BrowserIcon slug={o.slug} color="94a3b8" title={o.name} large />
                   <div className="flex-1">
-                    <p className="text-sm text-white/90 font-medium">{o.name}</p>
+                    <p className="text-sm text-[#2D1B0D] font-medium">{o.name}</p>
                   </div>
-                  <span className="font-mono text-xs text-white/60">{o.count.toLocaleString()} · {o.pct}%</span>
+                  <span className="font-mono text-xs text-[#7D6452]">{o.count.toLocaleString()} · {o.pct}%</span>
                 </div>
-                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-[#FFEDD5] rounded-full overflow-hidden">
                   <div className="h-full bg-gradient-to-r from-slate-300 to-slate-500 rounded-full" style={{ width: `${Math.max(o.pct, 2)}%` }} />
                 </div>
               </div>
@@ -348,19 +348,19 @@ function AnalyticsPage() {
         <Card
           className="col-span-12 xl:col-span-5"
           title="Bot Detection Breakdown"
-          right={<span className="text-[10px] text-amber-300/70 uppercase tracking-widest flex items-center gap-1"><ShieldAlert className="w-3 h-3" /> Protected</span>}
+          right={<span className="text-[10px] text-amber-600/80 uppercase tracking-widest flex items-center gap-1"><ShieldAlert className="w-3 h-3" /> Protected</span>}
         >
           <div className="space-y-3">
             {d.botReasons.length === 0 && <Empty label="No bot traffic detected — clean!" />}
             {d.botReasons.map((r) => (
               <div key={r.name} className="space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400/70 shrink-0" />
-                  <p className="text-sm text-white/85 font-medium flex-1">{r.name}</p>
-                  <span className="font-mono text-xs text-amber-300">{r.count.toLocaleString()}</span>
-                  <span className="font-mono text-[10px] text-white/40 w-12 text-right">{r.pct}%</span>
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <p className="text-sm text-[#3D2818] font-medium flex-1">{r.name}</p>
+                  <span className="font-mono text-xs text-amber-600">{r.count.toLocaleString()}</span>
+                  <span className="font-mono text-[10px] text-[#A38D7D] w-12 text-right">{r.pct}%</span>
                 </div>
-                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-[#FFEDD5] rounded-full overflow-hidden">
                   <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full" style={{ width: `${Math.max(r.pct, 2)}%` }} />
                 </div>
               </div>
@@ -374,26 +374,26 @@ function AnalyticsPage() {
             {d.topLinks.map((l, i) => (
               <div
                 key={l.id}
-                className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:border-sky-400/30 transition-colors"
+                className="flex items-center gap-3 p-3 rounded-xl bg-white/60 border border-[#FFEDD5] hover:border-[#FF7E5F]/40 transition-colors"
               >
-                <div className="w-9 h-9 rounded-lg bg-sky-500/10 border border-sky-400/20 flex items-center justify-center text-sky-300 text-xs font-bold shrink-0">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FF7E5F] to-[#FEB47B] flex items-center justify-center text-white text-xs font-bold shrink-0">
                   {i + 1}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-white truncate font-mono">/{l.code}</p>
-                  <p className="text-[10px] uppercase tracking-wider text-white/40 truncate">
+                  <p className="text-sm font-semibold text-[#2D1B0D] truncate font-mono">/{l.code}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-[#A38D7D] truncate">
                     {l.title ?? "Untitled link"}
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-[10px] text-emerald-300 font-mono">{l.humans.toLocaleString()} ✓</p>
-                  <p className="text-[10px] text-amber-300 font-mono">{l.bots.toLocaleString()} 🛡</p>
+                  <p className="text-[10px] text-emerald-600 font-mono">{l.humans.toLocaleString()} ✓</p>
+                  <p className="text-[10px] text-amber-600 font-mono">{l.bots.toLocaleString()} 🛡</p>
                 </div>
                 <div className="text-right shrink-0 min-w-[58px]">
-                  <p className={`text-sm font-bold font-mono ${l.health >= 70 ? "text-emerald-300" : l.health >= 40 ? "text-amber-300" : "text-rose-300"}`}>
+                  <p className={`text-sm font-bold font-mono ${l.health >= 70 ? "text-emerald-600" : l.health >= 40 ? "text-amber-600" : "text-rose-600"}`}>
                     {l.health}%
                   </p>
-                  <p className="text-[9px] uppercase tracking-wider text-white/40">Health</p>
+                  <p className="text-[9px] uppercase tracking-wider text-[#A38D7D]">Health</p>
                 </div>
               </div>
             ))}
@@ -418,9 +418,9 @@ function Card({
   className?: string;
 }) {
   return (
-    <div className={`p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl ${className}`}>
+    <div className={`p-6 rounded-3xl bg-white/80 border border-white/90 backdrop-blur-2xl shadow-[0_8px_30px_rgba(255,126,95,0.08)] ${className}`}>
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-sm font-bold text-white tracking-wide" style={display}>
+        <h3 className="text-sm font-bold text-[#2D1B0D] tracking-wide" style={display}>
           {title}
         </h3>
         {right}
@@ -431,10 +431,10 @@ function Card({
 }
 
 function Stat({ label, value, accent }: { label: string; value: string; accent?: "emerald" | "sky" }) {
-  const color = accent === "emerald" ? "text-emerald-300" : accent === "sky" ? "text-sky-300" : "text-white";
+  const color = accent === "emerald" ? "text-emerald-600" : accent === "sky" ? "text-[#FF7E5F]" : "text-[#2D1B0D]";
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-bold mb-1">{label}</p>
+      <p className="text-[10px] uppercase tracking-[0.2em] text-[#BFA899] font-bold mb-1">{label}</p>
       <p className={`text-xl font-bold font-mono ${color}`}>{value}</p>
     </div>
   );
@@ -450,22 +450,22 @@ function MiniCard({
   tone: "amber" | "sky";
 }) {
   const toneClasses = tone === "amber"
-    ? "from-amber-500/20 to-orange-500/10 text-amber-300 border-amber-400/20"
-    : "from-sky-500/20 to-indigo-500/10 text-sky-300 border-sky-400/20";
+    ? "from-amber-500/20 to-orange-500/10 text-amber-600 border-amber-400/40"
+    : "from-[#FF7E5F]/15 to-[#FEB47B]/10 text-[#FF7E5F] border-[#FF7E5F]/30";
   return (
-    <div className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl">
+    <div className="p-6 rounded-3xl bg-white/80 border border-white/90 backdrop-blur-2xl shadow-[0_8px_30px_rgba(255,126,95,0.08)]">
       <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r ${toneClasses} border text-[10px] uppercase tracking-[0.2em] font-bold mb-4`}>
         {icon}
         {label}
       </div>
-      <p className="text-3xl font-bold text-white font-mono" style={display}>{value}</p>
-      <p className="text-xs text-white/40 mt-1">{sub}</p>
+      <p className="text-3xl font-bold text-[#2D1B0D] font-mono" style={display}>{value}</p>
+      <p className="text-xs text-[#A38D7D] mt-1">{sub}</p>
     </div>
   );
 }
 
 function Empty({ label }: { label: string }) {
-  return <p className="text-xs text-white/30 italic">{label}</p>;
+  return <p className="text-xs text-[#BFA899] italic">{label}</p>;
 }
 
 function dayLabel(daysAgo: number) {
@@ -489,7 +489,7 @@ function Donut({
   return (
     <div className="relative w-36 h-36">
       <svg className="w-full h-full -rotate-90" viewBox="0 0 140 140">
-        <circle cx="70" cy="70" r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="14" />
+        <circle cx="70" cy="70" r={R} fill="none" stroke="rgba(45,27,13,0.08)" strokeWidth="14" />
         {data.map((d, i) => {
           const len = (d.value / total) * C;
           const seg = (
@@ -509,8 +509,8 @@ function Donut({
         })}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <p className="text-xl font-bold text-white">{centerValue}</p>
-        <p className="text-[9px] uppercase tracking-widest text-white/40 font-bold">{centerLabel}</p>
+        <p className="text-xl font-bold text-[#2D1B0D]">{centerValue}</p>
+        <p className="text-[9px] uppercase tracking-widest text-[#A38D7D] font-bold">{centerLabel}</p>
       </div>
     </div>
   );
@@ -521,7 +521,7 @@ function Flag({ code, small = false }: { code: string; small?: boolean }) {
   const lower = code.toLowerCase();
   const size = small ? "w-5 h-3.5" : "w-7 h-5";
   if (!code || code === "??" || code.length !== 2) {
-    return <span className={`${size} inline-flex items-center justify-center bg-white/5 rounded-[2px] text-white/40 text-[8px]`}>?</span>;
+    return <span className={`${size} inline-flex items-center justify-center bg-white/70 rounded-[2px] text-[#A38D7D] text-[8px]`}>?</span>;
   }
   return (
     <img
@@ -537,7 +537,7 @@ function Flag({ code, small = false }: { code: string; small?: boolean }) {
 /* ---- Device icon (lucide) ---- */
 function DeviceIcon({ name }: { name: string }) {
   const n = name.toLowerCase();
-  const cls = "w-3.5 h-3.5 text-white/60 shrink-0";
+  const cls = "w-3.5 h-3.5 text-[#7D6452] shrink-0";
   if (n === "mobile") return <Smartphone className={cls} />;
   if (n === "tablet") return <Tablet className={cls} />;
   if (n === "desktop") return <Monitor className={cls} />;
@@ -548,7 +548,7 @@ function DeviceIcon({ name }: { name: string }) {
 function BrowserIcon({ slug, color, title, large = false }: { slug: string; color: string; title: string; large?: boolean }) {
   const size = large ? "w-6 h-6" : "w-4 h-4";
   if (!slug || slug === "unknown") {
-    return <span className={`${size} inline-flex items-center justify-center bg-white/5 rounded text-white/40 text-[10px] shrink-0`} title={title}>?</span>;
+    return <span className={`${size} inline-flex items-center justify-center bg-white/70 rounded text-[#A38D7D] text-[10px] shrink-0`} title={title}>?</span>;
   }
   return (
     <img
