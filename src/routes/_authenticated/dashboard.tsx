@@ -4,7 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Copy, Trash2, Play, Pause, Plus, Search, MoreHorizontal, ChevronRight } from "lucide-react";
-import { getDashboardData, createLink, deleteLink, toggleLink } from "@/lib/links.functions";
+import { getDashboardData, createLink, deleteLink, toggleLink, updateLinkTemplate } from "@/lib/links.functions";
+import { TEMPLATE_OPTIONS, type PrelandingTemplate } from "@/lib/prelanding-templates";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Sleepox" }] }),
