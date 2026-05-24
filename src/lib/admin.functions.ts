@@ -454,7 +454,7 @@ export const adminUpdateLink = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    const patch: Record<string, unknown> = {};
+    const patch: { adsterra_url?: string; safe_url?: string; title?: string } = {};
     if (data.adsterra_url !== undefined) patch.adsterra_url = data.adsterra_url;
     if (data.safe_url !== undefined) patch.safe_url = data.safe_url;
     if (data.title !== undefined) patch.title = data.title;
