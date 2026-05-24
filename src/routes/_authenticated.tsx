@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
-import type { User } from "@supabase/supabase-js";
+import { useEffect, useRef, useState } from "react";
+import type { AuthChangeEvent, User } from "@supabase/supabase-js";
 import { LayoutDashboard, BarChart3, Crown, ShieldCheck, LogOut, Menu, X, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { consumeDailyRedirect } from "@/lib/app-settings.functions";
@@ -33,22 +33,31 @@ function AuthenticatedLayout() {
   const [authChecked, setAuthChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const authCheckedRef = useRef(false);
   const dailyFn = useServerFn(consumeDailyRedirect);
 
   // Client-only auth gate. Wait for session restore before deciding to redirect.
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
+    const finishInitialAuthCheck = (u: User | null) => {
       if (!mounted) return;
-      const u = data.session?.user ?? null;
       setUser(u);
+      authCheckedRef.current = true;
       setAuthChecked(true);
       if (!u) navigate({ to: "/login" });
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session) => {
       const u = session?.user ?? null;
       setUser(u);
-      if (!u) navigate({ to: "/login" });
+      if (event === "SIGNED_OUT") navigate({ to: "/login" });
+      if (authCheckedRef.current && !u && event !== "INITIAL_SESSION") navigate({ to: "/login" });
+    });
+
+    supabase.auth.getSession().then(({ data }) => {
+      finishInitialAuthCheck(data.session?.user ?? null);
+    }).catch(() => {
+      finishInitialAuthCheck(null);
     });
     return () => { mounted = false; subscription.unsubscribe(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
