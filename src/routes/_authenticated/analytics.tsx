@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo } from "react";
-import { Activity, Download, Globe2, Smartphone, Monitor, Tablet, HelpCircle, Zap, ShieldCheck, ShieldAlert, AlertTriangle } from "lucide-react";
-import { getAnalyticsData } from "@/lib/analytics.functions";
+import { useMemo, useState } from "react";
+import { Activity, Download, Globe2, Smartphone, Monitor, Tablet, HelpCircle, Zap, ShieldCheck, ShieldAlert, AlertTriangle, X, TrendingDown, Users } from "lucide-react";
+import { ComposableMap, Geographies, Geography, Sphere, Graticule } from "react-simple-maps";
+import { getAnalyticsData, getCohortRetention, getLinkDrilldown } from "@/lib/analytics.functions";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({ meta: [{ title: "Analytics — Sleepox" }] }),
@@ -14,13 +15,21 @@ const display = { fontFamily: "'Space Grotesk', sans-serif" } as const;
 
 function AnalyticsPage() {
   const fn = useServerFn(getAnalyticsData);
+  const cohortFn = useServerFn(getCohortRetention);
+  const [drilldownId, setDrilldownId] = useState<string | null>(null);
   const q = useQuery({
     queryKey: ["analytics"],
     queryFn: () => fn(),
-    refetchInterval: 60_000, // 60s — was 15s, way too aggressive for high-traffic VPS
+    refetchInterval: 60_000,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
     retry: 1,
+  });
+  const cohortQ = useQuery({
+    queryKey: ["cohort-retention"],
+    queryFn: () => cohortFn(),
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
   });
 
   const d = q.data;
@@ -140,37 +149,8 @@ function AnalyticsPage() {
 
       {/* Geo + Top countries */}
       <section className="grid grid-cols-12 gap-6">
-        <Card className="col-span-12 xl:col-span-7" title="Geographic Heatmap" right={<span className="text-[10px] text-[#7D6452] uppercase tracking-widest">Updates every 15s</span>}>
-          <div className="relative h-72 rounded-2xl bg-gradient-to-br from-[#2D1B0D] to-[#1A0E07] border border-[#FFEDD5] overflow-hidden">
-            {/* SVG abstract world dots */}
-            <svg viewBox="0 0 1000 500" className="absolute inset-0 w-full h-full opacity-20">
-              {Array.from({ length: 280 }).map((_, i) => {
-                const x = ((i * 37) % 1000);
-                const y = ((i * 53) % 500);
-                return <circle key={i} cx={x} cy={y} r="1.2" fill="#FEB47B" />;
-              })}
-            </svg>
-            {/* Country pins */}
-            {d.topCountries.slice(0, 6).map((c, i) => {
-              const positions = [
-                { x: 22, y: 38 }, { x: 48, y: 32 }, { x: 52, y: 36 },
-                { x: 70, y: 45 }, { x: 30, y: 60 }, { x: 80, y: 40 },
-              ];
-              const p = positions[i];
-              const size = 8 + (c.pct / 10);
-              return (
-                <div
-                  key={c.code}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#FF7E5F] shadow-[0_0_20px_rgba(255,126,95,0.9)]"
-                  style={{ left: `${p.x}%`, top: `${p.y}%`, width: size, height: size }}
-                  title={`${c.code}: ${c.count}`}
-                />
-              );
-            })}
-            <div className="absolute bottom-3 left-4 flex items-center gap-2 text-[10px] text-white/60 uppercase tracking-widest">
-              <Globe2 className="w-3 h-3" /> {d.topCountries.length} countries
-            </div>
-          </div>
+        <Card className="col-span-12 xl:col-span-7" title="World Map" right={<span className="text-[10px] text-[#7D6452] uppercase tracking-widest">Click intensity by country</span>}>
+          <WorldMap topCountries={d.topCountries} />
         </Card>
 
         <Card className="col-span-12 xl:col-span-5" title="Top Countries">
@@ -372,9 +352,10 @@ function AnalyticsPage() {
           <div className="space-y-3">
             {d.topLinks.length === 0 && <Empty label="No link data yet" />}
             {d.topLinks.map((l, i) => (
-              <div
+              <button
                 key={l.id}
-                className="flex items-center gap-3 p-3 rounded-xl bg-white/60 border border-[#FFEDD5] hover:border-[#FF7E5F]/40 transition-colors"
+                onClick={() => setDrilldownId(l.id)}
+                className="w-full text-left flex items-center gap-3 p-3 rounded-xl bg-white/60 border border-[#FFEDD5] hover:border-[#FF7E5F]/60 hover:bg-white/90 hover:shadow-md transition-all"
               >
                 <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FF7E5F] to-[#FEB47B] flex items-center justify-center text-white text-xs font-bold shrink-0">
                   {i + 1}
@@ -393,9 +374,9 @@ function AnalyticsPage() {
                   <p className={`text-sm font-bold font-mono ${l.health >= 70 ? "text-emerald-600" : l.health >= 40 ? "text-amber-600" : "text-rose-600"}`}>
                     {l.health}%
                   </p>
-                  <p className="text-[9px] uppercase tracking-wider text-[#7D6452]">Health</p>
+                  <p className="text-[9px] uppercase tracking-wider text-[#7D6452]">Drill →</p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </Card>
@@ -435,6 +416,21 @@ function AnalyticsPage() {
         </Card>
       </section>
 
+      {/* Conversion Funnel */}
+      <section className="grid grid-cols-12 gap-6 pb-2">
+        <Card className="col-span-12" title="Conversion Funnel" right={<span className="text-[10px] text-[#7D6452] uppercase tracking-widest flex items-center gap-1"><TrendingDown className="w-3 h-3" /> Click → Landing</span>}>
+          <Funnel stages={d.funnel} />
+        </Card>
+      </section>
+
+      {/* Cohort Retention */}
+      <section className="grid grid-cols-12 gap-6 pb-10">
+        <Card className="col-span-12" title="Cohort Retention" right={<span className="text-[10px] text-[#7D6452] uppercase tracking-widest flex items-center gap-1"><Users className="w-3 h-3" /> Returning visitors by first-seen day</span>}>
+          <CohortGrid loading={cohortQ.isLoading} rows={cohortQ.data?.rows ?? []} />
+        </Card>
+      </section>
+
+      {drilldownId && <DrilldownModal linkId={drilldownId} onClose={() => setDrilldownId(null)} />}
     </div>
   );
 }
@@ -602,5 +598,281 @@ function BrowserIcon({ slug, color, title, large = false }: { slug: string; colo
       loading="lazy"
       onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
     />
+  );
+}
+
+/* ---- Conversion Funnel ---- */
+function Funnel({ stages }: { stages: Array<{ stage: string; value: number; pct: number; color: string }> }) {
+  if (!stages.length || stages[0].value === 0) return <Empty label="No traffic yet to build a funnel" />;
+  const max = stages[0].value || 1;
+  return (
+    <div className="space-y-3">
+      {stages.map((s, i) => {
+        const widthPct = Math.max(8, (s.value / max) * 100);
+        const dropoff = i > 0 ? stages[i - 1].value - s.value : 0;
+        const dropPct = i > 0 && stages[i - 1].value ? Math.round((dropoff / stages[i - 1].value) * 1000) / 10 : 0;
+        return (
+          <div key={s.stage} className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-white border-2 flex items-center justify-center text-[10px] font-bold" style={{ borderColor: s.color, color: s.color }}>{i + 1}</span>
+                <span className="font-bold text-[#2D1B0D] text-sm" style={display}>{s.stage}</span>
+              </div>
+              <div className="flex items-center gap-3 font-mono">
+                <span className="text-[#2D1B0D] font-bold">{s.value.toLocaleString()}</span>
+                <span className="text-[#7D6452]">{s.pct}%</span>
+                {i > 0 && dropoff > 0 && (
+                  <span className="text-rose-600 text-[10px]">▼ {dropPct}%</span>
+                )}
+              </div>
+            </div>
+            <div className="relative h-9 rounded-xl bg-[#FFF5EE] overflow-hidden">
+              <div
+                className="absolute inset-y-0 left-0 rounded-xl flex items-center justify-end pr-3 text-white text-xs font-bold shadow-md transition-all"
+                style={{ width: `${widthPct}%`, background: `linear-gradient(90deg, ${s.color}, ${s.color}cc)` }}
+              >
+                {widthPct > 18 && <span className="opacity-90">{s.pct}%</span>}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ---- Cohort Retention Grid ---- */
+function CohortGrid({ rows, loading }: { rows: Array<{ day: string; size: number; d1: number; d7: number; d30: number }>; loading: boolean }) {
+  if (loading) return <p className="text-xs text-[#7D6452]">Loading cohorts…</p>;
+  if (!rows.length || rows.every(r => r.size === 0)) return <Empty label="Not enough returning visitors yet — needs at least a few days of traffic" />;
+  const cell = (pct: number) => {
+    if (pct === 0) return "rgba(45,27,13,0.04)";
+    const a = 0.15 + (pct / 100) * 0.7;
+    return `rgba(255,126,95,${a})`;
+  };
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="text-left text-[10px] uppercase tracking-widest text-[#7D6452]">
+            <th className="py-2 pr-3 font-bold">First seen</th>
+            <th className="py-2 pr-3 font-bold">Cohort size</th>
+            <th className="py-2 px-2 font-bold text-center">Day 1</th>
+            <th className="py-2 px-2 font-bold text-center">Day 7</th>
+            <th className="py-2 px-2 font-bold text-center">Day 30</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.day} className="border-t border-[#FFEDD5]">
+              <td className="py-2 pr-3 font-mono text-[#3D2818]">{r.day}</td>
+              <td className="py-2 pr-3 font-mono text-[#2D1B0D] font-bold">{r.size.toLocaleString()}</td>
+              {[r.d1, r.d7, r.d30].map((v, i) => (
+                <td key={i} className="py-1 px-2">
+                  <div className="rounded-md text-center font-mono font-bold text-[11px] py-1.5 text-[#2D1B0D]" style={{ backgroundColor: cell(v) }}>
+                    {r.size ? `${v}%` : "—"}
+                  </div>
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ---- Real SVG World Map (react-simple-maps + d3-style choropleth) ---- */
+const WORLD_TOPO = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+
+// ISO-2 → numeric ID used by world-atlas
+const ISO2_TO_ID: Record<string, string> = {
+  US:"840",GB:"826",DE:"276",FR:"250",CA:"124",IN:"356",BD:"050",PK:"586",JP:"392",CN:"156",
+  BR:"076",AU:"036",NL:"528",IT:"380",ES:"724",MX:"484",RU:"643",ID:"360",PH:"608",NG:"566",
+  ZA:"710",SE:"752",PL:"616",TR:"792",KR:"410",VN:"704",AE:"784",SA:"682",EG:"818",AR:"032",
+  CO:"170",CL:"152",TH:"764",MY:"458",SG:"702",CH:"756",BE:"056",AT:"040",PT:"620",IE:"372",
+  NO:"578",DK:"208",FI:"246",NZ:"554",
+};
+
+function WorldMap({ topCountries }: { topCountries: Array<{ code: string; name: string; count: number; pct: number }> }) {
+  const max = Math.max(1, ...topCountries.map(c => c.count));
+  const lookup = new Map<string, { name: string; count: number; pct: number }>();
+  topCountries.forEach(c => {
+    const id = ISO2_TO_ID[c.code];
+    if (id) lookup.set(id, { name: c.name, count: c.count, pct: c.pct });
+  });
+  const colorFor = (count: number) => {
+    if (!count) return "#FFF5EE";
+    const t = Math.min(1, count / max);
+    // interpolate cream → orange
+    const a = 0.18 + t * 0.72;
+    return `rgba(255,126,95,${a})`;
+  };
+
+  return (
+    <div className="relative h-[380px] rounded-2xl bg-gradient-to-br from-[#FFFBF7] to-[#FFF1E6] border border-[#FFEDD5] overflow-hidden">
+      <ComposableMap projectionConfig={{ scale: 155 }} style={{ width: "100%", height: "100%" }}>
+        <Sphere id="sphere" fill="transparent" stroke="#FEB47B33" strokeWidth={0.5} />
+        <Graticule stroke="#FEB47B22" strokeWidth={0.3} />
+        <Geographies geography={WORLD_TOPO}>
+          {({ geographies }: { geographies: any[] }) =>
+            geographies.map((geo) => {
+              const hit = lookup.get(geo.id);
+              return (
+                <Geography
+                  key={geo.rsmKey}
+                  geography={geo}
+                  fill={colorFor(hit?.count ?? 0)}
+                  stroke="#FFFFFF"
+                  strokeWidth={0.4}
+                  style={{
+                    default: { outline: "none" },
+                    hover: { outline: "none", fill: "#FF7E5F", cursor: "pointer" },
+                    pressed: { outline: "none" },
+                  }}
+                >
+                  <title>{hit ? `${hit.name}: ${hit.count.toLocaleString()} (${hit.pct}%)` : geo.properties?.name}</title>
+                </Geography>
+              );
+            })
+          }
+        </Geographies>
+      </ComposableMap>
+      {/* Legend */}
+      <div className="absolute bottom-3 left-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur border border-[#FFEDD5] shadow-sm">
+        <Globe2 className="w-3 h-3 text-[#FF7E5F]" />
+        <span className="text-[10px] font-bold text-[#5D4538] uppercase tracking-widest">{topCountries.length} countries</span>
+        <span className="ml-2 flex items-center gap-1">
+          <span className="w-3 h-2 rounded-sm" style={{ background: "rgba(255,126,95,0.18)" }} />
+          <span className="w-3 h-2 rounded-sm" style={{ background: "rgba(255,126,95,0.5)" }} />
+          <span className="w-3 h-2 rounded-sm" style={{ background: "rgba(255,126,95,0.9)" }} />
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ---- Per-link Drill-down Modal ---- */
+function DrilldownModal({ linkId, onClose }: { linkId: string; onClose: () => void }) {
+  const fn = useServerFn(getLinkDrilldown);
+  const q = useQuery({
+    queryKey: ["drilldown", linkId],
+    queryFn: () => fn({ data: { linkId } }),
+    staleTime: 30_000,
+  });
+  const d = q.data;
+  const maxS = Math.max(1, ...(d?.series ?? [1]));
+  const path = useMemo(() => {
+    if (!d) return "";
+    const pts = d.series.map((v, i) => {
+      const x = (i / 23) * 1000;
+      const y = 100 - (v / maxS) * 90;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    return `M ${pts.join(" L ")}`;
+  }, [d, maxS]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2D1B0D]/40 backdrop-blur-sm" onClick={onClose}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl bg-gradient-to-br from-[#FFFBF7] to-[#FFF1E6] border border-white shadow-2xl"
+      >
+        <div className="sticky top-0 z-10 flex items-center justify-between p-5 border-b border-[#FFEDD5] bg-white/85 backdrop-blur-xl rounded-t-3xl">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-[#FF7E5F] font-bold">Link Drill-down · Last 24h</p>
+            <h2 className="text-xl font-bold text-[#2D1B0D] font-mono mt-1" style={display}>
+              {q.isLoading ? "Loading…" : d ? `/${d.link.code}` : "—"}
+            </h2>
+            {d?.link.title && <p className="text-xs text-[#7D6452] mt-0.5">{d.link.title}</p>}
+          </div>
+          <button onClick={onClose} className="w-9 h-9 rounded-full bg-white border border-[#FFEDD5] flex items-center justify-center hover:bg-[#FF7E5F]/10 hover:border-[#FF7E5F]/40 transition">
+            <X className="w-4 h-4 text-[#5D4538]" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {q.isError && <p className="text-rose-600 text-sm">Couldn't load: {(q.error as Error).message}</p>}
+          {!d && !q.isError && <p className="text-[#7D6452] text-sm">Loading data…</p>}
+          {d && (
+            <>
+              {/* KPIs */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <KPIBox label="Clicks 24h" value={d.kpis24h.total.toLocaleString()} />
+                <KPIBox label="Humans" value={d.kpis24h.humans.toLocaleString()} accent="emerald" />
+                <KPIBox label="Bots blocked" value={d.kpis24h.bots.toLocaleString()} accent="amber" />
+                <KPIBox label="Human rate" value={`${d.kpis24h.humanRate}%`} accent="orange" />
+              </div>
+
+              {/* 24h sparkline */}
+              <div className="p-5 rounded-2xl bg-white/85 border border-[#FFEDD5]">
+                <p className="text-[10px] uppercase tracking-widest text-[#7D6452] font-bold mb-3">24h Click Velocity (humans, hourly)</p>
+                <svg viewBox="0 0 1000 100" preserveAspectRatio="none" className="w-full h-24">
+                  <defs>
+                    <linearGradient id="dGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#FF7E5F" stopOpacity="0.55" />
+                      <stop offset="100%" stopColor="#FF7E5F" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <path d={`${path} L 1000,100 L 0,100 Z`} fill="url(#dGrad)" />
+                  <path d={path} fill="none" stroke="#FF7E5F" strokeWidth="2.5" strokeLinecap="round" />
+                </svg>
+                <div className="flex justify-between mt-1 text-[9px] text-[#8B7563] font-mono">
+                  <span>-24h</span><span>-18h</span><span>-12h</span><span>-6h</span><span>now</span>
+                </div>
+              </div>
+
+              {/* Top countries + browsers side by side */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-5 rounded-2xl bg-white/85 border border-[#FFEDD5]">
+                  <p className="text-[10px] uppercase tracking-widest text-[#7D6452] font-bold mb-3">Top Countries (24h)</p>
+                  {d.countries.length === 0 ? <Empty label="No data" /> : (
+                    <div className="space-y-2">
+                      {d.countries.map((c) => (
+                        <div key={c.code} className="flex items-center gap-3">
+                          <Flag code={c.code} />
+                          <span className="text-xs text-[#3D2818] truncate flex-1">{c.name}</span>
+                          <span className="text-xs font-mono text-[#2D1B0D] font-bold">{c.count}</span>
+                          <span className="text-[10px] font-mono text-[#FF7E5F] w-12 text-right">{c.pct}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="p-5 rounded-2xl bg-white/85 border border-[#FFEDD5]">
+                  <p className="text-[10px] uppercase tracking-widest text-[#7D6452] font-bold mb-3">Top Browsers (24h)</p>
+                  {d.browsers.length === 0 ? <Empty label="No data" /> : (
+                    <div className="space-y-2.5">
+                      {d.browsers.map((b) => (
+                        <div key={b.name} className="space-y-1">
+                          <div className="flex items-center gap-2.5">
+                            <BrowserIcon slug={b.slug} color={b.color} title={b.name} large />
+                            <span className="text-xs text-[#3D2818] flex-1">{b.name}</span>
+                            <span className="text-xs font-mono text-[#7D6452]">{b.count} · {b.pct}%</span>
+                          </div>
+                          <div className="h-1.5 bg-[#FFEDD5] rounded-full overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${Math.max(b.pct, 2)}%`, background: `linear-gradient(90deg, #${b.color}, #${b.color}aa)` }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KPIBox({ label, value, accent }: { label: string; value: string; accent?: "emerald" | "amber" | "orange" }) {
+  const color = accent === "emerald" ? "text-emerald-600" : accent === "amber" ? "text-amber-600" : accent === "orange" ? "text-[#FF7E5F]" : "text-[#2D1B0D]";
+  return (
+    <div className="p-4 rounded-2xl bg-white/85 border border-[#FFEDD5]">
+      <p className="text-[10px] uppercase tracking-[0.2em] text-[#7D6452] font-bold mb-1">{label}</p>
+      <p className={`text-2xl font-bold font-mono ${color}`}>{value}</p>
+    </div>
   );
 }

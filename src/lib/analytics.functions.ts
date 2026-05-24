@@ -143,6 +143,18 @@ export const getAnalyticsData = createServerFn({ method: "GET" })
     const last24h = clicks.filter((c) => now - new Date(c.created_at).getTime() < 86_400_000).length;
     const last24hHumans = clicks.filter((c) => !c.is_bot && now - new Date(c.created_at).getTime() < 86_400_000).length;
 
+    // --- Conversion Funnel: Click → Human pass → Offer reach → Final landing ---
+    const fClick = total;
+    const fHuman = humans;
+    const fOffer = clicks.filter((c) => !c.is_bot && c.routed_to === "offer").length;
+    const fLanding = clicks.filter((c) => !c.is_bot && c.routed_to === "offer" && (c as any).challenge_passed !== false).length;
+    const funnel = [
+      { stage: "Clicks", value: fClick, pct: 100, color: "#FF7E5F" },
+      { stage: "Human Pass", value: fHuman, pct: fClick ? Math.round((fHuman / fClick) * 1000) / 10 : 0, color: "#FEB47B" },
+      { stage: "Offer Reach", value: fOffer, pct: fClick ? Math.round((fOffer / fClick) * 1000) / 10 : 0, color: "#F59E0B" },
+      { stage: "Final Landing", value: fLanding, pct: fClick ? Math.round((fLanding / fClick) * 1000) / 10 : 0, color: "#10B981" },
+    ];
+
     // --- 24h series — humans only (cleaner chart) ---
     const hourBuckets = new Array(24).fill(0);
     clicks
@@ -344,7 +356,7 @@ export const getAnalyticsData = createServerFn({ method: "GET" })
       topCountries, devices, browsers,
       operatingSystems, botReasons,
       topLinks, liveEvents, trafficSources,
-
+      funnel,
     };
   });
 
@@ -374,8 +386,136 @@ function empty() {
     topLinks: [] as Array<{ id: string; code: string; title: string | null; count: number; humans: number; bots: number; health: number }>,
     liveEvents: [] as Array<{ id: string; time: string; country: string; countryName: string; flag: string; device: string; browser: string; browserSlug: string; browserColor: string; isBot: boolean; routed: string }>,
     trafficSources: [] as Array<{ key: string; name: string; slug: string; color: string; humans: number; bots: number; total: number; pct: number; quality: number }>,
+    funnel: [] as Array<{ stage: string; value: number; pct: number; color: string }>,
   };
 }
+
+// ============== Cohort Retention (30-day fingerprint-based) ==============
+export const getCohortRetention = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: links } = await supabase.from("links").select("id").eq("user_id", userId);
+    const linkIds = (links ?? []).map((l) => l.id);
+    if (linkIds.length === 0) return { rows: [] as Array<{ day: string; size: number; d1: number; d7: number; d30: number }> };
+
+    const thirtyAgo = new Date(Date.now() - 30 * 86_400_000).toISOString();
+    const { data: raw } = await supabase
+      .from("clicks")
+      .select("ip, fingerprint_hash, created_at, is_bot")
+      .in("link_id", linkIds)
+      .gte("created_at", thirtyAgo)
+      .order("created_at", { ascending: true })
+      .limit(50000);
+
+    const clicks = (raw ?? []) as Array<{ ip: string | null; fingerprint_hash: string | null; created_at: string; is_bot: boolean }>;
+    const dayMs = 86_400_000;
+    const today = Math.floor(Date.now() / dayMs);
+
+    // First-seen day per visitor
+    const firstSeen = new Map<string, number>();
+    const visitDays = new Map<string, Set<number>>();
+    clicks.forEach((c) => {
+      if (c.is_bot) return;
+      const id = c.fingerprint_hash || c.ip;
+      if (!id) return;
+      const day = Math.floor(new Date(c.created_at).getTime() / dayMs);
+      if (!firstSeen.has(id)) firstSeen.set(id, day);
+      const set = visitDays.get(id) ?? new Set<number>();
+      set.add(day);
+      visitDays.set(id, set);
+    });
+
+    // Build cohort rows for last 14 days
+    const cohorts = new Map<number, string[]>();
+    firstSeen.forEach((day, id) => {
+      if (today - day > 13) return;
+      const arr = cohorts.get(day) ?? [];
+      arr.push(id);
+      cohorts.set(day, arr);
+    });
+
+    const rows: Array<{ day: string; size: number; d1: number; d7: number; d30: number }> = [];
+    for (let i = 13; i >= 0; i--) {
+      const day = today - i;
+      const ids = cohorts.get(day) ?? [];
+      const size = ids.length;
+      const d1 = ids.filter((id) => visitDays.get(id)?.has(day + 1)).length;
+      const d7 = ids.filter((id) => { const s = visitDays.get(id); if (!s) return false; for (let k = day + 1; k <= day + 7; k++) if (s.has(k)) return true; return false; }).length;
+      const d30 = ids.filter((id) => { const s = visitDays.get(id); if (!s) return false; for (let k = day + 1; k <= day + 30; k++) if (s.has(k)) return true; return false; }).length;
+      const dateStr = new Date(day * dayMs).toLocaleDateString([], { month: "short", day: "numeric" });
+      rows.push({
+        day: dateStr,
+        size,
+        d1: size ? Math.round((d1 / size) * 100) : 0,
+        d7: size ? Math.round((d7 / size) * 100) : 0,
+        d30: size ? Math.round((d30 / size) * 100) : 0,
+      });
+    }
+    return { rows };
+  });
+
+// ============== Per-link drill-down ==============
+export const getLinkDrilldown = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { linkId: string }) => input)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: link } = await supabase
+      .from("links").select("id, short_code, title, user_id, clicks_count, bot_clicks_count, created_at")
+      .eq("id", data.linkId).single();
+    if (!link || link.user_id !== userId) throw new Error("Not found");
+
+    const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
+    const { data: rawC } = await supabase
+      .from("clicks")
+      .select("country, ua, is_bot, routed_to, created_at")
+      .eq("link_id", data.linkId)
+      .gte("created_at", dayAgo)
+      .order("created_at", { ascending: false })
+      .limit(10000);
+
+    const clicks = (rawC ?? []) as Array<{ country: string | null; ua: string | null; is_bot: boolean; routed_to: string; created_at: string }>;
+    const now = Date.now();
+
+    // 24h hourly series — humans
+    const series = new Array(24).fill(0);
+    clicks.filter(c => !c.is_bot).forEach((c) => {
+      const h = Math.floor((now - new Date(c.created_at).getTime()) / 3_600_000);
+      if (h >= 0 && h < 24) series[23 - h]++;
+    });
+
+    // top countries
+    const cMap = new Map<string, number>();
+    clicks.forEach(c => { const k = (c.country ?? "??").toUpperCase(); cMap.set(k, (cMap.get(k) ?? 0) + 1); });
+    const tot = Math.max(1, clicks.length);
+    const countries = [...cMap.entries()].sort((a,b) => b[1]-a[1]).slice(0, 8).map(([code, count]) => ({
+      code, flag: COUNTRIES[code]?.flag ?? "🌐", name: COUNTRIES[code]?.name ?? code,
+      count, pct: Math.round((count / tot) * 1000) / 10,
+    }));
+
+    // top browsers
+    const bMap = new Map<string, { count: number; slug: string; color: string }>();
+    clicks.filter(c => !c.is_bot).forEach(c => {
+      const b = browserFromUA(c.ua);
+      const cur = bMap.get(b.name) ?? { count: 0, slug: b.slug, color: b.color };
+      cur.count++; bMap.set(b.name, cur);
+    });
+    const humans = clicks.filter(c => !c.is_bot).length;
+    const totH = Math.max(1, humans);
+    const browsers = [...bMap.entries()].sort((a,b) => b[1].count-a[1].count).slice(0, 6).map(([name, v]) => ({
+      name, slug: v.slug, color: v.color, count: v.count,
+      pct: Math.round((v.count / totH) * 1000) / 10,
+    }));
+
+    const bots = clicks.filter(c => c.is_bot).length;
+    return {
+      link: { id: link.id, code: link.short_code, title: link.title, total: link.clicks_count, created_at: link.created_at },
+      kpis24h: { total: clicks.length, humans, bots: hideBots(bots), humanRate: clicks.length ? Math.round((humans / clicks.length) * 1000) / 10 : 100 },
+      series, countries, browsers,
+    };
+  });
 
 // ============== Live feed (real-time stream) ==============
 export const getLiveFeed = createServerFn({ method: "GET" })
