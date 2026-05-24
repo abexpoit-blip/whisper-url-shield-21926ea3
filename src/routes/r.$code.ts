@@ -91,33 +91,15 @@ async function recordRedirectClick(input: {
 
   if (!rpcError) return;
 
-  const { error: insertError } = await supabaseAdmin.from("clicks").insert({
-    link_id: input.linkId,
-    ip: input.ip,
-    country: input.country,
-    ua: input.ua,
-    is_bot: input.isBot,
-    bot_reason: input.botReason,
-    routed_to: input.routedTo,
-    utm_source: input.utm.utm_source,
-    utm_medium: input.utm.utm_medium,
-    utm_campaign: input.utm.utm_campaign,
-    utm_term: input.utm.utm_term,
-    utm_content: input.utm.utm_content,
-    referer_host: input.refererHost,
-    bot_score: input.botScore,
-    signals: input.signals,
-    challenge_passed: input.challengePassed,
-  } as never);
-
-  if (insertError) {
-    await supabaseAdmin.from("clicks").insert({
+  const clickRows = [
+    {
       link_id: input.linkId,
-      ip_address: input.ip,
+      ip: input.ip,
       country: input.country,
-      user_agent: input.ua,
+      ua: input.ua,
       is_bot: input.isBot,
       bot_reason: input.botReason,
+      routed_to: input.routedTo,
       utm_source: input.utm.utm_source,
       utm_medium: input.utm.utm_medium,
       utm_campaign: input.utm.utm_campaign,
@@ -127,7 +109,58 @@ async function recordRedirectClick(input: {
       bot_score: input.botScore,
       signals: input.signals,
       challenge_passed: input.challengePassed,
-    } as never);
+    },
+    {
+      link_id: input.linkId,
+      ip_address: input.ip,
+      country: input.country,
+      user_agent: input.ua,
+      is_bot: input.isBot,
+      bot_reason: input.botReason,
+      variant: input.routedTo,
+      utm_source: input.utm.utm_source,
+      utm_medium: input.utm.utm_medium,
+      utm_campaign: input.utm.utm_campaign,
+      utm_term: input.utm.utm_term,
+      utm_content: input.utm.utm_content,
+      referer_host: input.refererHost,
+      bot_score: input.botScore,
+      signals: input.signals,
+      challenge_passed: input.challengePassed,
+    },
+    {
+      link_id: input.linkId,
+      ip: input.ip,
+      country: input.country,
+      ua: input.ua,
+      is_bot: input.isBot,
+      bot_reason: input.botReason,
+      routed_to: input.routedTo,
+    },
+    {
+      link_id: input.linkId,
+      ip_address: input.ip,
+      country: input.country,
+      user_agent: input.ua,
+      is_bot: input.isBot,
+      bot_reason: input.botReason,
+      variant: input.routedTo,
+    },
+  ];
+
+  let inserted = false;
+  let lastInsertError: string | null = null;
+  for (const row of clickRows) {
+    const { error } = await supabaseAdmin.from("clicks").insert(row as never);
+    if (!error) {
+      inserted = true;
+      break;
+    }
+    lastInsertError = error.message;
+  }
+
+  if (!inserted) {
+    console.error("redirect click insert failed", { linkId: input.linkId, message: lastInsertError });
   }
 
   const { data: cur } = await supabaseAdmin
@@ -361,11 +394,12 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
     routedTo = "safe";
   } else {
     // Quota overflow: if user exceeded their plan quota → route to OUR adsterra
-    const { data: profile } = await supabaseAdmin
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("click_quota, clicks_used")
       .eq("id", link.user_id)
-      .single();
+      .maybeSingle();
+    if (profileError) console.error("redirect profile lookup failed", { userId: link.user_id, message: profileError.message });
 
     const overQuota =
       profile && profile.click_quota !== null && (profile.clicks_used || 0) >= profile.click_quota;
@@ -390,7 +424,7 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
 
   const botScore = isBot ? 100 : 0;
   if (shouldRecordClick) {
-    recordRedirectClick({
+    await recordRedirectClick({
       linkId: link.id,
       userId: link.user_id,
       ip: ip || null,
