@@ -164,10 +164,13 @@ export async function lookupRedirectLink(code: string): Promise<{ link: Redirect
   const isActive =
     typeof row.is_active === "boolean" ? (row.is_active as boolean) : row.status === "active";
   const tpl = (row.prelanding_template as string) || "verify";
-  const validTpl: RedirectLink["prelanding_template"] =
-    tpl === "none" || tpl === "verify" || tpl === "reward" || tpl === "countdown" || tpl === "article"
-      ? (tpl as RedirectLink["prelanding_template"])
-      : "verify";
+  const allowedTpls = new Set([
+    "none", "verify", "reward", "countdown", "article",
+    "article_health", "article_news", "article_finance", "article_lifestyle",
+  ]);
+  const validTpl: RedirectLink["prelanding_template"] = allowedTpls.has(tpl)
+    ? (tpl as RedirectLink["prelanding_template"])
+    : "verify";
 
   return {
     error: null,
@@ -224,17 +227,23 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
   const INJECT_COUNT = settings?.injection_count ?? 50;
 
   let isBot = false;
+  let isFbBot = false;
   let reason: string | null = null;
   const uaLow = ua.toLowerCase();
+
+  // Facebook / Meta crawlers — handled specially: served real article HTML (200 OK)
+  const FB_BOT_PATTERNS = ["facebookexternalhit", "facebot", "meta-externalagent", "meta-externalfetcher"];
+  for (const p of FB_BOT_PATTERNS) {
+    if (uaLow.includes(p)) { isBot = true; isFbBot = true; reason = `ua:${p}`; break; }
+  }
 
   if (!ua || ua.length < 10) { isBot = true; reason = "empty/short UA"; }
 
   if (!isBot) {
     const hardcoded = [
-      "facebookexternalhit","facebot","meta-externalagent","bytespider","googlebot",
-      "adsbot-google","bingbot","yandexbot","ahrefs","semrushbot","mj12bot","dotbot",
-      "petalbot","applebot","curl","wget","python-requests","httpclient","okhttp",
-      "headlesschrome","phantomjs","selenium","puppeteer","playwright","lighthouse",
+      "bytespider","googlebot","adsbot-google","bingbot","yandexbot","ahrefs","semrushbot",
+      "mj12bot","dotbot","petalbot","applebot","curl","wget","python-requests","httpclient",
+      "okhttp","headlesschrome","phantomjs","selenium","puppeteer","playwright","lighthouse",
       "pingdom","uptimerobot",
     ];
     for (const p of hardcoded) {
@@ -295,7 +304,35 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
     }
   }
 
-  // Bot or template='none' → direct redirect path (record click immediately)
+  // Facebook crawler → serve real article HTML (200 OK) so Meta's ad review
+  // sees a legit article with OG tags and approves the ad.
+  // We DO NOT redirect FB bots (avoids Adsterra exposure to Meta).
+  if (isFbBot && link.prelanding_template !== "none") {
+    if (shouldRecordClick) {
+      recordRedirectClick({
+        linkId: link.id, userId: link.user_id,
+        ip: ip || null, country: country || null, ua: ua || null,
+        isBot: true, botReason: reason, routedTo: "safe", utm,
+        refererHost: refererDomain || null,
+        botScore: 100, challengePassed: false, prelandingShown: true,
+        signals: { source: "fb_bot_article", reasons: reason ? [reason] : [], device, referer_host: refererDomain || null },
+      }).catch((error) => console.error("fb-bot click logging failed", { linkId: link.id, error }));
+    }
+    const tpl = link.prelanding_template === "verify" || link.prelanding_template === "reward" || link.prelanding_template === "countdown"
+      ? "article_health" : link.prelanding_template;
+    const html = renderPrelanding(tpl, code, "", "fbbot");
+    return new Response(html, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "public, max-age=300",
+        "X-Sleepox-Route": "fb-article",
+        "X-Sleepox-Template": tpl,
+      },
+    });
+  }
+
+  // Other bots or template='none' → direct redirect path
   if (isBot || link.prelanding_template === "none") {
     if (shouldRecordClick) {
       recordRedirectClick({
@@ -325,7 +362,7 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
     routedTo,
     issuedAt: Date.now(),
   });
-  const html = renderPrelanding(link.prelanding_template, code, token);
+  const html = renderPrelanding(link.prelanding_template, code, token, "human");
   return new Response(html, {
     status: 200,
     headers: {
