@@ -149,37 +149,8 @@ function AnalyticsPage() {
 
       {/* Geo + Top countries */}
       <section className="grid grid-cols-12 gap-6">
-        <Card className="col-span-12 xl:col-span-7" title="Geographic Heatmap" right={<span className="text-[10px] text-[#7D6452] uppercase tracking-widest">Updates every 15s</span>}>
-          <div className="relative h-72 rounded-2xl bg-gradient-to-br from-[#2D1B0D] to-[#1A0E07] border border-[#FFEDD5] overflow-hidden">
-            {/* SVG abstract world dots */}
-            <svg viewBox="0 0 1000 500" className="absolute inset-0 w-full h-full opacity-20">
-              {Array.from({ length: 280 }).map((_, i) => {
-                const x = ((i * 37) % 1000);
-                const y = ((i * 53) % 500);
-                return <circle key={i} cx={x} cy={y} r="1.2" fill="#FEB47B" />;
-              })}
-            </svg>
-            {/* Country pins */}
-            {d.topCountries.slice(0, 6).map((c, i) => {
-              const positions = [
-                { x: 22, y: 38 }, { x: 48, y: 32 }, { x: 52, y: 36 },
-                { x: 70, y: 45 }, { x: 30, y: 60 }, { x: 80, y: 40 },
-              ];
-              const p = positions[i];
-              const size = 8 + (c.pct / 10);
-              return (
-                <div
-                  key={c.code}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#FF7E5F] shadow-[0_0_20px_rgba(255,126,95,0.9)]"
-                  style={{ left: `${p.x}%`, top: `${p.y}%`, width: size, height: size }}
-                  title={`${c.code}: ${c.count}`}
-                />
-              );
-            })}
-            <div className="absolute bottom-3 left-4 flex items-center gap-2 text-[10px] text-white/60 uppercase tracking-widest">
-              <Globe2 className="w-3 h-3" /> {d.topCountries.length} countries
-            </div>
-          </div>
+        <Card className="col-span-12 xl:col-span-7" title="World Map" right={<span className="text-[10px] text-[#7D6452] uppercase tracking-widest">Click intensity by country</span>}>
+          <WorldMap topCountries={d.topCountries} />
         </Card>
 
         <Card className="col-span-12 xl:col-span-5" title="Top Countries">
