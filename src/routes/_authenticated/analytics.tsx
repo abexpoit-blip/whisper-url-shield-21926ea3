@@ -515,3 +515,49 @@ function Donut({
     </div>
   );
 }
+
+/* ---- Country flag (flagcdn.com — free, no install) ---- */
+function Flag({ code, small = false }: { code: string; small?: boolean }) {
+  const lower = code.toLowerCase();
+  const size = small ? "w-5 h-3.5" : "w-7 h-5";
+  if (!code || code === "??" || code.length !== 2) {
+    return <span className={`${size} inline-flex items-center justify-center bg-white/5 rounded-[2px] text-white/40 text-[8px]`}>?</span>;
+  }
+  return (
+    <img
+      src={`https://flagcdn.com/w40/${lower}.png`}
+      srcSet={`https://flagcdn.com/w80/${lower}.png 2x`}
+      alt={code}
+      className={`${size} object-cover rounded-[2px] shadow-sm shrink-0`}
+      loading="lazy"
+    />
+  );
+}
+
+/* ---- Device icon (lucide) ---- */
+function DeviceIcon({ name }: { name: string }) {
+  const n = name.toLowerCase();
+  const cls = "w-3.5 h-3.5 text-white/60 shrink-0";
+  if (n === "mobile") return <Smartphone className={cls} />;
+  if (n === "tablet") return <Tablet className={cls} />;
+  if (n === "desktop") return <Monitor className={cls} />;
+  return <HelpCircle className={cls} />;
+}
+
+/* ---- Browser/OS brand icon (simpleicons CDN — free SVG, brand color) ---- */
+function BrowserIcon({ slug, color, title, large = false }: { slug: string; color: string; title: string; large?: boolean }) {
+  const size = large ? "w-6 h-6" : "w-4 h-4";
+  if (!slug || slug === "unknown") {
+    return <span className={`${size} inline-flex items-center justify-center bg-white/5 rounded text-white/40 text-[10px] shrink-0`} title={title}>?</span>;
+  }
+  return (
+    <img
+      src={`https://cdn.simpleicons.org/${slug}/${color}`}
+      alt={title}
+      title={title}
+      className={`${size} shrink-0`}
+      loading="lazy"
+      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+    />
+  );
+}
