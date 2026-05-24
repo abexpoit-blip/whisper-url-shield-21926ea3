@@ -164,10 +164,13 @@ export async function lookupRedirectLink(code: string): Promise<{ link: Redirect
   const isActive =
     typeof row.is_active === "boolean" ? (row.is_active as boolean) : row.status === "active";
   const tpl = (row.prelanding_template as string) || "verify";
-  const validTpl: RedirectLink["prelanding_template"] =
-    tpl === "none" || tpl === "verify" || tpl === "reward" || tpl === "countdown" || tpl === "article"
-      ? (tpl as RedirectLink["prelanding_template"])
-      : "verify";
+  const allowedTpls = new Set([
+    "none", "verify", "reward", "countdown", "article",
+    "article_health", "article_news", "article_finance", "article_lifestyle",
+  ]);
+  const validTpl: RedirectLink["prelanding_template"] = allowedTpls.has(tpl)
+    ? (tpl as RedirectLink["prelanding_template"])
+    : "verify";
 
   return {
     error: null,
