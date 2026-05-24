@@ -534,15 +534,23 @@ function Flag({ code, small = false }: { code: string; small?: boolean }) {
   );
 }
 
-/* ---- Device icon (lucide) ---- */
-function DeviceIcon({ name }: { name: string }) {
+/* ---- Device icon — uses real brand logos (Android, Apple, Windows...) ---- */
+function DeviceIcon({ name, os, large = false }: { name: string; os?: string; large?: boolean }) {
+  const size = large ? "w-5 h-5" : "w-3.5 h-3.5";
+  const o = (os ?? "").toLowerCase();
+  if (o.includes("android")) return <img src="https://cdn.simpleicons.org/android/3DDC84" alt="Android" className={`${size} shrink-0`} loading="lazy" />;
+  if (o.includes("ios") || o.includes("ipad") || o.includes("iphone")) return <img src="https://cdn.simpleicons.org/apple/000000" alt="iOS" className={`${size} shrink-0`} loading="lazy" />;
+  if (o.includes("mac")) return <img src="https://cdn.simpleicons.org/apple/000000" alt="macOS" className={`${size} shrink-0`} loading="lazy" />;
+  if (o.includes("windows")) return <img src="https://cdn.simpleicons.org/windows11/0078D4" alt="Windows" className={`${size} shrink-0`} loading="lazy" />;
+  if (o.includes("linux")) return <img src="https://cdn.simpleicons.org/linux/000000" alt="Linux" className={`${size} shrink-0`} loading="lazy" />;
   const n = name.toLowerCase();
-  const cls = "w-3.5 h-3.5 text-[#7D6452] shrink-0";
+  const cls = `${size} text-[#7D6452] shrink-0`;
   if (n === "mobile") return <Smartphone className={cls} />;
   if (n === "tablet") return <Tablet className={cls} />;
   if (n === "desktop") return <Monitor className={cls} />;
   return <HelpCircle className={cls} />;
 }
+
 
 /* ---- Browser/OS brand icon (simpleicons CDN — free SVG, brand color) ---- */
 function BrowserIcon({ slug, color, title, large = false }: { slug: string; color: string; title: string; large?: boolean }) {
