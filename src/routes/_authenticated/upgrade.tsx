@@ -159,12 +159,28 @@ function UpgradePage() {
 
         {/* Pricing cards */}
         <section className="grid gap-6 lg:grid-cols-3">
-          {packages?.map((p) => {
-            const meta = PLAN_META[p.slug] ?? PLAN_META.free;
+          {packages?.map((p, idx) => {
+            // Robust meta lookup: by slug, then by name keyword, then by index order
+            const slugKey = (p.slug || "").toLowerCase();
+            const nameKey = (p.name || "").toLowerCase();
+            const metaBySlug = PLAN_META[slugKey];
+            const metaByName =
+              nameKey.includes("life") ? PLAN_META.lifetime :
+              nameKey.includes("month") || nameKey.includes("pro") ? PLAN_META.monthly :
+              nameKey.includes("free") ? PLAN_META.free : undefined;
+            const metaByOrder = [PLAN_META.free, PLAN_META.monthly, PLAN_META.lifetime][idx];
+            const meta = metaBySlug ?? metaByName ?? metaByOrder ?? PLAN_META.free;
             const Icon = meta.icon;
             const BadgeIcon = meta.badgeIcon;
-            const isFree = p.slug === "free";
+            const price = Number(p.price_usd ?? 0) || 0;
+            const isFree = price === 0;
             const highlight = meta.highlight;
+            const clickQuota = p.click_quota == null ? null : Number(p.click_quota);
+            const linkLimit = p.link_limit == null ? null : Number(p.link_limit);
+            const formatClicks = (n: number) =>
+              n >= 1_000_000 ? `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`
+              : n >= 1_000 ? `${(n / 1_000).toFixed(n % 1_000 === 0 ? 0 : 1)}K`
+              : n.toLocaleString();
 
             return (
               <div
@@ -204,10 +220,14 @@ function UpgradePage() {
                 {/* Price */}
                 <div className="mt-6 flex items-baseline gap-2">
                   <span className={`text-6xl font-extrabold tracking-tight ${highlight ? "text-white" : "bg-clip-text text-transparent bg-gradient-to-br from-[#FF7E5F] to-[#FEB47B]"}`}>
-                    ${Number(p.price_usd).toFixed(0)}
+                    ${price.toFixed(price % 1 === 0 ? 0 : 2)}
                   </span>
                   <span className={`text-sm font-medium ${highlight ? "text-white/80" : "text-[#7A5C45]"}`}>
-                    {p.slug === "lifetime" ? "/ lifetime" : p.slug === "monthly" ? "/ month" : "/ forever"}
+                    {slugKey === "lifetime" || nameKey.includes("life")
+                      ? "/ lifetime"
+                      : slugKey === "monthly" || nameKey.includes("month")
+                        ? "/ month"
+                        : isFree ? "/ forever" : ""}
                   </span>
                 </div>
 
@@ -216,16 +236,21 @@ function UpgradePage() {
                   highlight ? "bg-white/15 backdrop-blur" : "bg-[#FFEDD5]/60"
                 }`}>
                   <div>
-                    <div className={`text-[10px] font-bold uppercase tracking-widest ${highlight ? "text-white/70" : "text-[#7A5C45]"}`}>Links</div>
-                    <div className={`mt-1 text-xl font-extrabold ${highlight ? "text-white" : "text-[#2D1B0D]"}`}>
-                      {p.link_limit === null ? <InfinityIcon className="w-6 h-6" /> : p.link_limit}
+                    <div className={`text-[10px] font-bold uppercase tracking-widest ${highlight ? "text-white/70" : "text-[#7A5C45]"}`}>Smart links</div>
+                    <div className={`mt-1 text-xl font-extrabold flex items-center gap-1 ${highlight ? "text-white" : "text-[#2D1B0D]"}`}>
+                      {linkLimit === null ? <><InfinityIcon className="w-5 h-5" /> Unlimited</> : linkLimit.toLocaleString()}
                     </div>
                   </div>
                   <div>
-                    <div className={`text-[10px] font-bold uppercase tracking-widest ${highlight ? "text-white/70" : "text-[#7A5C45]"}`}>Clicks / mo</div>
-                    <div className={`mt-1 text-xl font-extrabold ${highlight ? "text-white" : "text-[#2D1B0D]"}`}>
-                      {p.click_quota === null ? <InfinityIcon className="w-6 h-6" /> : p.click_quota >= 1_000_000 ? `${(p.click_quota / 1_000_000).toFixed(0)}M` : p.click_quota >= 1000 ? `${(p.click_quota / 1000).toFixed(0)}K` : p.click_quota}
+                    <div className={`text-[10px] font-bold uppercase tracking-widest ${highlight ? "text-white/70" : "text-[#7A5C45]"}`}>Clicks / month</div>
+                    <div className={`mt-1 text-xl font-extrabold flex items-center gap-1 ${highlight ? "text-white" : "text-[#2D1B0D]"}`}>
+                      {clickQuota === null ? <><InfinityIcon className="w-5 h-5" /> Unlimited</> : formatClicks(clickQuota)}
                     </div>
+                    {clickQuota !== null && clickQuota >= 1000 && (
+                      <div className={`text-[10px] mt-0.5 ${highlight ? "text-white/70" : "text-[#A8907A]"}`}>
+                        ({clickQuota.toLocaleString()} clicks)
+                      </div>
+                    )}
                   </div>
                 </div>
 
