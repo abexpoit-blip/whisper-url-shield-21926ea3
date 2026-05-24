@@ -343,7 +343,8 @@ export const getAnalyticsData = createServerFn({ method: "GET" })
       heatmap, heatMax,
       topCountries, devices, browsers,
       operatingSystems, botReasons,
-      topLinks, liveEvents,
+      topLinks, liveEvents, trafficSources,
+
     };
   });
 
