@@ -150,7 +150,7 @@ function CloakingTab() {
           { h: "Action", render: (r) => <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${r.action === "block" ? "bg-rose-100 text-rose-700" : r.action === "safe" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>{r.action}</span> },
           { h: "Prio", render: (r) => <span className="text-xs text-[#A38D7D]">{r.priority}</span> },
         ]}
-        onToggle={(r) => toggleMut.mutate(r)}
+        onToggle={(r) => toggleMut.mutate(r as unknown as Parameters<typeof toggleMut.mutate>[0])}
         onDelete={(id) => delMut.mutate(id)}
       />
     </div>

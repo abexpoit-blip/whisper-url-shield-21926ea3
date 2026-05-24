@@ -17,6 +17,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as AuthenticatedUpgradeRouteImport } from './routes/_authenticated/upgrade'
+import { Route as AuthenticatedSmartFilterRouteImport } from './routes/_authenticated/smart-filter'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedControlPanelRouteImport } from './routes/_authenticated/control-panel'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
@@ -62,6 +63,12 @@ const AuthenticatedUpgradeRoute = AuthenticatedUpgradeRouteImport.update({
   path: '/upgrade',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSmartFilterRoute =
+  AuthenticatedSmartFilterRouteImport.update({
+    id: '/smart-filter',
+    path: '/smart-filter',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -98,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/control-panel': typeof AuthenticatedControlPanelRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/smart-filter': typeof AuthenticatedSmartFilterRoute
   '/upgrade': typeof AuthenticatedUpgradeRoute
   '/r/$code': typeof RCodeRouteWithChildren
   '/api/public/plisio-webhook': typeof ApiPublicPlisioWebhookRoute
@@ -112,6 +120,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/control-panel': typeof AuthenticatedControlPanelRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/smart-filter': typeof AuthenticatedSmartFilterRoute
   '/upgrade': typeof AuthenticatedUpgradeRoute
   '/r/$code': typeof RCodeRouteWithChildren
   '/api/public/plisio-webhook': typeof ApiPublicPlisioWebhookRoute
@@ -128,6 +137,7 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/control-panel': typeof AuthenticatedControlPanelRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/smart-filter': typeof AuthenticatedSmartFilterRoute
   '/_authenticated/upgrade': typeof AuthenticatedUpgradeRoute
   '/r/$code': typeof RCodeRouteWithChildren
   '/api/public/plisio-webhook': typeof ApiPublicPlisioWebhookRoute
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/control-panel'
     | '/dashboard'
+    | '/smart-filter'
     | '/upgrade'
     | '/r/$code'
     | '/api/public/plisio-webhook'
@@ -158,6 +169,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/control-panel'
     | '/dashboard'
+    | '/smart-filter'
     | '/upgrade'
     | '/r/$code'
     | '/api/public/plisio-webhook'
@@ -173,6 +185,7 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/control-panel'
     | '/_authenticated/dashboard'
+    | '/_authenticated/smart-filter'
     | '/_authenticated/upgrade'
     | '/r/$code'
     | '/api/public/plisio-webhook'
@@ -248,6 +261,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUpgradeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/smart-filter': {
+      id: '/_authenticated/smart-filter'
+      path: '/smart-filter'
+      fullPath: '/smart-filter'
+      preLoaderRoute: typeof AuthenticatedSmartFilterRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -290,6 +310,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedControlPanelRoute: typeof AuthenticatedControlPanelRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedSmartFilterRoute: typeof AuthenticatedSmartFilterRoute
   AuthenticatedUpgradeRoute: typeof AuthenticatedUpgradeRoute
 }
 
@@ -297,6 +318,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedControlPanelRoute: AuthenticatedControlPanelRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedSmartFilterRoute: AuthenticatedSmartFilterRoute,
   AuthenticatedUpgradeRoute: AuthenticatedUpgradeRoute,
 }
 
