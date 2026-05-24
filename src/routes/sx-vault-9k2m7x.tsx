@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/admin-login")({
-  head: () => ({ meta: [{ title: "Admin · Secure Console — Sleepox" }, { name: "robots", content: "noindex,nofollow" }] }),
+export const Route = createFileRoute("/sx-vault-9k2m7x")({
+  head: () => ({ meta: [{ title: "Secure Console" }, { name: "robots", content: "noindex,nofollow" }] }),
   component: AdminLoginPage,
 });
 
@@ -27,7 +27,6 @@ function AdminLoginPage() {
       toast.error(error?.message ?? "Login failed");
       return;
     }
-    // Verify admin role
     const { data: role } = await supabase
       .from("user_roles").select("role").eq("user_id", signIn.user.id).eq("role", "admin").maybeSingle();
     setLoading(false);
