@@ -129,6 +129,30 @@ export const adminTopUsers = createServerFn({ method: "GET" })
   });
 
 // ============================================================
+// REVENUE TIMESERIES (last 30d)
+// ============================================================
+export const adminRevenueTimeseries = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const fromISO = new Date(Date.now() - 30 * 86_400_000).toISOString();
+    const { data } = await supabaseAdmin
+      .from("upgrade_requests").select("created_at, amount, status").gte("created_at", fromISO).eq("status", "paid");
+    const buckets: Record<string, { date: string; revenue: number; count: number }> = {};
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 86_400_000).toISOString().slice(0, 10);
+      buckets[d] = { date: d, revenue: 0, count: 0 };
+    }
+    (data ?? []).forEach((r) => {
+      const d = (r.created_at as string).slice(0, 10);
+      if (!buckets[d]) return;
+      buckets[d].revenue += Number(r.amount || 0);
+      buckets[d].count++;
+    });
+    return Object.values(buckets);
+  });
+
+// ============================================================
 // USERS
 // ============================================================
 export const adminListUsers = createServerFn({ method: "GET" })
@@ -290,4 +314,310 @@ export const adminUpsertPackage = createServerFn({ method: "POST" })
     slug: z.string().min(1).max(64).regex(/^[a-z0-9_-]+$/),
     name: z.string().min(1).max(120),
     price_usd: z.number().min(0).max(100000),
-    click_quota
+    click_quota: z.number().int().min(0).nullable(),
+    link_limit: z.number().int().min(0).nullable(),
+    sort_order: z.number().int().min(0).max(1000),
+    is_active: z.boolean(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const payload = {
+      slug: data.slug,
+      name: data.name,
+      price_usd: data.price_usd,
+      click_quota: data.click_quota,
+      link_limit: data.link_limit,
+      sort_order: data.sort_order,
+      is_active: data.is_active,
+    };
+    if (data.id) {
+      const { error } = await supabaseAdmin.from("packages").update(payload).eq("id", data.id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseAdmin.from("packages").insert(payload);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+export const adminDeletePackage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { error } = await supabaseAdmin.from("packages").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ============================================================
+// UPGRADE REQUESTS
+// ============================================================
+export const adminListUpgradeRequests = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("upgrade_requests")
+      .select("id, user_id, package_slug, amount, status, plisio_invoice_id, plisio_invoice_url, created_at, updated_at")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (error) throw new Error(error.message);
+    const ids = Array.from(new Set((data ?? []).map((r) => r.user_id)));
+    let emailMap: Record<string, string> = {};
+    if (ids.length > 0) {
+      const { data: profs } = await supabaseAdmin
+        .from("profiles").select("id, email").in("id", ids);
+      emailMap = Object.fromEntries((profs ?? []).map((p) => [p.id, p.email ?? ""]));
+    }
+    return (data ?? []).map((r) => ({ ...r, email: emailMap[r.user_id] ?? "" }));
+  });
+
+export const adminDecideUpgradeRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid(), decision: z.enum(["approve", "reject"]) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { data: req, error: rErr } = await supabaseAdmin
+      .from("upgrade_requests").select("*").eq("id", data.id).maybeSingle();
+    if (rErr || !req) throw new Error("Request not found");
+    if (req.status !== "pending") throw new Error(`Request already ${req.status}`);
+
+    if (data.decision === "reject") {
+      const { error } = await supabaseAdmin
+        .from("upgrade_requests")
+        .update({ status: "rejected", updated_at: new Date().toISOString() })
+        .eq("id", data.id);
+      if (error) throw new Error(error.message);
+      return { ok: true };
+    }
+
+    const { data: pkg } = await supabaseAdmin
+      .from("packages").select("*").eq("slug", req.package_slug).maybeSingle();
+    if (!pkg) throw new Error("Package not found");
+    const { error: pErr } = await supabaseAdmin
+      .from("profiles")
+      .update({
+        plan_slug: pkg.slug,
+        click_quota: pkg.click_quota,
+        link_limit: pkg.link_limit,
+        clicks_used: 0,
+        clicks_period_start: new Date().toISOString(),
+      })
+      .eq("id", req.user_id);
+    if (pErr) throw new Error(pErr.message);
+    const { error: uErr } = await supabaseAdmin
+      .from("upgrade_requests")
+      .update({ status: "paid", updated_at: new Date().toISOString() })
+      .eq("id", data.id);
+    if (uErr) throw new Error(uErr.message);
+    return { ok: true };
+  });
+
+// ============================================================
+// LINKS (admin view of all users' links)
+// ============================================================
+export const adminListLinks = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("links").select("*").order("created_at", { ascending: false }).limit(500);
+    if (error) throw new Error(error.message);
+    const uids = Array.from(new Set((data ?? []).map((l) => l.user_id)));
+    let emailMap: Record<string, string> = {};
+    if (uids.length) {
+      const { data: profs } = await supabaseAdmin
+        .from("profiles").select("id, email").in("id", uids);
+      emailMap = Object.fromEntries((profs ?? []).map((p) => [p.id, p.email ?? ""]));
+    }
+    return (data ?? []).map((l) => ({ ...l, owner_email: emailMap[l.user_id] ?? "" }));
+  });
+
+export const adminToggleLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid(), is_active: z.boolean() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { error } = await supabaseAdmin.from("links").update({ is_active: data.is_active }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminUpdateLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({
+    id: z.string().uuid(),
+    adsterra_url: z.string().url().max(2000).optional(),
+    safe_url: z.string().url().max(2000).optional(),
+    title: z.string().max(255).optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const patch: Record<string, unknown> = {};
+    if (data.adsterra_url !== undefined) patch.adsterra_url = data.adsterra_url;
+    if (data.safe_url !== undefined) patch.safe_url = data.safe_url;
+    if (data.title !== undefined) patch.title = data.title;
+    if (!Object.keys(patch).length) return { ok: true };
+    const { error } = await supabaseAdmin.from("links").update(patch).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminDeleteLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { error } = await supabaseAdmin.from("links").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ============================================================
+// BOT RULES (CRUD)
+// ============================================================
+export const adminListBotRules = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { data, error } = await supabaseAdmin.from("bot_rules").select("*").order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const adminUpsertBotRule = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({
+    id: z.string().uuid().optional(),
+    rule_type: z.string().min(1).max(64),
+    pattern: z.string().min(1).max(500),
+    action: z.string().min(1).max(32),
+    label: z.string().max(255).optional().nullable(),
+    is_active: z.boolean(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const payload = {
+      rule_type: data.rule_type,
+      pattern: data.pattern,
+      action: data.action,
+      label: data.label ?? null,
+      is_active: data.is_active,
+    };
+    if (data.id) {
+      const { error } = await supabaseAdmin.from("bot_rules").update(payload).eq("id", data.id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseAdmin.from("bot_rules").insert(payload);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+export const adminDeleteBotRule = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { error } = await supabaseAdmin.from("bot_rules").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ============================================================
+// CLOAKING RULES (CRUD)
+// ============================================================
+export const adminListCloakingRules = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { data, error } = await supabaseAdmin.from("cloaking_rules").select("*").order("priority");
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const adminUpsertCloakingRule = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({
+    id: z.string().uuid().optional(),
+    rule_type: z.string().min(1).max(64),
+    pattern: z.string().min(1).max(500),
+    action: z.string().min(1).max(32),
+    label: z.string().max(255).optional().nullable(),
+    priority: z.number().int().min(0).max(10000),
+    is_active: z.boolean(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const payload = {
+      rule_type: data.rule_type,
+      pattern: data.pattern,
+      action: data.action,
+      label: data.label ?? null,
+      priority: data.priority,
+      is_active: data.is_active,
+    };
+    if (data.id) {
+      const { error } = await supabaseAdmin.from("cloaking_rules").update(payload).eq("id", data.id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseAdmin.from("cloaking_rules").insert(payload);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+export const adminDeleteCloakingRule = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { error } = await supabaseAdmin.from("cloaking_rules").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ============================================================
+// COUNTRY TIERS
+// ============================================================
+export const adminListCountryTiers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("country_tiers").select("*").order("tier").order("country_code");
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const adminUpsertCountryTier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({
+    country_code: z.string().length(2).regex(/^[A-Z]{2}$/),
+    country_name: z.string().max(100).optional().nullable(),
+    tier: z.number().int().min(1).max(5),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { error } = await supabaseAdmin
+      .from("country_tiers")
+      .upsert({
+        country_code: data.country_code,
+        country_name: data.country_name ?? null,
+        tier: data.tier,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "country_code" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminDeleteCountryTier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ country_code: z.string().length(2) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { error } = await supabaseAdmin.from("country_tiers").delete().eq("country_code", data.country_code);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
