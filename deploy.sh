@@ -1,81 +1,60 @@
 #!/usr/bin/env bash
-# SLEEPOX deploy script — updates the app on the self-hosted VPS
-# Usage: ./deploy.sh                 (deploy; auto local/remote)
-#        LOCAL=1 ./deploy.sh         (force deploy on current VPS shell)
-#        ./deploy.sh logs            (tail logs)
-#        ./deploy.sh status          (container status)
+# Deploy Sleepox app on VPS (self-hosted, PM2 + Supabase docker stack)
+# Usage on VPS:
+#   cd /opt/sleepox-app-new && ./deploy.sh
+#   ./deploy.sh logs      # live PM2 logs
+#   ./deploy.sh status    # PM2 + supabase status
+#   ./deploy.sh restart   # restart only (no pull/build)
 
 set -e
 
-VPS_USER="${VPS_USER:-root}"
-VPS_HOST="${VPS_HOST:-supabase.sleepox.com}"
-VPS_IP="${VPS_IP:-75.119.144.171}"
-APP_DIR="${APP_DIR:-/opt/sleepox-app-new}"
+APP_DIR="/opt/sleepox-app-new"
+PM2_NAME="sleepox"
+SUPABASE_DIR="/opt/supabase-docker"
 
-is_vps_shell() {
-  [ "${LOCAL:-0}" = "1" ] || hostname -I 2>/dev/null | tr ' ' '\n' | grep -qx "$VPS_IP"
-}
+cd "$APP_DIR"
 
-compose_cmd() {
-  if docker compose version >/dev/null 2>&1; then
-    echo "docker compose"
-  else
-    echo "docker-compose"
-  fi
-}
+action="${1:-deploy}"
 
-run_local() {
-  local action="$1"
-  cd "$APP_DIR"
-  local compose
-  compose="$(compose_cmd)"
-
-  case "$action" in
-    deploy)
-      git pull
-      $compose pull
-      $compose up -d --remove-orphans
-      $compose ps
-      ;;
-    logs)
-      $compose logs -f --tail=100
-      ;;
-    status)
-      $compose ps
-      ;;
-    restart)
-      $compose restart
-      $compose ps
-      ;;
-  esac
-}
-
-run_remote() {
-  local action="$1"
-  ssh "$VPS_USER@$VPS_HOST" "LOCAL=1 APP_DIR='$APP_DIR' bash -s '$action'" < "$0"
-}
-
-case "${1:-deploy}" in
-  deploy)
-    echo "🚀 Deploying to $VPS_HOST ..."
-    if is_vps_shell; then
-      run_local deploy
-    else
-      run_remote deploy
-    fi
-    echo "✅ Deploy complete."
-    ;;
+case "$action" in
   logs)
-    if is_vps_shell; then run_local logs; else run_remote logs; fi
+    pm2 logs "$PM2_NAME" --lines 100
     ;;
   status)
-    if is_vps_shell; then run_local status; else run_remote status; fi
+    echo "=== PM2 ==="
+    pm2 list
+    echo ""
+    echo "=== Supabase containers ==="
+    docker ps --format "table {{.Names}}\t{{.Status}}" | grep -E "supabase|realtime" || true
     ;;
   restart)
-    if is_vps_shell; then run_local restart; else run_remote restart; fi
+    echo "♻️  Restarting PM2 process..."
+    pm2 restart "$PM2_NAME" --update-env
+    pm2 save
+    ;;
+  deploy|"")
+    echo "🚀 Deploying sleepox app..."
+
+    echo "📥 [1/4] git pull..."
+    git pull --ff-only
+
+    echo "📦 [2/4] bun install..."
+    bun install
+
+    echo "🔨 [3/4] bun run build..."
+    bun run build
+
+    echo "♻️  [4/4] pm2 restart $PM2_NAME..."
+    pm2 restart "$PM2_NAME" --update-env
+    pm2 save
+
+    echo ""
+    echo "✅ Deploy complete!"
+    pm2 list
     ;;
   *)
-    echo "Usage: $0 [deploy|logs|status|restart]"
+    echo "Unknown action: $action"
+    echo "Usage: ./deploy.sh [deploy|logs|status|restart]"
     exit 1
     ;;
 esac
