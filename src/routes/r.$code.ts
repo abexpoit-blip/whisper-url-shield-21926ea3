@@ -196,44 +196,44 @@ async function recordRedirectClick(input: {
 }
 
 async function lookupRedirectLink(code: string): Promise<{ link: RedirectLink | null; error: Error | null }> {
-  const legacy = await supabaseAdmin
+  const res = await supabaseAdmin
     .from("links")
-    .select("id, destination_url, adsterra_direct_link, status, user_id, clicks_count")
+    .select("*")
     .eq("short_code", code)
     .maybeSingle();
 
-  if (legacy.error) {
-    const modern = await supabaseAdmin
-      .from("links")
-      .select("id, adsterra_url, safe_url, is_active, user_id, clicks_count")
-      .eq("short_code", code)
-      .maybeSingle();
-    return modern.error
-      ? { link: null, error: legacy.error }
-      : { link: modern.data as RedirectLink | null, error: null };
+  if (res.error) {
+    return { link: null, error: res.error as unknown as Error };
   }
+  const row = res.data as Record<string, unknown> | null;
+  if (!row) return { link: null, error: null };
 
-  const row = legacy.data as {
-    id: string;
-    destination_url: string | null;
-    adsterra_direct_link: string | null;
-    status: string | null;
-    user_id: string;
-    clicks_count: number | null;
-  } | null;
+  const adsterraDirect = (row.adsterra_direct_link as string | null) ?? null;
+  const destination = (row.destination_url as string | null) ?? null;
+  const adsterra =
+    (row.adsterra_url as string | null) ??
+    adsterraDirect ??
+    destination ??
+    null;
+  const safe =
+    (row.safe_url as string | null) ??
+    (adsterraDirect ? destination : null) ??
+    SAFE_FALLBACK;
+  const isActive =
+    typeof row.is_active === "boolean"
+      ? (row.is_active as boolean)
+      : row.status === "active";
 
   return {
     error: null,
-    link: row
-      ? {
-          id: row.id,
-          user_id: row.user_id,
-          clicks_count: row.clicks_count,
-          adsterra_url: row.adsterra_direct_link || row.destination_url,
-          safe_url: row.adsterra_direct_link ? row.destination_url || SAFE_FALLBACK : SAFE_FALLBACK,
-          is_active: row.status === "active",
-        }
-      : null,
+    link: {
+      id: row.id as string,
+      user_id: row.user_id as string,
+      clicks_count: (row.clicks_count as number | null) ?? 0,
+      adsterra_url: adsterra,
+      safe_url: safe || SAFE_FALLBACK,
+      is_active: isActive,
+    },
   };
 }
 
