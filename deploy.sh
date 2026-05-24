@@ -11,6 +11,7 @@ set -e
 APP_DIR="/opt/sleepox-app-new"
 PM2_NAME="sleepox"
 SUPABASE_DIR="/opt/supabase-docker"
+SCRIPT_PATH="$APP_DIR/deploy.sh"
 
 cd "$APP_DIR"
 
@@ -36,7 +37,15 @@ case "$action" in
     echo "🚀 Deploying sleepox app..."
 
     echo "📥 [1/4] git pull..."
+    old_head="$(git rev-parse HEAD 2>/dev/null || true)"
     git pull --ff-only
+    new_head="$(git rev-parse HEAD 2>/dev/null || true)"
+
+    if [ -n "$old_head" ] && [ "$old_head" != "$new_head" ] && git diff --name-only "$old_head" "$new_head" -- deploy.sh | grep -qx "deploy.sh"; then
+      echo "🔁 deploy.sh updated from GitHub. Restarting with the latest deploy script..."
+      chmod +x "$SCRIPT_PATH"
+      exec "$SCRIPT_PATH" "$action"
+    fi
 
     echo "📦 [2/4] bun install..."
     bun install
