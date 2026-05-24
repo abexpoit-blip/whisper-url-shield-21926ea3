@@ -220,10 +220,14 @@ function UpgradePage() {
                 {/* Price */}
                 <div className="mt-6 flex items-baseline gap-2">
                   <span className={`text-6xl font-extrabold tracking-tight ${highlight ? "text-white" : "bg-clip-text text-transparent bg-gradient-to-br from-[#FF7E5F] to-[#FEB47B]"}`}>
-                    ${Number(p.price_usd).toFixed(0)}
+                    ${price.toFixed(price % 1 === 0 ? 0 : 2)}
                   </span>
                   <span className={`text-sm font-medium ${highlight ? "text-white/80" : "text-[#7A5C45]"}`}>
-                    {p.slug === "lifetime" ? "/ lifetime" : p.slug === "monthly" ? "/ month" : "/ forever"}
+                    {slugKey === "lifetime" || nameKey.includes("life")
+                      ? "/ lifetime"
+                      : slugKey === "monthly" || nameKey.includes("month")
+                        ? "/ month"
+                        : isFree ? "/ forever" : ""}
                   </span>
                 </div>
 
@@ -232,16 +236,21 @@ function UpgradePage() {
                   highlight ? "bg-white/15 backdrop-blur" : "bg-[#FFEDD5]/60"
                 }`}>
                   <div>
-                    <div className={`text-[10px] font-bold uppercase tracking-widest ${highlight ? "text-white/70" : "text-[#7A5C45]"}`}>Links</div>
-                    <div className={`mt-1 text-xl font-extrabold ${highlight ? "text-white" : "text-[#2D1B0D]"}`}>
-                      {p.link_limit === null ? <InfinityIcon className="w-6 h-6" /> : p.link_limit}
+                    <div className={`text-[10px] font-bold uppercase tracking-widest ${highlight ? "text-white/70" : "text-[#7A5C45]"}`}>Smart links</div>
+                    <div className={`mt-1 text-xl font-extrabold flex items-center gap-1 ${highlight ? "text-white" : "text-[#2D1B0D]"}`}>
+                      {linkLimit === null ? <><InfinityIcon className="w-5 h-5" /> Unlimited</> : linkLimit.toLocaleString()}
                     </div>
                   </div>
                   <div>
-                    <div className={`text-[10px] font-bold uppercase tracking-widest ${highlight ? "text-white/70" : "text-[#7A5C45]"}`}>Clicks / mo</div>
-                    <div className={`mt-1 text-xl font-extrabold ${highlight ? "text-white" : "text-[#2D1B0D]"}`}>
-                      {p.click_quota === null ? <InfinityIcon className="w-6 h-6" /> : p.click_quota >= 1_000_000 ? `${(p.click_quota / 1_000_000).toFixed(0)}M` : p.click_quota >= 1000 ? `${(p.click_quota / 1000).toFixed(0)}K` : p.click_quota}
+                    <div className={`text-[10px] font-bold uppercase tracking-widest ${highlight ? "text-white/70" : "text-[#7A5C45]"}`}>Clicks / month</div>
+                    <div className={`mt-1 text-xl font-extrabold flex items-center gap-1 ${highlight ? "text-white" : "text-[#2D1B0D]"}`}>
+                      {clickQuota === null ? <><InfinityIcon className="w-5 h-5" /> Unlimited</> : formatClicks(clickQuota)}
                     </div>
+                    {clickQuota !== null && clickQuota >= 1000 && (
+                      <div className={`text-[10px] mt-0.5 ${highlight ? "text-white/70" : "text-[#A8907A]"}`}>
+                        ({clickQuota.toLocaleString()} clicks)
+                      </div>
+                    )}
                   </div>
                 </div>
 
