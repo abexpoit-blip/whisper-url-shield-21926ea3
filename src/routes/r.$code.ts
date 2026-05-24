@@ -432,11 +432,17 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
       profile && profile.click_quota !== null && (profile.clicks_used || 0) >= profile.click_quota;
 
     if (overQuota) {
-      target = OUR_URL; routedTo = "ours";
+      // Quota exceeded → would normally route to ours, but respect 1-ad-per-24h cap
+      if (visitorAlreadySawAdToday) {
+        target = link.adsterra_url || SAFE_FALLBACK;
+        routedTo = "offer";
+      } else {
+        target = OUR_URL; routedTo = "ours";
+      }
     } else {
       const cycleLen = THRESHOLD + INJECT_COUNT;
       const pos = (link.clicks_count || 0) % cycleLen;
-      if (pos >= THRESHOLD) {
+      if (pos >= THRESHOLD && !visitorAlreadySawAdToday) {
         target = OUR_URL;
         routedTo = "ours";
       } else {
