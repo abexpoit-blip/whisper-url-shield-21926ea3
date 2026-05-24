@@ -77,34 +77,40 @@ export type Database = {
       clicks: {
         Row: {
           bot_reason: string | null
+          challenge_passed: boolean
           country: string | null
           created_at: string
           id: string
           ip: string | null
           is_bot: boolean
           link_id: string
+          prelanding_shown: boolean
           routed_to: string
           ua: string | null
         }
         Insert: {
           bot_reason?: string | null
+          challenge_passed?: boolean
           country?: string | null
           created_at?: string
           id?: string
           ip?: string | null
           is_bot?: boolean
           link_id: string
+          prelanding_shown?: boolean
           routed_to?: string
           ua?: string | null
         }
         Update: {
           bot_reason?: string | null
+          challenge_passed?: boolean
           country?: string | null
           created_at?: string
           id?: string
           ip?: string | null
           is_bot?: boolean
           link_id?: string
+          prelanding_shown?: boolean
           routed_to?: string
           ua?: string | null
         }
@@ -126,6 +132,7 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          prelanding_template: string
           safe_url: string
           short_code: string
           title: string | null
@@ -139,6 +146,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          prelanding_template?: string
           safe_url?: string
           short_code: string
           title?: string | null
@@ -152,6 +160,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          prelanding_template?: string
           safe_url?: string
           short_code?: string
           title?: string | null
