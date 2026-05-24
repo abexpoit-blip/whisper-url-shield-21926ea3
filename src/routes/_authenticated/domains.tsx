@@ -105,12 +105,12 @@ function DomainsPage() {
         <h2 className="text-sm font-bold text-[#2D1B0D] uppercase tracking-wider mb-4" style={display}>Add a new domain</h2>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 flex items-center gap-2 px-4 py-3 rounded-2xl bg-white border border-[#FFEDD5] focus-within:border-[#FF7E5F]/50 transition">
-            <Globe className="w-4 h-4 text-[#A38D7D] shrink-0" />
+            <Globe className="w-4 h-4 text-[#7D6452] shrink-0" />
             <input
               value={newDomain}
               onChange={(e) => setNewDomain(e.target.value)}
               placeholder="go.yoursite.com"
-              className="bg-transparent flex-1 outline-none text-sm text-[#2D1B0D] placeholder:text-[#BFA899] font-mono"
+              className="bg-transparent flex-1 outline-none text-sm text-[#2D1B0D] placeholder:text-[#A38D7D] font-mono"
             />
           </div>
           <button
@@ -215,7 +215,7 @@ function DomainCard({
       {open && (
         <div className="mt-6 pt-6 border-t border-[#FFEDD5] space-y-5">
           <div>
-            <h4 className="text-xs uppercase tracking-[0.2em] text-[#A38D7D] font-bold mb-3">DNS Records (add at your registrar)</h4>
+            <h4 className="text-xs uppercase tracking-[0.2em] text-[#7D6452] font-bold mb-3">DNS Records (add at your registrar)</h4>
             <div className="space-y-3">
               <DnsRow type="CNAME" name={dom.domain} value="sleepox.com" />
               <DnsRow type="TXT" name={`_sleepox-verify.${dom.domain}`} value={dom.verification_token} />
@@ -251,16 +251,16 @@ function DnsRow({ type, name, value }: { type: string; name: string; value: stri
     <div className="grid grid-cols-12 gap-2 items-center p-3 rounded-xl bg-white border border-[#FFEDD5] text-xs">
       <span className="col-span-2 inline-flex items-center justify-center px-2 py-1 rounded-md bg-[#FF7E5F]/15 text-[#FF7E5F] font-bold font-mono">{type}</span>
       <div className="col-span-5 min-w-0 flex items-center gap-2">
-        <span className="text-[10px] uppercase text-[#A38D7D] shrink-0">Name</span>
+        <span className="text-[10px] uppercase text-[#7D6452] shrink-0">Name</span>
         <code className="text-[#2D1B0D] font-mono truncate" title={name}>{name}</code>
-        <button onClick={() => copy("n", name)} className="ml-auto p-1 text-[#A38D7D] hover:text-[#FF7E5F]" title="Copy">
+        <button onClick={() => copy("n", name)} className="ml-auto p-1 text-[#7D6452] hover:text-[#FF7E5F]" title="Copy">
           {copied === "n" ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
         </button>
       </div>
       <div className="col-span-5 min-w-0 flex items-center gap-2">
-        <span className="text-[10px] uppercase text-[#A38D7D] shrink-0">Value</span>
+        <span className="text-[10px] uppercase text-[#7D6452] shrink-0">Value</span>
         <code className="text-[#2D1B0D] font-mono truncate" title={value}>{value}</code>
-        <button onClick={() => copy("v", value)} className="ml-auto p-1 text-[#A38D7D] hover:text-[#FF7E5F]" title="Copy">
+        <button onClick={() => copy("v", value)} className="ml-auto p-1 text-[#7D6452] hover:text-[#FF7E5F]" title="Copy">
           {copied === "v" ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
         </button>
       </div>
