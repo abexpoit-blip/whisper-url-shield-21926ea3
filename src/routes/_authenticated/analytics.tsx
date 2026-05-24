@@ -40,7 +40,7 @@ function AnalyticsPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-center p-6">
         <p className="text-[#5D4538] text-sm">Couldn't load analytics.</p>
-        <p className="text-[#A38D7D] text-xs max-w-md">{(q.error as Error)?.message ?? "Unknown error"}</p>
+        <p className="text-[#7D6452] text-xs max-w-md">{(q.error as Error)?.message ?? "Unknown error"}</p>
         <button onClick={() => q.refetch()} className="mt-2 px-4 py-2 rounded-xl bg-[#FF7E5F]/15 border border-[#FF7E5F]/40 text-[#FF7E5F] text-xs font-bold hover:bg-[#FF7E5F]/25 transition">
           Retry
         </button>
@@ -68,7 +68,7 @@ function AnalyticsPage() {
           <h1 className="text-3xl lg:text-4xl font-bold text-[#2D1B0D] tracking-tight" style={display}>
             Advanced Analytics
           </h1>
-          <p className="text-[#A38D7D] text-sm mt-1">Live performance signals across all your smart links — last 7 days.</p>
+          <p className="text-[#7D6452] text-sm mt-1">Live performance signals across all your smart links — last 7 days.</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/70 border border-white/80 backdrop-blur-md">
@@ -96,7 +96,7 @@ function AnalyticsPage() {
                 <h2 className="text-6xl lg:text-7xl font-bold text-[#2D1B0D] tracking-tighter" style={display}>
                   {d.kpis.cps}
                 </h2>
-                <p className="text-[#A38D7D] text-xs uppercase tracking-[0.25em] mt-2 font-bold">Clicks per second</p>
+                <p className="text-[#7D6452] text-xs uppercase tracking-[0.25em] mt-2 font-bold">Clicks per second</p>
               </div>
               <div className="flex-1 min-w-[280px] h-24 relative">
                 <svg viewBox="0 0 1000 100" preserveAspectRatio="none" className="w-full h-full">
@@ -140,7 +140,7 @@ function AnalyticsPage() {
 
       {/* Geo + Top countries */}
       <section className="grid grid-cols-12 gap-6">
-        <Card className="col-span-12 xl:col-span-7" title="Geographic Heatmap" right={<span className="text-[10px] text-[#A38D7D] uppercase tracking-widest">Updates every 15s</span>}>
+        <Card className="col-span-12 xl:col-span-7" title="Geographic Heatmap" right={<span className="text-[10px] text-[#7D6452] uppercase tracking-widest">Updates every 15s</span>}>
           <div className="relative h-72 rounded-2xl bg-gradient-to-br from-[#2D1B0D] to-[#1A0E07] border border-[#FFEDD5] overflow-hidden">
             {/* SVG abstract world dots */}
             <svg viewBox="0 0 1000 500" className="absolute inset-0 w-full h-full opacity-20">
@@ -182,7 +182,7 @@ function AnalyticsPage() {
                   <Flag code={c.code} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-[#2D1B0D] font-medium truncate">{c.name}</p>
-                    <p className="text-[10px] text-[#A38D7D] uppercase tracking-wider font-mono">{c.code}</p>
+                    <p className="text-[10px] text-[#7D6452] uppercase tracking-wider font-mono">{c.code}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-mono text-[#2D1B0D]">{c.count.toLocaleString()}</p>
@@ -207,7 +207,7 @@ function AnalyticsPage() {
           <div className="space-y-1">
             {d.heatmap.map((row, di) => (
               <div key={di} className="flex items-center gap-2">
-                <span className="w-8 text-[9px] text-[#BFA899] font-mono">
+                <span className="w-8 text-[9px] text-[#8B7563] font-mono">
                   {dayLabel(6 - di)}
                 </span>
                 <div className="flex-1 grid grid-cols-24 gap-[3px]">
@@ -231,7 +231,7 @@ function AnalyticsPage() {
                 </div>
               </div>
             ))}
-            <div className="flex justify-between pl-10 pt-2 text-[9px] text-[#BFA899] font-mono">
+            <div className="flex justify-between pl-10 pt-2 text-[9px] text-[#8B7563] font-mono">
               <span>00</span><span>06</span><span>12</span><span>18</span><span>23</span>
             </div>
           </div>
@@ -252,7 +252,7 @@ function AnalyticsPage() {
                   className={`flex items-center gap-2 text-xs border-l-2 ${color} pl-2 py-2 bg-white/60 rounded-r-md`}
                   style={{ opacity: 1 - i * 0.03 }}
                 >
-                  <span className="font-mono text-[10px] text-[#A38D7D] w-14 shrink-0">
+                  <span className="font-mono text-[10px] text-[#7D6452] w-14 shrink-0">
                     {new Date(e.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                   </span>
                   <Flag code={e.country} small />
@@ -358,7 +358,7 @@ function AnalyticsPage() {
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                   <p className="text-sm text-[#3D2818] font-medium flex-1">{r.name}</p>
                   <span className="font-mono text-xs text-amber-600">{r.count.toLocaleString()}</span>
-                  <span className="font-mono text-[10px] text-[#A38D7D] w-12 text-right">{r.pct}%</span>
+                  <span className="font-mono text-[10px] text-[#7D6452] w-12 text-right">{r.pct}%</span>
                 </div>
                 <div className="h-1.5 bg-[#FFEDD5] rounded-full overflow-hidden">
                   <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full" style={{ width: `${Math.max(r.pct, 2)}%` }} />
@@ -381,7 +381,7 @@ function AnalyticsPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-[#2D1B0D] truncate font-mono">/{l.code}</p>
-                  <p className="text-[10px] uppercase tracking-wider text-[#A38D7D] truncate">
+                  <p className="text-[10px] uppercase tracking-wider text-[#7D6452] truncate">
                     {l.title ?? "Untitled link"}
                   </p>
                 </div>
@@ -393,7 +393,7 @@ function AnalyticsPage() {
                   <p className={`text-sm font-bold font-mono ${l.health >= 70 ? "text-emerald-600" : l.health >= 40 ? "text-amber-600" : "text-rose-600"}`}>
                     {l.health}%
                   </p>
-                  <p className="text-[9px] uppercase tracking-wider text-[#A38D7D]">Health</p>
+                  <p className="text-[9px] uppercase tracking-wider text-[#7D6452]">Health</p>
                 </div>
               </div>
             ))}
@@ -403,7 +403,7 @@ function AnalyticsPage() {
 
       {/* Traffic Sources — quality per cohort */}
       <section className="grid grid-cols-12 gap-6 pb-10">
-        <Card className="col-span-12" title="Traffic Sources" right={<span className="text-[10px] text-[#A38D7D] uppercase tracking-widest">Quality = human / total</span>}>
+        <Card className="col-span-12" title="Traffic Sources" right={<span className="text-[10px] text-[#7D6452] uppercase tracking-widest">Quality = human / total</span>}>
           {d.trafficSources.length === 0 ? <Empty label="No traffic yet — share a link to see sources" /> : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
               {d.trafficSources.map((s) => (
@@ -414,7 +414,7 @@ function AnalyticsPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-bold text-[#2D1B0D] truncate">{s.name}</p>
-                      <p className="text-[10px] uppercase tracking-wider text-[#A38D7D]">{s.pct}% share</p>
+                      <p className="text-[10px] uppercase tracking-wider text-[#7D6452]">{s.pct}% share</p>
                     </div>
                     <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${s.quality >= 80 ? "bg-emerald-500/15 text-emerald-700" : s.quality >= 50 ? "bg-amber-500/15 text-amber-700" : "bg-rose-500/15 text-rose-700"}`}>
                       {s.quality}%
@@ -469,7 +469,7 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
   const color = accent === "emerald" ? "text-emerald-600" : accent === "sky" ? "text-[#FF7E5F]" : "text-[#2D1B0D]";
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-[0.2em] text-[#BFA899] font-bold mb-1">{label}</p>
+      <p className="text-[10px] uppercase tracking-[0.2em] text-[#8B7563] font-bold mb-1">{label}</p>
       <p className={`text-xl font-bold font-mono ${color}`}>{value}</p>
     </div>
   );
@@ -494,13 +494,13 @@ function MiniCard({
         {label}
       </div>
       <p className="text-3xl font-bold text-[#2D1B0D] font-mono" style={display}>{value}</p>
-      <p className="text-xs text-[#A38D7D] mt-1">{sub}</p>
+      <p className="text-xs text-[#7D6452] mt-1">{sub}</p>
     </div>
   );
 }
 
 function Empty({ label }: { label: string }) {
-  return <p className="text-xs text-[#BFA899] italic">{label}</p>;
+  return <p className="text-xs text-[#8B7563] italic">{label}</p>;
 }
 
 function dayLabel(daysAgo: number) {
@@ -545,7 +545,7 @@ function Donut({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <p className="text-xl font-bold text-[#2D1B0D]">{centerValue}</p>
-        <p className="text-[9px] uppercase tracking-widest text-[#A38D7D] font-bold">{centerLabel}</p>
+        <p className="text-[9px] uppercase tracking-widest text-[#7D6452] font-bold">{centerLabel}</p>
       </div>
     </div>
   );
@@ -556,7 +556,7 @@ function Flag({ code, small = false }: { code: string; small?: boolean }) {
   const lower = code.toLowerCase();
   const size = small ? "w-5 h-3.5" : "w-7 h-5";
   if (!code || code === "??" || code.length !== 2) {
-    return <span className={`${size} inline-flex items-center justify-center bg-white/70 rounded-[2px] text-[#A38D7D] text-[8px]`}>?</span>;
+    return <span className={`${size} inline-flex items-center justify-center bg-white/70 rounded-[2px] text-[#7D6452] text-[8px]`}>?</span>;
   }
   return (
     <img
@@ -591,7 +591,7 @@ function DeviceIcon({ name, os, large = false }: { name: string; os?: string; la
 function BrowserIcon({ slug, color, title, large = false }: { slug: string; color: string; title: string; large?: boolean }) {
   const size = large ? "w-6 h-6" : "w-4 h-4";
   if (!slug || slug === "unknown") {
-    return <span className={`${size} inline-flex items-center justify-center bg-white/70 rounded text-[#A38D7D] text-[10px] shrink-0`} title={title}>?</span>;
+    return <span className={`${size} inline-flex items-center justify-center bg-white/70 rounded text-[#7D6452] text-[10px] shrink-0`} title={title}>?</span>;
   }
   return (
     <img

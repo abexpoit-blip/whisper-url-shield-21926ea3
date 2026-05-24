@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, BarChart3, Crown, ShieldCheck, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, BarChart3, Crown, ShieldCheck, LogOut, Menu, X, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { consumeDailyRedirect } from "@/lib/app-settings.functions";
 import { BrandLogo } from "@/components/brand-logo";
@@ -25,6 +25,7 @@ export const Route = createFileRoute("/_authenticated")({
 const navMgmt = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/domains", label: "Domains", icon: Globe },
 ] as const;
 
 function AuthenticatedLayout() {

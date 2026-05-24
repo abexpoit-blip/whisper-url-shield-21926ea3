@@ -19,6 +19,7 @@ import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as AuthenticatedUpgradeRouteImport } from './routes/_authenticated/upgrade'
 import { Route as AuthenticatedSmartFilterRouteImport } from './routes/_authenticated/smart-filter'
 import { Route as AuthenticatedLiveRouteImport } from './routes/_authenticated/live'
+import { Route as AuthenticatedDomainsRouteImport } from './routes/_authenticated/domains'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedControlPanelRouteImport } from './routes/_authenticated/control-panel'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
@@ -75,6 +76,11 @@ const AuthenticatedLiveRoute = AuthenticatedLiveRouteImport.update({
   path: '/live',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedDomainsRoute = AuthenticatedDomainsRouteImport.update({
+  id: '/domains',
+  path: '/domains',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -111,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/control-panel': typeof AuthenticatedControlPanelRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/domains': typeof AuthenticatedDomainsRoute
   '/live': typeof AuthenticatedLiveRoute
   '/smart-filter': typeof AuthenticatedSmartFilterRoute
   '/upgrade': typeof AuthenticatedUpgradeRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/control-panel': typeof AuthenticatedControlPanelRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/domains': typeof AuthenticatedDomainsRoute
   '/live': typeof AuthenticatedLiveRoute
   '/smart-filter': typeof AuthenticatedSmartFilterRoute
   '/upgrade': typeof AuthenticatedUpgradeRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/control-panel': typeof AuthenticatedControlPanelRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/domains': typeof AuthenticatedDomainsRoute
   '/_authenticated/live': typeof AuthenticatedLiveRoute
   '/_authenticated/smart-filter': typeof AuthenticatedSmartFilterRoute
   '/_authenticated/upgrade': typeof AuthenticatedUpgradeRoute
@@ -163,6 +172,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/control-panel'
     | '/dashboard'
+    | '/domains'
     | '/live'
     | '/smart-filter'
     | '/upgrade'
@@ -179,6 +189,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/control-panel'
     | '/dashboard'
+    | '/domains'
     | '/live'
     | '/smart-filter'
     | '/upgrade'
@@ -196,6 +207,7 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/control-panel'
     | '/_authenticated/dashboard'
+    | '/_authenticated/domains'
     | '/_authenticated/live'
     | '/_authenticated/smart-filter'
     | '/_authenticated/upgrade'
@@ -287,6 +299,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLiveRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/domains': {
+      id: '/_authenticated/domains'
+      path: '/domains'
+      fullPath: '/domains'
+      preLoaderRoute: typeof AuthenticatedDomainsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -329,6 +348,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedControlPanelRoute: typeof AuthenticatedControlPanelRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDomainsRoute: typeof AuthenticatedDomainsRoute
   AuthenticatedLiveRoute: typeof AuthenticatedLiveRoute
   AuthenticatedSmartFilterRoute: typeof AuthenticatedSmartFilterRoute
   AuthenticatedUpgradeRoute: typeof AuthenticatedUpgradeRoute
@@ -338,6 +358,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedControlPanelRoute: AuthenticatedControlPanelRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDomainsRoute: AuthenticatedDomainsRoute,
   AuthenticatedLiveRoute: AuthenticatedLiveRoute,
   AuthenticatedSmartFilterRoute: AuthenticatedSmartFilterRoute,
   AuthenticatedUpgradeRoute: AuthenticatedUpgradeRoute,
