@@ -70,11 +70,11 @@ function AuthenticatedLayout() {
     <>
       <div className="flex items-center justify-between mb-14">
         <Link to="/dashboard" className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-400 via-purple-500 to-fuchsia-600 shadow-[0_0_25px_rgba(45,212,191,0.45)] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-400 via-indigo-500 to-indigo-600 shadow-[0_0_25px_rgba(56,189,248,0.45)] flex items-center justify-center">
             <div className="w-5 h-5 border-2 border-white rounded-sm rotate-45" />
           </div>
           <span
-            className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-teal-200 to-purple-300 bg-clip-text text-transparent"
+            className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-sky-200 to-indigo-300 bg-clip-text text-transparent"
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
             SLEEP OX
@@ -100,7 +100,7 @@ function AuthenticatedLayout() {
                 to={item.to}
                 className={
                   active
-                    ? "flex items-center gap-3 px-4 py-3 text-white bg-gradient-to-r from-teal-500/15 via-purple-500/10 to-transparent rounded-2xl border border-teal-400/20 shadow-[0_0_25px_rgba(45,212,191,0.18)] backdrop-blur-md transition-all"
+                    ? "flex items-center gap-3 px-4 py-3 text-white bg-gradient-to-r from-sky-500/15 via-indigo-500/10 to-transparent rounded-2xl border border-sky-400/20 shadow-[0_0_25px_rgba(56,189,248,0.18)] backdrop-blur-md transition-all"
                     : "flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/80 hover:bg-white/[0.02] rounded-2xl transition-all"
                 }
               >
@@ -116,8 +116,8 @@ function AuthenticatedLayout() {
             to="/upgrade"
             className={
               pathname === "/upgrade"
-                ? "flex items-center gap-3 px-4 py-3 text-teal-200 font-medium bg-teal-500/10 rounded-2xl border border-teal-400/30 shadow-[0_0_25px_rgba(45,212,191,0.2)]"
-                : "flex items-center gap-3 px-4 py-3 text-teal-300 font-medium bg-teal-500/5 rounded-2xl border border-teal-400/10 hover:bg-teal-500/10 transition-all"
+                ? "flex items-center gap-3 px-4 py-3 text-sky-200 font-medium bg-sky-500/10 rounded-2xl border border-sky-400/30 shadow-[0_0_25px_rgba(56,189,248,0.2)]"
+                : "flex items-center gap-3 px-4 py-3 text-sky-300 font-medium bg-sky-500/5 rounded-2xl border border-sky-400/10 hover:bg-sky-500/10 transition-all"
             }
           >
             <Crown className="w-4 h-4" />
@@ -132,7 +132,7 @@ function AuthenticatedLayout() {
               to="/control-panel"
               className={
                 pathname === "/control-panel"
-                  ? "flex items-center gap-3 px-4 py-3 text-teal-200 bg-teal-500/10 rounded-2xl border border-teal-400/30"
+                  ? "flex items-center gap-3 px-4 py-3 text-sky-200 bg-sky-500/10 rounded-2xl border border-sky-400/30"
                   : "flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white/80 hover:bg-white/[0.02] rounded-2xl transition-all"
               }
             >
@@ -152,14 +152,14 @@ function AuthenticatedLayout() {
 
       <div className="mt-auto pt-8 border-t border-white/5">
         <div className="flex items-center gap-4 bg-white/5 p-3 rounded-2xl border border-white/5">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-400 via-purple-500 to-indigo-500 p-[1px]">
-            <div className="w-full h-full bg-[#05050f] rounded-[11px] flex items-center justify-center text-xs font-bold">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-400 via-indigo-500 to-indigo-500 p-[1px]">
+            <div className="w-full h-full bg-[#050B1F] rounded-[11px] flex items-center justify-center text-xs font-bold">
               {initials}
             </div>
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-white truncate">{user.email}</p>
-            <p className="text-[10px] text-teal-300/70 uppercase tracking-wider">{isAdmin ? "Admin" : "Premium Tier"}</p>
+            <p className="text-[10px] text-sky-300/70 uppercase tracking-wider">{isAdmin ? "Admin" : "Premium Tier"}</p>
           </div>
         </div>
       </div>
@@ -168,18 +168,18 @@ function AuthenticatedLayout() {
 
   return (
     <div
-      className="min-h-screen w-full flex bg-[#03060d] text-[#f0f0f5] overflow-hidden relative"
+      className="min-h-screen w-full flex bg-[#050B1F] text-[#f0f0f5] overflow-hidden relative"
       style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
     >
       {/* Aurora Glass ambient overlays — teal / purple / fuchsia */}
-      <div className="fixed top-[-15%] left-[-10%] w-[55%] h-[55%] bg-teal-500/15 blur-[140px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: "8s" }} />
-      <div className="fixed top-[10%] right-[-15%] w-[50%] h-[55%] bg-purple-600/15 blur-[140px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: "10s" }} />
-      <div className="fixed bottom-[-10%] left-[20%] w-[45%] h-[45%] bg-fuchsia-600/10 blur-[130px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: "12s" }} />
+      <div className="fixed top-[-15%] left-[-10%] w-[55%] h-[55%] bg-sky-500/15 blur-[140px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: "8s" }} />
+      <div className="fixed top-[10%] right-[-15%] w-[50%] h-[55%] bg-indigo-600/15 blur-[140px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: "10s" }} />
+      <div className="fixed bottom-[-10%] left-[20%] w-[45%] h-[45%] bg-indigo-600/10 blur-[130px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: "12s" }} />
 
       {/* Mobile top bar */}
-      <div className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between px-5 py-4 backdrop-blur-2xl bg-[#03060d]/80 border-b border-white/5">
+      <div className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between px-5 py-4 backdrop-blur-2xl bg-[#050B1F]/80 border-b border-white/5">
         <Link to="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-teal-400 to-fuchsia-600 shadow-[0_0_15px_rgba(45,212,191,0.4)] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400 to-indigo-600 shadow-[0_0_15px_rgba(56,189,248,0.4)] flex items-center justify-center">
             <div className="w-4 h-4 border-2 border-white rounded-sm rotate-45" />
           </div>
           <span className="font-bold text-white tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>SLEEP OX</span>
@@ -204,7 +204,7 @@ function AuthenticatedLayout() {
       {/* Sidebar */}
       <aside
         className={
-          "fixed lg:static inset-y-0 left-0 z-50 w-72 border-r border-white/5 flex flex-col p-8 backdrop-blur-3xl bg-[#05080f]/90 lg:bg-white/[0.01] shrink-0 transition-transform duration-300 " +
+          "fixed lg:static inset-y-0 left-0 z-50 w-72 border-r border-white/5 flex flex-col p-8 backdrop-blur-3xl bg-[#050B1F]/90 lg:bg-white/[0.01] shrink-0 transition-transform duration-300 " +
           (menuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0")
         }
       >

@@ -85,7 +85,7 @@ function DashboardPage() {
         <div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-medium text-white tracking-tight" style={display}>Performance</h1>
           <p className="text-white/30 mt-2 font-light text-sm sm:text-base">
-            Monitoring activity across <span className="text-teal-300/90">{links.length}</span> smart link{links.length === 1 ? "" : "s"}.
+            Monitoring activity across <span className="text-sky-300/90">{links.length}</span> smart link{links.length === 1 ? "" : "s"}.
           </p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -96,12 +96,12 @@ function DashboardPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search links…"
-              className="bg-white/[0.03] border border-white/10 rounded-2xl pl-12 pr-6 py-3 text-sm w-full sm:w-72 focus:outline-none focus:border-teal-400/50 focus:bg-white/[0.05] transition-all backdrop-blur-md text-white placeholder:text-white/30"
+              className="bg-white/[0.03] border border-white/10 rounded-2xl pl-12 pr-6 py-3 text-sm w-full sm:w-72 focus:outline-none focus:border-sky-400/50 focus:bg-white/[0.05] transition-all backdrop-blur-md text-white placeholder:text-white/30"
             />
           </div>
           <button
             onClick={() => setShowCreate((v) => !v)}
-            className="bg-gradient-to-r from-teal-500 to-purple-600 hover:from-teal-400 hover:to-purple-500 text-white px-5 sm:px-8 py-3 rounded-2xl font-bold text-sm tracking-tight transition-all shadow-[0_0_28px_rgba(45,212,191,0.4)] hover:scale-105 active:scale-95 flex items-center gap-2 whitespace-nowrap"
+            className="bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white px-5 sm:px-8 py-3 rounded-2xl font-bold text-sm tracking-tight transition-all shadow-[0_0_28px_rgba(56,189,248,0.4)] hover:scale-105 active:scale-95 flex items-center gap-2 whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Create Link</span>
@@ -115,7 +115,7 @@ function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-10 lg:mb-12">
         <Kpi label="Total Clicks" value={totalHumans.toLocaleString()} delta="+12%" accent>
           <div className="h-1.5 w-full bg-white/5 overflow-hidden rounded-full">
-            <div className="h-full w-[70%] bg-gradient-to-r from-teal-400 via-purple-500 to-fuchsia-400 shadow-[0_0_12px_rgba(45,212,191,0.55)]" />
+            <div className="h-full w-[70%] bg-gradient-to-r from-sky-400 via-indigo-500 to-indigo-400 shadow-[0_0_12px_rgba(56,189,248,0.55)]" />
           </div>
         </Kpi>
 
@@ -125,7 +125,7 @@ function DashboardPage() {
               <div
                 key={i}
                 style={{ height: `${h * 4}px` }}
-                className={i % 2 === 0 ? "w-1.5 bg-purple-500 rounded-full shadow-[0_0_10px_rgba(168,85,247,0.4)]" : "w-1.5 bg-purple-500/40 rounded-full"}
+                className={i % 2 === 0 ? "w-1.5 bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.4)]" : "w-1.5 bg-indigo-500/40 rounded-full"}
               />
             ))}
           </div>
@@ -142,7 +142,7 @@ function DashboardPage() {
 
       {/* Create form (collapsible) */}
       {showCreate && (
-        <div className="mb-12 p-10 border border-purple-500/20 bg-purple-500/[0.03] backdrop-blur-xl rounded-[2.5rem] shadow-[0_0_60px_rgba(168,85,247,0.08)]">
+        <div className="mb-12 p-10 border border-indigo-500/20 bg-indigo-500/[0.03] backdrop-blur-xl rounded-[2.5rem] shadow-[0_0_60px_rgba(99,102,241,0.08)]">
           <h3 className="text-2xl font-medium text-white mb-2" style={display}>Create New Link</h3>
           <p className="text-sm text-white/40 mb-8">Wrap your Adsterra Direct Link with bot-shield + clean analytics.</p>
           <form onSubmit={onSubmit} className="grid gap-5 sm:grid-cols-2">
@@ -159,7 +159,7 @@ function DashboardPage() {
               <button
                 type="submit"
                 disabled={createMut.isPending}
-                className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-2xl font-bold text-sm tracking-tight transition-all shadow-[0_0_25px_rgba(147,51,234,0.35)] disabled:opacity-50"
+                className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-2xl font-bold text-sm tracking-tight transition-all shadow-[0_0_25px_rgba(99,102,241,0.35)] disabled:opacity-50"
               >
                 {createMut.isPending ? "Creating…" : "Create Link"}
               </button>
@@ -185,7 +185,7 @@ function DashboardPage() {
             </div>
             <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
               <button className="px-5 py-2 rounded-xl text-xs font-medium text-white/40 hover:text-white transition-all">Daily</button>
-              <button className="px-5 py-2 rounded-xl bg-purple-600 shadow-[0_0_20px_rgba(168,85,247,0.4)] text-xs font-bold text-white">Weekly</button>
+              <button className="px-5 py-2 rounded-xl bg-indigo-600 shadow-[0_0_20px_rgba(99,102,241,0.4)] text-xs font-bold text-white">Weekly</button>
             </div>
           </div>
           <div className="h-72 flex items-end justify-between gap-4 sm:gap-6 px-2">
@@ -194,13 +194,13 @@ function DashboardPage() {
                 <div
                   className={
                     b.peak
-                      ? "w-full bg-gradient-to-t from-purple-900/40 to-purple-500/60 rounded-t-2xl border-x border-t border-purple-400/30 relative shadow-[0_0_30px_rgba(168,85,247,0.3)]"
-                      : "w-full bg-white/5 rounded-t-2xl transition-all group-hover:bg-purple-500/20"
+                      ? "w-full bg-gradient-to-t from-indigo-900/40 to-indigo-500/60 rounded-t-2xl border-x border-t border-indigo-400/30 relative shadow-[0_0_30px_rgba(99,102,241,0.3)]"
+                      : "w-full bg-white/5 rounded-t-2xl transition-all group-hover:bg-indigo-500/20"
                   }
                   style={{ height: `${b.h}%` }}
                 >
                   {b.peak && (
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 bg-purple-600 rounded-lg text-[10px] font-bold shadow-xl whitespace-nowrap">
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 bg-indigo-600 rounded-lg text-[10px] font-bold shadow-xl whitespace-nowrap">
                       PEAK
                     </div>
                   )}
@@ -225,7 +225,7 @@ function DashboardPage() {
       <div className="p-6 sm:p-10 border border-white/10 bg-white/[0.01] backdrop-blur-2xl rounded-[2.5rem]">
         <div className="flex justify-between items-center mb-10 flex-wrap gap-4">
           <h3 className="text-2xl font-medium text-white" style={display}>Smart Links</h3>
-          <span className="text-xs font-bold uppercase tracking-[0.2em] text-purple-400 border-b border-purple-400/20 pb-1">
+          <span className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-400 border-b border-indigo-400/20 pb-1">
             {filtered.length} of {links.length}
           </span>
         </div>
@@ -262,7 +262,7 @@ function DashboardPage() {
                       <td className="py-5 px-4 rounded-l-2xl">
                         <button
                           onClick={() => { navigator.clipboard.writeText(shortUrl); toast.success("Copied"); }}
-                          className="font-medium text-purple-400 hover:text-purple-300 inline-flex items-center gap-2 group/copy"
+                          className="font-medium text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-2 group/copy"
                           title="Click to copy"
                         >
                           <span className="font-mono">{l.short_code}</span>
@@ -278,7 +278,7 @@ function DashboardPage() {
                           onClick={() => togMut.mutate({ id: l.id, is_active: !l.is_active })}
                           className={
                             l.is_active
-                              ? "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[11px] font-bold uppercase tracking-wider shadow-[0_0_15px_rgba(168,85,247,0.25)]"
+                              ? "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[11px] font-bold uppercase tracking-wider shadow-[0_0_15px_rgba(99,102,241,0.25)]"
                               : "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/40 text-[11px] font-bold uppercase tracking-wider"
                           }
                         >
@@ -308,7 +308,7 @@ function DashboardPage() {
 }
 
 const fieldCls =
-  "w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.05] transition-all text-white placeholder:text-white/30";
+  "w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all text-white placeholder:text-white/30";
 
 function Field({ label, children, full }: { label: string; children: React.ReactNode; full?: boolean }) {
   return (
@@ -323,11 +323,11 @@ function Kpi({
   label, value, delta, accent, children,
 }: { label: string; value: string; delta?: string; accent?: boolean; children?: React.ReactNode }) {
   return (
-    <div className={`p-6 sm:p-8 border border-white/10 bg-white/[0.02] backdrop-blur-xl rounded-[2rem] transition-all hover:bg-white/[0.04] hover:-translate-y-1 ${accent ? "shadow-[0_0_40px_rgba(45,212,191,0.12)] border-teal-400/20" : ""}`}>
+    <div className={`p-6 sm:p-8 border border-white/10 bg-white/[0.02] backdrop-blur-xl rounded-[2rem] transition-all hover:bg-white/[0.04] hover:-translate-y-1 ${accent ? "shadow-[0_0_40px_rgba(56,189,248,0.12)] border-sky-400/20" : ""}`}>
       <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 mb-4 sm:mb-6">{label}</p>
       <div className="flex items-baseline gap-3 mb-4 sm:mb-6 flex-wrap">
         <span className="text-3xl sm:text-4xl xl:text-5xl font-medium text-white" style={display}>{value}</span>
-        {delta && <span className={`text-xs sm:text-sm font-bold ${accent ? "text-teal-300" : "text-white/30"}`}>{delta}</span>}
+        {delta && <span className={`text-xs sm:text-sm font-bold ${accent ? "text-sky-300" : "text-white/30"}`}>{delta}</span>}
       </div>
       {children}
     </div>
@@ -338,7 +338,7 @@ function Bar({ icon, label, value, total, color }: { icon: React.ReactNode; labe
   const pct = total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
   const fill =
     color === "violet"
-      ? "bg-gradient-to-r from-teal-500 via-purple-500 to-fuchsia-400 shadow-[0_0_15px_rgba(45,212,191,0.4)]"
+      ? "bg-gradient-to-r from-sky-500 via-indigo-500 to-indigo-400 shadow-[0_0_15px_rgba(56,189,248,0.4)]"
       : color === "white"
         ? "bg-white/30"
         : "bg-white/15";
