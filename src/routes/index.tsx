@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import logoSrc from "@/assets/sleepox-logo.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
