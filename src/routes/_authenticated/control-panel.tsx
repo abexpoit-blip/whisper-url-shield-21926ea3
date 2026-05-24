@@ -583,7 +583,7 @@ function RuleSection({ title, icon, listFnRef, upFnRef, delFnRef, keyName, showP
         <table className="w-full text-sm">
           <thead><tr className="text-left text-[10px] font-bold uppercase tracking-widest text-[#7A5C45]"><Th>Type</Th><Th>Pattern</Th><Th>Action</Th><Th>Label</Th>{showPriority && <Th>Pri</Th>}<Th>Active</Th><Th></Th></tr></thead>
           <tbody>
-            {list.data?.map((r) => (
+            {list.data?.map((r: any) => (
               <tr key={r.id} className="border-t border-[#FFE4D0]/60">
                 <Td><Pill>{r.rule_type}</Pill></Td>
                 <Td className="font-mono text-xs max-w-[280px] truncate">{r.pattern}</Td>
