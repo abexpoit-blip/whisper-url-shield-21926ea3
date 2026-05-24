@@ -279,7 +279,7 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
   })();
   const referrerSource = classifyReferrer(refererDomain);
 
-  // Parallel fetch: link, settings, cloaking rules, referrer rules, country tier, fp blacklist, geo offers, ab variants
+  // Parallel fetch: link, settings, cloaking rules, referrer rules, country tier, fp blacklist, recent-ad seen
   const [
     { link, error: linkError },
     { data: settings, error: settingsError },
@@ -287,10 +287,11 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
     { data: referrerRulesRaw },
     { data: tierRow },
     { data: fpRow },
+    { data: recentAdRow },
   ] = await Promise.all([
     lookupRedirectLink(code),
     supabaseAdmin.from("app_settings")
-      .select("our_adsterra_url, injection_threshold, injection_count")
+      .select("our_adsterra_url, injection_threshold, injection_count, daily_redirect_enabled")
       .eq("id", true).maybeSingle(),
     supabaseAdmin.from("cloaking_rules")
       .select("rule_type, pattern, action, label, priority")
@@ -303,7 +304,18 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
       : Promise.resolve({ data: null }),
     supabaseAdmin.from("bot_fingerprints")
       .select("auto_blocked").eq("fingerprint_hash", fpHash).maybeSingle(),
+    // Daily 1-ad-per-visitor check: did this fingerprint already see our adsterra link in last 24h?
+    fpHash
+      ? supabaseAdmin.from("clicks")
+          .select("id")
+          .eq("fingerprint_hash", fpHash)
+          .eq("routed_to", "ours")
+          .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
+
 
   if (linkError) console.error("redirect link lookup failed", { code, message: linkError.message });
   if (settingsError) console.error("redirect settings lookup failed", { message: settingsError.message });
