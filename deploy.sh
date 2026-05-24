@@ -13,6 +13,8 @@ PM2_NAME="sleepox"
 SUPABASE_DIR="/opt/supabase-docker"
 SCRIPT_PATH="$APP_DIR/deploy.sh"
 BUILD_STAMP_FILE="dist/.sleepox-build"
+STAGING_DIR="$APP_DIR/.deploy-build"
+BACKUP_DIST="$APP_DIR/dist.previous"
 
 cd "$APP_DIR"
 
@@ -48,23 +50,49 @@ case "$action" in
       exec "$SCRIPT_PATH" "$action"
     fi
 
-    echo "📦 [2/4] bun install..."
-    bun install
+    echo "📦 [2/4] prepare isolated build..."
+    rm -rf "$STAGING_DIR"
+    mkdir -p "$STAGING_DIR"
+    tar \
+      --exclude="./.git" \
+      --exclude="./node_modules" \
+      --exclude="./dist" \
+      --exclude="./dist.previous" \
+      --exclude="./.deploy-build" \
+      -cf - . | tar -xf - -C "$STAGING_DIR"
 
-    echo "🔨 [3/4] bun run build..."
-    rm -rf dist
-    APP_BUILD_VERSION="$(git rev-parse --short HEAD)-$(date +%s)" bun run build
+    echo "🔨 [3/4] install + build in staging..."
+    (
+      cd "$STAGING_DIR"
+      bun install
+      APP_BUILD_VERSION="$(git rev-parse --short HEAD)-$(date +%s)" bun run build
+    )
 
-    if [ ! -f "dist/server/wrangler.json" ] || [ ! -d "dist/client" ]; then
-      echo "❌ Build output is incomplete. Missing dist/server/wrangler.json or dist/client."
+    if [ ! -f "$STAGING_DIR/dist/server/wrangler.json" ] || [ ! -d "$STAGING_DIR/dist/client" ]; then
+      echo "❌ Build output is incomplete. Live app was NOT changed."
       exit 1
     fi
 
+    echo "🚚 Publishing verified build..."
+    rm -rf "$BACKUP_DIST"
+    if [ -d "dist" ]; then
+      mv dist "$BACKUP_DIST"
+    fi
+    mv "$STAGING_DIR/dist" dist
     date -u +"%Y-%m-%dT%H:%M:%SZ" > "$BUILD_STAMP_FILE"
 
     echo "♻️  [4/4] pm2 restart $PM2_NAME..."
-    pm2 restart "$PM2_NAME" --update-env
+    if ! pm2 restart "$PM2_NAME" --update-env; then
+      echo "❌ PM2 restart failed. Rolling back to previous dist..."
+      rm -rf dist
+      if [ -d "$BACKUP_DIST" ]; then
+        mv "$BACKUP_DIST" dist
+        pm2 restart "$PM2_NAME" --update-env || true
+      fi
+      exit 1
+    fi
     pm2 save
+    rm -rf "$STAGING_DIR"
 
     echo ""
     echo "✅ Deploy complete!"
