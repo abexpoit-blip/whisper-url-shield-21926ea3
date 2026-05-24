@@ -9,7 +9,39 @@ type Click = {
   is_bot: boolean;
   routed_to: string;
   created_at: string;
+  user_agent?: string | null;
+  variant?: string | null;
 };
+
+async function selectClicks(supabase: any, linkIds: string[], sevenDaysAgo: string) {
+  const modern = await supabase
+    .from("clicks")
+    .select("id, link_id, country, ua, is_bot, routed_to, created_at")
+    .in("link_id", linkIds)
+    .gte("created_at", sevenDaysAgo)
+    .order("created_at", { ascending: false })
+    .limit(50000);
+  if (!modern.error) return modern;
+
+  const legacy = await supabase
+    .from("clicks")
+    .select("id, link_id, country, user_agent, is_bot, bot_reason, variant, created_at")
+    .in("link_id", linkIds)
+    .gte("created_at", sevenDaysAgo)
+    .order("created_at", { ascending: false })
+    .limit(50000);
+
+  return legacy.error
+    ? modern
+    : {
+        data: (legacy.data ?? []).map((c: Click) => ({
+          ...c,
+          ua: c.user_agent ?? null,
+          routed_to: c.variant ?? (c.is_bot ? "safe" : "offer"),
+        })),
+        error: null,
+      };
+}
 
 function deviceFromUA(ua: string | null): "Mobile" | "Desktop" | "Tablet" | "Other" {
   if (!ua) return "Other";
@@ -57,13 +89,7 @@ export const getAnalyticsData = createServerFn({ method: "GET" })
 
     // Last 7 days of clicks (cap at 50k for safety)
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
-    const { data: clicksRaw, error: clickErr } = await supabase
-      .from("clicks")
-      .select("id, link_id, country, ua, is_bot, routed_to, created_at")
-      .in("link_id", linkIds)
-      .gte("created_at", sevenDaysAgo)
-      .order("created_at", { ascending: false })
-      .limit(50000);
+    const { data: clicksRaw, error: clickErr } = await selectClicks(supabase, linkIds, sevenDaysAgo);
     if (clickErr) throw new Error(clickErr.message);
 
     const clicks = (clicksRaw ?? []) as Click[];
