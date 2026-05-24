@@ -15,13 +15,21 @@ const display = { fontFamily: "'Space Grotesk', sans-serif" } as const;
 
 function AnalyticsPage() {
   const fn = useServerFn(getAnalyticsData);
+  const cohortFn = useServerFn(getCohortRetention);
+  const [drilldownId, setDrilldownId] = useState<string | null>(null);
   const q = useQuery({
     queryKey: ["analytics"],
     queryFn: () => fn(),
-    refetchInterval: 60_000, // 60s — was 15s, way too aggressive for high-traffic VPS
+    refetchInterval: 60_000,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
     retry: 1,
+  });
+  const cohortQ = useQuery({
+    queryKey: ["cohort-retention"],
+    queryFn: () => cohortFn(),
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
   });
 
   const d = q.data;
