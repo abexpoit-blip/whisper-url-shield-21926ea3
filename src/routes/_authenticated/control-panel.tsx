@@ -562,7 +562,8 @@ function RulesTab() {
 
 function RuleSection({ title, icon, listFnRef, upFnRef, delFnRef, keyName, showPriority }: {
   title: string; icon: React.ComponentType<{ className?: string }>;
-  listFnRef: typeof adminListBotRules; upFnRef: typeof adminUpsertBotRule; delFnRef: typeof adminDeleteBotRule;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  listFnRef: any; upFnRef: any; delFnRef: any;
   keyName: string; showPriority: boolean;
 }) {
   const qc = useQueryClient();
