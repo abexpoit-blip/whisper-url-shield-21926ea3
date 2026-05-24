@@ -400,6 +400,41 @@ function AnalyticsPage() {
           </div>
         </Card>
       </section>
+
+      {/* Traffic Sources — quality per cohort */}
+      <section className="grid grid-cols-12 gap-6 pb-10">
+        <Card className="col-span-12" title="Traffic Sources" right={<span className="text-[10px] text-[#A38D7D] uppercase tracking-widest">Quality = human / total</span>}>
+          {d.trafficSources.length === 0 ? <Empty label="No traffic yet — share a link to see sources" /> : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+              {d.trafficSources.map((s) => (
+                <div key={s.key} className="group p-4 rounded-2xl bg-white/70 border border-[#FFEDD5] hover:border-[#FF7E5F]/40 hover:-translate-y-0.5 transition-all">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-[#FFEDD5] flex items-center justify-center shadow-sm">
+                      <BrowserIcon slug={s.slug} color={s.color} title={s.name} large />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-[#2D1B0D] truncate">{s.name}</p>
+                      <p className="text-[10px] uppercase tracking-wider text-[#A38D7D]">{s.pct}% share</p>
+                    </div>
+                    <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${s.quality >= 80 ? "bg-emerald-500/15 text-emerald-700" : s.quality >= 50 ? "bg-amber-500/15 text-amber-700" : "bg-rose-500/15 text-rose-700"}`}>
+                      {s.quality}%
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-[11px] font-mono text-[#5D4538]">
+                    <span><span className="text-emerald-600">✓</span> {s.humans.toLocaleString()}</span>
+                    <span><span className="text-amber-600">🛡</span> {s.bots.toLocaleString()}</span>
+                    <span className="text-[#2D1B0D] font-bold">{s.total.toLocaleString()}</span>
+                  </div>
+                  <div className="h-1.5 mt-2 bg-[#FFEDD5] rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-gradient-to-r from-[#FF7E5F] to-[#FEB47B]" style={{ width: `${Math.max(s.pct, 2)}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </section>
+
     </div>
   );
 }
