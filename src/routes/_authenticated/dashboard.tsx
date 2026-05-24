@@ -495,7 +495,35 @@ function Kpi({ label, value, delta, spark }: { label: string; value: string; del
   );
 }
 
-function VelocityChart({ data }: { data: number[] }) {
+function HeroKpi({ label, value, delta, sub }: { label: string; value: string; delta: string; sub: string }) {
+  return (
+    <div className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-[#FF7E5F] to-[#FEB47B] text-white shadow-xl shadow-orange-500/30 hover:-translate-y-1 transition-all">
+      <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/15 blur-2xl rounded-full pointer-events-none" />
+      <div className="absolute top-4 right-4 opacity-25">
+        <ShieldCheck className="w-10 h-10" />
+      </div>
+      <div className="relative">
+        <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/80">{label}</div>
+        <h3 className="text-[42px] leading-[1.1] mt-2 font-extrabold tabular-nums" style={display}>{value}</h3>
+        <div className="mt-1 flex items-center gap-2 text-[12px]">
+          <span className="text-white font-bold flex items-center gap-0.5">
+            <TrendingUp className="w-3 h-3" /> +{delta}%
+          </span>
+          <span className="text-white/70">{sub}</span>
+        </div>
+        <div className="mt-4 flex gap-1">
+          {[35, 60, 45, 80, 55, 90, 70, 95, 75, 100].map((h, i) => (
+            <div key={i} className="flex-1 bg-white/20 rounded-sm overflow-hidden" style={{ height: 28 }}>
+              <div className="w-full bg-white/70 rounded-sm" style={{ height: `${h}%`, marginTop: `${100 - h}%` }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
   const w = 1000, h = 300;
   const max = 1.25;
   const pts = data.map((v, i) => {
