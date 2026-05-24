@@ -356,7 +356,7 @@ export const getAnalyticsData = createServerFn({ method: "GET" })
       topCountries, devices, browsers,
       operatingSystems, botReasons,
       topLinks, liveEvents, trafficSources,
-
+      funnel,
     };
   });
 
