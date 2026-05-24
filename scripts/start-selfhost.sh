@@ -6,6 +6,7 @@ HOST="${HOST:-0.0.0.0}"
 LOG_LEVEL="${WRANGLER_LOG_LEVEL:-warn}"
 WRANGLER_CLI="node_modules/wrangler/wrangler-dist/cli.js"
 WRANGLER_CONFIG="dist/server/wrangler.json"
+CLIENT_DIR="dist/client"
 ENV_FILE=".env"
 
 export CI="${CI:-1}"
@@ -36,12 +37,12 @@ fi
 bun run verify-env
 
 if [ ! -f "${WRANGLER_CONFIG}" ]; then
-  echo "Built server config not found at ${WRANGLER_CONFIG}. Building the app before start..." >&2
-  bun run build
+  echo "Built server config not found at ${WRANGLER_CONFIG}. Run ./deploy.sh first to build the app." >&2
+  exit 1
 fi
 
-if [ ! -f "${WRANGLER_CONFIG}" ]; then
-  echo "Build finished but ${WRANGLER_CONFIG} is still missing. Check the build output above." >&2
+if [ ! -d "${CLIENT_DIR}" ]; then
+  echo "Built client files not found at ${CLIENT_DIR}. Run ./deploy.sh first to build the app." >&2
   exit 1
 fi
 
