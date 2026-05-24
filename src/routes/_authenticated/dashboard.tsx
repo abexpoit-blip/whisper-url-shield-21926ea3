@@ -266,7 +266,11 @@ function DashboardPage() {
                             </td>
                             <td className="px-5 py-4"><MiniSpark up={up} /></td>
                             <td className="px-5 py-4">
-                              <div className="text-sm font-bold text-[#2D1B0D] tabular-nums" style={display}>{(l.clicks_count || 0).toLocaleString()}</div>
+                              <div className="text-sm font-bold text-[#2D1B0D] tabular-nums" style={display}>
+                                {(l.clicks_count || 0) >= 5000
+                                  ? "5,000+"
+                                  : (l.clicks_count || 0).toLocaleString()}
+                              </div>
                             </td>
                             <td className="px-5 py-4">
                               <select
