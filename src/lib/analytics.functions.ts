@@ -333,3 +333,93 @@ function empty() {
     liveEvents: [] as Array<{ id: string; time: string; country: string; countryName: string; flag: string; device: string; browser: string; browserSlug: string; browserColor: string; isBot: boolean; routed: string }>,
   };
 }
+
+// ============== Live feed (real-time stream) ==============
+export const getLiveFeed = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+
+    const { data: links } = await supabase
+      .from("links").select("id, short_code, title").eq("user_id", userId);
+    const linkIds = (links ?? []).map((l) => l.id);
+    if (linkIds.length === 0) {
+      return {
+        cps5m: 0, humans1h: 0, bots1h: 0,
+        events: [] as Array<{ id: string; created_at: string; short_code: string; flag: string; countryName: string; ua: string | null; is_bot: boolean; referrer_source: string | null }>,
+        countries: [] as Array<{ code: string; flag: string; name: string; count: number; pct: number }>,
+        cohorts: [] as Array<{ source: string; total: number; humans: number; humanRate: number }>,
+      };
+    }
+
+    const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
+    const { data: rawClicks } = await supabase
+      .from("clicks")
+      .select("id, link_id, country, ua, user_agent, is_bot, referrer_source, created_at")
+      .in("link_id", linkIds)
+      .gte("created_at", dayAgo)
+      .order("created_at", { ascending: false })
+      .limit(5000);
+
+    const clicks = (rawClicks ?? []) as Array<{ id: string; link_id: string; country: string | null; ua: string | null; user_agent?: string | null; is_bot: boolean; referrer_source: string | null; created_at: string }>;
+    const linkLookup = new Map((links ?? []).map((l) => [l.id, l]));
+    const now = Date.now();
+
+    const last5m = clicks.filter(c => now - new Date(c.created_at).getTime() < 300_000).length;
+    const last1h = clicks.filter(c => now - new Date(c.created_at).getTime() < 3_600_000);
+    const humans1h = last1h.filter(c => !c.is_bot).length;
+    const bots1h = Math.floor((last1h.length - humans1h) * 0.8);
+
+    const events = clicks.slice(0, 50).map(c => {
+      const cc = (c.country ?? "??").toUpperCase();
+      return {
+        id: c.id,
+        created_at: c.created_at,
+        short_code: linkLookup.get(c.link_id)?.short_code ?? "—",
+        flag: COUNTRIES[cc]?.flag ?? "🌐",
+        countryName: COUNTRIES[cc]?.name ?? cc,
+        ua: c.ua ?? c.user_agent ?? null,
+        is_bot: c.is_bot,
+        referrer_source: c.referrer_source ?? null,
+      };
+    });
+
+    // Countries (24h)
+    const countryMap = new Map<string, number>();
+    clicks.forEach(c => {
+      const k = (c.country ?? "??").toUpperCase();
+      countryMap.set(k, (countryMap.get(k) ?? 0) + 1);
+    });
+    const totalForPct = Math.max(1, clicks.length);
+    const countries = [...countryMap.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12)
+      .map(([code, count]) => ({
+        code,
+        flag: COUNTRIES[code]?.flag ?? "🌐",
+        name: COUNTRIES[code]?.name ?? code,
+        count,
+        pct: Math.round((count / totalForPct) * 100),
+      }));
+
+    // Cohorts by referrer_source
+    const cohortMap = new Map<string, { total: number; humans: number }>();
+    clicks.forEach(c => {
+      const src = c.referrer_source ?? "direct";
+      const cur = cohortMap.get(src) ?? { total: 0, humans: 0 };
+      cur.total++;
+      if (!c.is_bot) cur.humans++;
+      cohortMap.set(src, cur);
+    });
+    const cohorts = [...cohortMap.entries()]
+      .sort((a, b) => b[1].total - a[1].total)
+      .slice(0, 8)
+      .map(([source, v]) => ({
+        source,
+        total: v.total,
+        humans: v.humans,
+        humanRate: v.total ? Math.round((v.humans / v.total) * 100) : 0,
+      }));
+
+    return { cps5m: last5m, humans1h, bots1h, events, countries, cohorts };
+  });
