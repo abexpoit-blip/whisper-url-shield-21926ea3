@@ -32,7 +32,7 @@ export const createInvoice = createServerFn({ method: "POST" })
       .insert({
         user_id: context.userId,
         package_slug: pkg.slug,
-        amount: chargeAmount,
+        amount: Number(chargeAmount),
         status: "pending",
       })
       .select()
