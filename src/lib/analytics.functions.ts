@@ -143,6 +143,18 @@ export const getAnalyticsData = createServerFn({ method: "GET" })
     const last24h = clicks.filter((c) => now - new Date(c.created_at).getTime() < 86_400_000).length;
     const last24hHumans = clicks.filter((c) => !c.is_bot && now - new Date(c.created_at).getTime() < 86_400_000).length;
 
+    // --- Conversion Funnel: Click → Human pass → Offer reach → Final landing ---
+    const fClick = total;
+    const fHuman = humans;
+    const fOffer = clicks.filter((c) => !c.is_bot && c.routed_to === "offer").length;
+    const fLanding = clicks.filter((c) => !c.is_bot && c.routed_to === "offer" && (c as any).challenge_passed !== false).length;
+    const funnel = [
+      { stage: "Clicks", value: fClick, pct: 100, color: "#FF7E5F" },
+      { stage: "Human Pass", value: fHuman, pct: fClick ? Math.round((fHuman / fClick) * 1000) / 10 : 0, color: "#FEB47B" },
+      { stage: "Offer Reach", value: fOffer, pct: fClick ? Math.round((fOffer / fClick) * 1000) / 10 : 0, color: "#F59E0B" },
+      { stage: "Final Landing", value: fLanding, pct: fClick ? Math.round((fLanding / fClick) * 1000) / 10 : 0, color: "#10B981" },
+    ];
+
     // --- 24h series — humans only (cleaner chart) ---
     const hourBuckets = new Array(24).fill(0);
     clicks
