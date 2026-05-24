@@ -43,7 +43,7 @@ async function selectClicks(supabase: any, linkIds: string[], sevenDaysAgo: stri
 
   const modern = await supabase
     .from("clicks")
-    .select("id, link_id, country, ua, is_bot, bot_reason, routed_to, created_at")
+    .select("id, link_id, country, ua, is_bot, bot_reason, routed_to, referrer_source, created_at")
     .in("link_id", linkIds)
     .gte("created_at", sevenDaysAgo)
     .order("created_at", { ascending: false })
