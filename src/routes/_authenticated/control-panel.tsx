@@ -5,7 +5,15 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { adminStats, adminListUsers, adminBanUser } from "@/lib/admin.functions";
+import {
+  adminStats,
+  adminListUsers,
+  adminBanUser,
+  adminListPackages,
+  adminSetUserPlan,
+  adminListUpgradeRequests,
+  adminDecideUpgradeRequest,
+} from "@/lib/admin.functions";
 import { getAppSettings, updateAppSettings } from "@/lib/app-settings.functions";
 
 export const Route = createFileRoute("/_authenticated/control-panel")({
@@ -27,16 +35,44 @@ function AdminPage() {
   const banFn = useServerFn(adminBanUser);
   const settingsFn = useServerFn(getAppSettings);
   const updateSettingsFn = useServerFn(updateAppSettings);
+  const packagesFn = useServerFn(adminListPackages);
+  const setPlanFn = useServerFn(adminSetUserPlan);
+  const upgradesFn = useServerFn(adminListUpgradeRequests);
+  const decideFn = useServerFn(adminDecideUpgradeRequest);
 
   const stats = useQuery({ queryKey: ["admin-stats"], queryFn: () => statsFn() });
   const users = useQuery({ queryKey: ["admin-users"], queryFn: () => usersFn() });
   const settings = useQuery({ queryKey: ["app-settings"], queryFn: () => settingsFn() });
+  const packages = useQuery({ queryKey: ["admin-packages"], queryFn: () => packagesFn() });
+  const upgrades = useQuery({ queryKey: ["admin-upgrades"], queryFn: () => upgradesFn() });
 
   const banMut = useMutation({
     mutationFn: (v: { id: string; is_banned: boolean }) => banFn({ data: v }),
     onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["admin-users"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const planMut = useMutation({
+    mutationFn: (v: { user_id: string; package_slug: string }) => setPlanFn({ data: v }),
+    onSuccess: () => {
+      toast.success("Plan updated");
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+      qc.invalidateQueries({ queryKey: ["admin-stats"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const decideMut = useMutation({
+    mutationFn: (v: { id: string; decision: "approve" | "reject" }) => decideFn({ data: v }),
+    onSuccess: (_, v) => {
+      toast.success(v.decision === "approve" ? "Approved & plan applied" : "Rejected");
+      qc.invalidateQueries({ queryKey: ["admin-upgrades"] });
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+      qc.invalidateQueries({ queryKey: ["admin-stats"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   // ── App-wide settings form ─────────────────────────────────────────
   const [fallbackUrl, setFallbackUrl] = useState("");
