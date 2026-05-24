@@ -9,10 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SxVault9k2m7xRouteImport } from './routes/sx-vault-9k2m7x'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as AdminLoginRouteImport } from './routes/admin-login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RCodeRouteImport } from './routes/r.$code'
@@ -26,6 +26,11 @@ import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authentica
 import { Route as RCodeVerifyRouteImport } from './routes/r.$code.verify'
 import { Route as ApiPublicPlisioWebhookRouteImport } from './routes/api/public/plisio-webhook'
 
+const SxVault9k2m7xRoute = SxVault9k2m7xRouteImport.update({
+  id: '/sx-vault-9k2m7x',
+  path: '/sx-vault-9k2m7x',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -39,11 +44,6 @@ const PricingRoute = PricingRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminLoginRoute = AdminLoginRouteImport.update({
-  id: '/admin-login',
-  path: '/admin-login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -110,10 +110,10 @@ const ApiPublicPlisioWebhookRoute = ApiPublicPlisioWebhookRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin-login': typeof AdminLoginRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
+  '/sx-vault-9k2m7x': typeof SxVault9k2m7xRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/control-panel': typeof AuthenticatedControlPanelRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -127,10 +127,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin-login': typeof AdminLoginRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
+  '/sx-vault-9k2m7x': typeof SxVault9k2m7xRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/control-panel': typeof AuthenticatedControlPanelRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -146,10 +146,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/admin-login': typeof AdminLoginRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
+  '/sx-vault-9k2m7x': typeof SxVault9k2m7xRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/control-panel': typeof AuthenticatedControlPanelRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -165,10 +165,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/admin-login'
     | '/login'
     | '/pricing'
     | '/signup'
+    | '/sx-vault-9k2m7x'
     | '/analytics'
     | '/control-panel'
     | '/dashboard'
@@ -182,10 +182,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin-login'
     | '/login'
     | '/pricing'
     | '/signup'
+    | '/sx-vault-9k2m7x'
     | '/analytics'
     | '/control-panel'
     | '/dashboard'
@@ -200,10 +200,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/admin-login'
     | '/login'
     | '/pricing'
     | '/signup'
+    | '/sx-vault-9k2m7x'
     | '/_authenticated/analytics'
     | '/_authenticated/control-panel'
     | '/_authenticated/dashboard'
@@ -219,16 +219,23 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
-  AdminLoginRoute: typeof AdminLoginRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   SignupRoute: typeof SignupRoute
+  SxVault9k2m7xRoute: typeof SxVault9k2m7xRoute
   RCodeRoute: typeof RCodeRouteWithChildren
   ApiPublicPlisioWebhookRoute: typeof ApiPublicPlisioWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sx-vault-9k2m7x': {
+      id: '/sx-vault-9k2m7x'
+      path: '/sx-vault-9k2m7x'
+      fullPath: '/sx-vault-9k2m7x'
+      preLoaderRoute: typeof SxVault9k2m7xRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -248,13 +255,6 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin-login': {
-      id: '/admin-login'
-      path: '/admin-login'
-      fullPath: '/admin-login'
-      preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -381,13 +381,23 @@ const RCodeRouteWithChildren = RCodeRoute._addFileChildren(RCodeRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
-  AdminLoginRoute: AdminLoginRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   SignupRoute: SignupRoute,
+  SxVault9k2m7xRoute: SxVault9k2m7xRoute,
   RCodeRoute: RCodeRouteWithChildren,
   ApiPublicPlisioWebhookRoute: ApiPublicPlisioWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
