@@ -219,7 +219,7 @@ function ReferrerTab() {
           { h: "Trust", render: (r) => <span className="text-xs font-bold text-[#2D1B0D]">{r.trust_score}</span> },
           { h: "Action", render: (r) => <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${r.action === "block" ? "bg-rose-100 text-rose-700" : r.action === "suspect" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>{r.action}</span> },
         ]}
-        onToggle={(r) => toggleMut.mutate(r)}
+        onToggle={(r) => toggleMut.mutate(r as unknown as Parameters<typeof toggleMut.mutate>[0])}
         onDelete={(id) => delMut.mutate(id)}
       />
     </div>
