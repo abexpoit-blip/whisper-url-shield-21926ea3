@@ -400,6 +400,41 @@ function AnalyticsPage() {
           </div>
         </Card>
       </section>
+
+      {/* Traffic Sources — quality per cohort */}
+      <section className="grid grid-cols-12 gap-6 pb-10">
+        <Card className="col-span-12" title="Traffic Sources" right={<span className="text-[10px] text-[#A38D7D] uppercase tracking-widest">Quality = human / total</span>}>
+          {d.trafficSources.length === 0 ? <Empty label="No traffic yet — share a link to see sources" /> : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+              {d.trafficSources.map((s) => (
+                <div key={s.key} className="group p-4 rounded-2xl bg-white/70 border border-[#FFEDD5] hover:border-[#FF7E5F]/40 hover:-translate-y-0.5 transition-all">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-[#FFEDD5] flex items-center justify-center shadow-sm">
+                      <BrowserIcon slug={s.slug} color={s.color} title={s.name} large />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-[#2D1B0D] truncate">{s.name}</p>
+                      <p className="text-[10px] uppercase tracking-wider text-[#A38D7D]">{s.pct}% share</p>
+                    </div>
+                    <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${s.quality >= 80 ? "bg-emerald-500/15 text-emerald-700" : s.quality >= 50 ? "bg-amber-500/15 text-amber-700" : "bg-rose-500/15 text-rose-700"}`}>
+                      {s.quality}%
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-[11px] font-mono text-[#5D4538]">
+                    <span><span className="text-emerald-600">✓</span> {s.humans.toLocaleString()}</span>
+                    <span><span className="text-amber-600">🛡</span> {s.bots.toLocaleString()}</span>
+                    <span className="text-[#2D1B0D] font-bold">{s.total.toLocaleString()}</span>
+                  </div>
+                  <div className="h-1.5 mt-2 bg-[#FFEDD5] rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-gradient-to-r from-[#FF7E5F] to-[#FEB47B]" style={{ width: `${Math.max(s.pct, 2)}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </section>
+
     </div>
   );
 }
@@ -534,15 +569,23 @@ function Flag({ code, small = false }: { code: string; small?: boolean }) {
   );
 }
 
-/* ---- Device icon (lucide) ---- */
-function DeviceIcon({ name }: { name: string }) {
+/* ---- Device icon — uses real brand logos (Android, Apple, Windows...) ---- */
+function DeviceIcon({ name, os, large = false }: { name: string; os?: string; large?: boolean }) {
+  const size = large ? "w-5 h-5" : "w-3.5 h-3.5";
+  const o = (os ?? "").toLowerCase();
+  if (o.includes("android")) return <img src="https://cdn.simpleicons.org/android/3DDC84" alt="Android" className={`${size} shrink-0`} loading="lazy" />;
+  if (o.includes("ios") || o.includes("ipad") || o.includes("iphone")) return <img src="https://cdn.simpleicons.org/apple/000000" alt="iOS" className={`${size} shrink-0`} loading="lazy" />;
+  if (o.includes("mac")) return <img src="https://cdn.simpleicons.org/apple/000000" alt="macOS" className={`${size} shrink-0`} loading="lazy" />;
+  if (o.includes("windows")) return <img src="https://cdn.simpleicons.org/windows11/0078D4" alt="Windows" className={`${size} shrink-0`} loading="lazy" />;
+  if (o.includes("linux")) return <img src="https://cdn.simpleicons.org/linux/000000" alt="Linux" className={`${size} shrink-0`} loading="lazy" />;
   const n = name.toLowerCase();
-  const cls = "w-3.5 h-3.5 text-[#7D6452] shrink-0";
+  const cls = `${size} text-[#7D6452] shrink-0`;
   if (n === "mobile") return <Smartphone className={cls} />;
   if (n === "tablet") return <Tablet className={cls} />;
   if (n === "desktop") return <Monitor className={cls} />;
   return <HelpCircle className={cls} />;
 }
+
 
 /* ---- Browser/OS brand icon (simpleicons CDN — free SVG, brand color) ---- */
 function BrowserIcon({ slug, color, title, large = false }: { slug: string; color: string; title: string; large?: boolean }) {

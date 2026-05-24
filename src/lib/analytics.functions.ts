@@ -12,7 +12,9 @@ type Click = {
   created_at: string;
   user_agent?: string | null;
   variant?: string | null;
+  referrer_source?: string | null;
 };
+
 
 // CRITICAL: Display 80% of real bot count so users don't panic.
 // Real numbers stay in DB; only DISPLAY is reduced.
@@ -41,7 +43,7 @@ async function selectClicks(supabase: any, linkIds: string[], sevenDaysAgo: stri
 
   const modern = await supabase
     .from("clicks")
-    .select("id, link_id, country, ua, is_bot, bot_reason, routed_to, created_at")
+    .select("id, link_id, country, ua, is_bot, bot_reason, routed_to, referrer_source, created_at")
     .in("link_id", linkIds)
     .gte("created_at", sevenDaysAgo)
     .order("created_at", { ascending: false })
@@ -245,6 +247,45 @@ export const getAnalyticsData = createServerFn({ method: "GET" })
         pct: realBots ? Math.round((real / realBots) * 1000) / 10 : 0,
       }));
 
+    // --- Traffic sources (referrer/utm cohorts) ---
+    const sourceMap = new Map<string, { total: number; humans: number; bots: number }>();
+    clicks.forEach((c) => {
+      const s = (c.referrer_source as string | null) || "direct";
+      const cur = sourceMap.get(s) ?? { total: 0, humans: 0, bots: 0 };
+      cur.total++;
+      if (c.is_bot) cur.bots++; else cur.humans++;
+      sourceMap.set(s, cur);
+    });
+    const SOURCE_META: Record<string, { name: string; slug: string; color: string }> = {
+      facebook:  { name: "Facebook",   slug: "facebook",  color: "1877F2" },
+      instagram: { name: "Instagram",  slug: "instagram", color: "E4405F" },
+      tiktok:    { name: "TikTok",     slug: "tiktok",    color: "000000" },
+      youtube:   { name: "YouTube",    slug: "youtube",   color: "FF0000" },
+      twitter:   { name: "X / Twitter",slug: "x",         color: "000000" },
+      x:         { name: "X / Twitter",slug: "x",         color: "000000" },
+      reddit:    { name: "Reddit",     slug: "reddit",    color: "FF4500" },
+      telegram:  { name: "Telegram",   slug: "telegram",  color: "26A5E4" },
+      whatsapp:  { name: "WhatsApp",   slug: "whatsapp",  color: "25D366" },
+      google:    { name: "Google",     slug: "google",    color: "4285F4" },
+      bing:      { name: "Bing",       slug: "microsoftbing", color: "008373" },
+      direct:    { name: "Direct",     slug: "direct",    color: "7D6452" },
+    };
+    const totalSrcHumans = Math.max(1, [...sourceMap.values()].reduce((s, v) => s + v.humans, 0));
+    const trafficSources = [...sourceMap.entries()]
+      .sort((a, b) => b[1].humans - a[1].humans)
+      .slice(0, 8)
+      .map(([key, v]) => {
+        const meta = SOURCE_META[key.toLowerCase()] ?? { name: key.charAt(0).toUpperCase()+key.slice(1), slug: "direct", color: "7D6452" };
+        const quality = v.total ? Math.round((v.humans / v.total) * 100) : 100;
+        return {
+          key, name: meta.name, slug: meta.slug, color: meta.color,
+          humans: v.humans, bots: hideBots(v.bots), total: v.humans + hideBots(v.bots),
+          pct: Math.round((v.humans / totalSrcHumans) * 1000) / 10,
+          quality,
+        };
+      });
+
+
     // --- Top links ---
     const linkMap = new Map<string, { total: number; humans: number; bots: number }>();
     clicks.forEach((c) => {
@@ -302,7 +343,8 @@ export const getAnalyticsData = createServerFn({ method: "GET" })
       heatmap, heatMax,
       topCountries, devices, browsers,
       operatingSystems, botReasons,
-      topLinks, liveEvents,
+      topLinks, liveEvents, trafficSources,
+
     };
   });
 
@@ -331,6 +373,7 @@ function empty() {
     botReasons: [] as Array<{ name: string; count: number; pct: number }>,
     topLinks: [] as Array<{ id: string; code: string; title: string | null; count: number; humans: number; bots: number; health: number }>,
     liveEvents: [] as Array<{ id: string; time: string; country: string; countryName: string; flag: string; device: string; browser: string; browserSlug: string; browserColor: string; isBot: boolean; routed: string }>,
+    trafficSources: [] as Array<{ key: string; name: string; slug: string; color: string; humans: number; bots: number; total: number; pct: number; quality: number }>,
   };
 }
 
