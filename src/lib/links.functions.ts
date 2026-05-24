@@ -105,7 +105,7 @@ export const createLink = createServerFn({ method: "POST" })
       code = randomCode();
     }
 
-    let { data: link, error } = await context.supabase
+    const createdModern = await context.supabase
       .from("links")
       .insert({
         user_id: context.userId,
@@ -117,6 +117,9 @@ export const createLink = createServerFn({ method: "POST" })
       .select()
       .single();
 
+    let link: unknown = createdModern.data;
+    let error: { message: string } | null = createdModern.error;
+
     if (error) {
       const legacy = await context.supabase
         .from("links")
@@ -127,7 +130,7 @@ export const createLink = createServerFn({ method: "POST" })
           destination_url: data.safe_url ?? "https://sleepox.com/",
           adsterra_direct_link: data.adsterra_url,
           status: "active",
-        })
+        } as never)
         .select()
         .single();
       link = legacy.data ? normalizeLink(legacy.data as LinkRow) : null;
@@ -183,7 +186,7 @@ export const toggleLink = createServerFn({ method: "POST" })
     const { error } = modern.error
       ? await context.supabase
           .from("links")
-          .update({ status: data.is_active ? "active" : "paused" })
+          .update({ status: data.is_active ? "active" : "paused" } as never)
           .eq("id", data.id)
       : modern;
     if (error) throw new Error(error.message);
