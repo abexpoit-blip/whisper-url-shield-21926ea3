@@ -373,6 +373,7 @@ function empty() {
     botReasons: [] as Array<{ name: string; count: number; pct: number }>,
     topLinks: [] as Array<{ id: string; code: string; title: string | null; count: number; humans: number; bots: number; health: number }>,
     liveEvents: [] as Array<{ id: string; time: string; country: string; countryName: string; flag: string; device: string; browser: string; browserSlug: string; browserColor: string; isBot: boolean; routed: string }>,
+    trafficSources: [] as Array<{ key: string; name: string; slug: string; color: string; humans: number; bots: number; total: number; pct: number; quality: number }>,
   };
 }
 
