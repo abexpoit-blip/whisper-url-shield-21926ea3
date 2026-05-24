@@ -159,12 +159,28 @@ function UpgradePage() {
 
         {/* Pricing cards */}
         <section className="grid gap-6 lg:grid-cols-3">
-          {packages?.map((p) => {
-            const meta = PLAN_META[p.slug] ?? PLAN_META.free;
+          {packages?.map((p, idx) => {
+            // Robust meta lookup: by slug, then by name keyword, then by index order
+            const slugKey = (p.slug || "").toLowerCase();
+            const nameKey = (p.name || "").toLowerCase();
+            const metaBySlug = PLAN_META[slugKey];
+            const metaByName =
+              nameKey.includes("life") ? PLAN_META.lifetime :
+              nameKey.includes("month") || nameKey.includes("pro") ? PLAN_META.monthly :
+              nameKey.includes("free") ? PLAN_META.free : undefined;
+            const metaByOrder = [PLAN_META.free, PLAN_META.monthly, PLAN_META.lifetime][idx];
+            const meta = metaBySlug ?? metaByName ?? metaByOrder ?? PLAN_META.free;
             const Icon = meta.icon;
             const BadgeIcon = meta.badgeIcon;
-            const isFree = p.slug === "free";
+            const price = Number(p.price_usd ?? 0) || 0;
+            const isFree = price === 0;
             const highlight = meta.highlight;
+            const clickQuota = p.click_quota == null ? null : Number(p.click_quota);
+            const linkLimit = p.link_limit == null ? null : Number(p.link_limit);
+            const formatClicks = (n: number) =>
+              n >= 1_000_000 ? `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`
+              : n >= 1_000 ? `${(n / 1_000).toFixed(n % 1_000 === 0 ? 0 : 1)}K`
+              : n.toLocaleString();
 
             return (
               <div
