@@ -825,7 +825,7 @@ function DomainsTab() {
   const domains: any[] = q.data?.domains ?? [];
 
   return (
-    <Section>
+    <section className="rounded-3xl border border-white/80 bg-white/60 backdrop-blur-xl p-6 sm:p-8 shadow-[0_20px_60px_-30px_rgba(255,126,95,0.35)]">
       <div className="flex items-center gap-2 mb-4">
         <Globe className="w-5 h-5 text-[#FF7E5F]" />
         <h3 className="text-lg font-bold text-[#2D1B0D]">Shortener Domain Pool</h3>
@@ -920,6 +920,6 @@ function DomainsTab() {
           <li>Click <strong>Set Primary</strong> when ready. All short links auto-switch.</li>
         </ol>
       </div>
-    </Section>
+    </section>
   );
 }
