@@ -61,6 +61,18 @@ function DomainsPage() {
     return <div className="min-h-screen flex items-center justify-center text-[#7D6452]">Loading…</div>;
   }
 
+  if (q.isError) {
+    return (
+      <div className="p-6 lg:p-10 max-w-2xl mx-auto">
+        <div className="p-8 rounded-3xl bg-rose-50 border border-rose-200 text-rose-700">
+          <h2 className="font-bold mb-2">Could not load domains</h2>
+          <p className="text-sm">{(q.error as Error)?.message ?? "Unknown error"}</p>
+          <button onClick={() => q.refetch()} className="mt-4 px-4 py-2 rounded-xl bg-rose-600 text-white text-sm font-bold">Retry</button>
+        </div>
+      </div>
+    );
+  }
+
   const data = q.data;
   if (!data) return null;
 
