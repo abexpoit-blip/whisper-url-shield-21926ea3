@@ -86,25 +86,29 @@ export async function recordRedirectClick(input: {
   abVariant?: string | null;
   ja3Hash?: string | null;
 }) {
-  // Direct insert — ONLY columns that exist on self-host clicks table.
-  // Schema: id, link_id, ip, country, ua, is_bot, bot_reason, routed_to,
-  //         ja3_hash, ab_variant, country_tier, referrer_source,
-  //         fingerprint_hash, challenge_passed, prelanding_shown, created_at
+  // Direct insert — ONLY columns confirmed to exist on self-host clicks table
+  // (verified via PostgREST probe). Removed: prelanding_shown, ja3_hash,
+  // ab_variant, country_tier, referrer_source (do not exist on this schema).
   const row: Record<string, unknown> = {
     link_id: input.linkId,
     ip: input.ip,
+    ip_address: input.ip,
     country: input.country,
     ua: input.ua,
+    user_agent: input.ua,
     is_bot: input.isBot,
     bot_reason: input.botReason,
     routed_to: input.routedTo,
     challenge_passed: input.challengePassed,
-    prelanding_shown: input.prelandingShown,
     fingerprint_hash: input.fingerprintHash ?? null,
-    ja3_hash: input.ja3Hash ?? null,
-    ab_variant: input.abVariant ?? null,
-    country_tier: input.countryTier ?? null,
-    referrer_source: input.referrerSource ?? null,
+    referer_host: input.refererHost ?? null,
+    bot_score: input.botScore ?? null,
+    signals: input.signals ?? null,
+    utm_source: input.utm?.utm_source ?? null,
+    utm_medium: input.utm?.utm_medium ?? null,
+    utm_campaign: input.utm?.utm_campaign ?? null,
+    utm_term: input.utm?.utm_term ?? null,
+    utm_content: input.utm?.utm_content ?? null,
   };
   const { error: insertErr } = await supabaseAdmin.from("clicks").insert(row as never);
   if (insertErr) {
