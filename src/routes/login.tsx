@@ -29,10 +29,10 @@ function LoginPage() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
     if (error) { setLoading(false); toast.error(error.message); return; }
-    await router.invalidate();
-    setLoading(false);
-    navigate({ to: "/dashboard", replace: true });
+    // Hard redirect — guarantees session is hydrated before _authenticated layout runs
+    window.location.replace("/dashboard");
   };
+
 
   return (
     <div
