@@ -27,9 +27,11 @@ function LoginPage() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
     if (error) { setLoading(false); toast.error(error.message); return; }
-    navigate({ to: "/dashboard" });
+    await router.invalidate();
+    setLoading(false);
+    navigate({ to: "/dashboard", replace: true });
   };
 
   return (
