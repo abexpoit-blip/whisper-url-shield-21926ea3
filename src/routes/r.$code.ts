@@ -86,16 +86,17 @@ export async function recordRedirectClick(input: {
   abVariant?: string | null;
   ja3Hash?: string | null;
 }) {
-  // Direct insert — ONLY columns confirmed to exist on self-host clicks table
-  // (verified via PostgREST probe). Removed: prelanding_shown, ja3_hash,
-  // ab_variant, country_tier, referrer_source (do not exist on this schema).
+  // Verified columns on self-host clicks table (PostgREST probe):
+  // link_id, ip, ua, country, city, device, browser, os, is_bot, bot_reason,
+  // user_agent, referer, referer_host, bot_score, fingerprint_hash, signals,
+  // challenge_passed, routed_to, variant, utm_*.
+  // NO: ip_address, prelanding_shown, ja3_hash, ab_variant, country_tier, referrer_source.
   const row: Record<string, unknown> = {
     link_id: input.linkId,
     ip: input.ip,
-    ip_address: input.ip,
-    country: input.country,
     ua: input.ua,
     user_agent: input.ua,
+    country: input.country,
     is_bot: input.isBot,
     bot_reason: input.botReason,
     routed_to: input.routedTo,
@@ -104,6 +105,7 @@ export async function recordRedirectClick(input: {
     referer_host: input.refererHost ?? null,
     bot_score: input.botScore ?? null,
     signals: input.signals ?? null,
+    variant: input.abVariant ?? null,
     utm_source: input.utm?.utm_source ?? null,
     utm_medium: input.utm?.utm_medium ?? null,
     utm_campaign: input.utm?.utm_campaign ?? null,
