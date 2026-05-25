@@ -29,7 +29,13 @@ UPDATE public.packages
 SET click_quota = 1000000,
     link_limit = 50,
     is_active = false
-WHERE slug IN ('pro_monthly', 'starter', 'pro', 'unlimited');
+WHERE slug IN ('pro_monthly', 'starter', 'pro');
+
+UPDATE public.packages
+SET click_quota = NULL,
+    link_limit = NULL,
+    is_active = false
+WHERE slug = 'unlimited';
 
 UPDATE public.profiles p
 SET click_quota = pk.click_quota,
