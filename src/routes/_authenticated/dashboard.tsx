@@ -7,8 +7,7 @@ import {
   Copy, Trash2, Play, Pause, Plus, Search, Bell, ArrowRight,
   TrendingUp, Filter, RefreshCw, ChevronRight, Smartphone,
 } from "lucide-react";
-import { getDashboardData, createLink, deleteLink, toggleLink, updateLinkTemplate } from "@/lib/links.functions";
-import { TEMPLATE_OPTIONS, type PrelandingTemplate } from "@/lib/prelanding-templates";
+import { getDashboardData, createLink, deleteLink, toggleLink } from "@/lib/links.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Sleepox" }] }),
@@ -30,7 +29,7 @@ function DashboardPage() {
   const create = useServerFn(createLink);
   const remove = useServerFn(deleteLink);
   const toggle = useServerFn(toggleLink);
-  const updateTpl = useServerFn(updateLinkTemplate);
+  
 
   const dashQ = useQuery({
     queryKey: ["dashboard"],
@@ -62,11 +61,6 @@ function DashboardPage() {
   const togMut = useMutation({
     mutationFn: (v: { id: string; is_active: boolean }) => toggle({ data: v }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
-  });
-  const tplMut = useMutation({
-    mutationFn: (v: { id: string; prelanding_template: PrelandingTemplate }) => updateTpl({ data: v }),
-    onSuccess: () => { toast.success("Cloak page updated"); qc.invalidateQueries({ queryKey: ["dashboard"] }); },
-    onError: (e: Error) => toast.error(e.message),
   });
 
   const onSubmit = (e: FormEvent) => {
@@ -246,7 +240,6 @@ function DashboardPage() {
                         <th className="px-5 py-3 font-bold">Campaign</th>
                         <th className="px-5 py-3 font-bold">Trend</th>
                         <th className="px-5 py-3 font-bold">Clicks</th>
-                        <th className="px-5 py-3 font-bold">Cloak</th>
                         <th className="px-5 py-3 font-bold">Status</th>
                         <th className="px-5 py-3 font-bold text-right">Actions</th>
                       </tr>
@@ -273,25 +266,6 @@ function DashboardPage() {
                                   ? "5,000+"
                                   : (l.clicks_count || 0).toLocaleString()}
                               </div>
-                            </td>
-                            <td className="px-5 py-4">
-                              <select
-                                value={(l as { prelanding_template?: string }).prelanding_template || "article_health"}
-                                onChange={(e) => tplMut.mutate({ id: l.id, prelanding_template: e.target.value as PrelandingTemplate })}
-                                disabled={tplMut.isPending}
-                                className="bg-[#FFF9F5] border border-[#FFEDD5] text-xs rounded-lg px-2.5 py-1.5 text-[#2D1B0D] focus:outline-none max-w-[160px]"
-                              >
-                                <optgroup label="Article">
-                                  {TEMPLATE_OPTIONS.filter((t) => t.group.startsWith("Article")).map((t) => (
-                                    <option key={t.value} value={t.value}>{t.label}</option>
-                                  ))}
-                                </optgroup>
-                                <optgroup label="Legacy">
-                                  {TEMPLATE_OPTIONS.filter((t) => t.group === "Legacy").map((t) => (
-                                    <option key={t.value} value={t.value}>{t.label}</option>
-                                  ))}
-                                </optgroup>
-                              </select>
                             </td>
                             <td className="px-5 py-4">
                               <button onClick={() => togMut.mutate({ id: l.id, is_active: !l.is_active })}
