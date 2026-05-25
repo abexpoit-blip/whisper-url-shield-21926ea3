@@ -758,8 +758,8 @@ function WorldMap({ topCountries }: { topCountries: Array<{ code: string; name: 
                   key={geo.rsmKey}
                   geography={geo}
                   fill={colorFor(hit?.count ?? 0)}
-                  stroke={isActive ? "#FFFFFF" : "#FFC9A8"}
-                  strokeWidth={isActive ? 0.7 : 0.45}
+                  stroke={isActive ? "#FFFFFF" : "#C97A4F"}
+                  strokeWidth={isActive ? 0.9 : 0.5}
                   style={{
                     default: { outline: "none", transition: "fill 200ms" },
                     hover: { outline: "none", fill: "#FF4E2B", cursor: "pointer" },
