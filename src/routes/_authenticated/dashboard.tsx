@@ -8,6 +8,7 @@ import {
   TrendingUp, Filter, RefreshCw, ChevronRight, Smartphone,
 } from "lucide-react";
 import { getDashboardData, createLink, deleteLink, toggleLink } from "@/lib/links.functions";
+import { getPrimaryShortenerDomain } from "@/lib/shortener-domains.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Sleepox" }] }),
