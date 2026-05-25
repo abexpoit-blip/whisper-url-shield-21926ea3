@@ -7,8 +7,7 @@ import {
   Copy, Trash2, Play, Pause, Plus, Search, Bell, ArrowRight,
   TrendingUp, Filter, RefreshCw, ChevronRight, Smartphone,
 } from "lucide-react";
-import { getDashboardData, createLink, deleteLink, toggleLink, updateLinkTemplate } from "@/lib/links.functions";
-import { TEMPLATE_OPTIONS, type PrelandingTemplate } from "@/lib/prelanding-templates";
+import { getDashboardData, createLink, deleteLink, toggleLink } from "@/lib/links.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Sleepox" }] }),
