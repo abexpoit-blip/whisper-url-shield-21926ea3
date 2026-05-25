@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
@@ -30,13 +30,6 @@ import {
 import { getAppSettings, updateAppSettings } from "@/lib/app-settings.functions";
 
 export const Route = createFileRoute("/_authenticated/control-panel")({
-  beforeLoad: async ({ context }) => {
-    const user = (context as { user?: { id: string } }).user;
-    if (!user) throw redirect({ to: "/sx-vault-9k2m7x" });
-    const { data } = await supabase
-      .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
-    if (!data) throw redirect({ to: "/dashboard" });
-  },
   head: () => ({ meta: [{ title: "Control Panel — Sleepox" }] }),
   component: AdminPage,
 });
@@ -45,6 +38,38 @@ const font = { fontFamily: "'Outfit', system-ui, sans-serif" } as const;
 const PIE_COLORS = ["#FF7E5F", "#FEB47B", "#FFD4BB", "#7A5C45", "#FFEDD5", "#2D1B0D", "#4A3728", "#A8907A"];
 
 function AdminPage() {
+  const navigate = useNavigate();
+  const [adminChecked, setAdminChecked] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData.session?.user;
+      if (!user) {
+        navigate({ to: "/sx-vault-9k2m7x" });
+        return;
+      }
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (!mounted) return;
+      if (!data) {
+        navigate({ to: "/dashboard" });
+        return;
+      }
+      setAdminChecked(true);
+    })();
+    return () => { mounted = false; };
+  }, [navigate]);
+
+  if (!adminChecked) {
+    return <div className="min-h-screen flex items-center justify-center bg-[#FFF9F5] text-[#7A5C45] text-sm">Loading…</div>;
+  }
+
   return (
     <div className="relative min-h-screen bg-[#FFF9F5] text-[#4A3728] overflow-hidden" style={font}>
       <div className="fixed top-[-20%] left-[-10%] w-[55%] h-[55%] bg-[#FF7E5F]/15 blur-[160px] rounded-full pointer-events-none" />
