@@ -262,7 +262,19 @@ export const getAnalyticsData = createServerFn({ method: "GET" })
     // --- Traffic sources (referrer/utm cohorts) ---
     const sourceMap = new Map<string, { total: number; humans: number; bots: number }>();
     clicks.forEach((c) => {
-      const s = (c.referrer_source as string | null) || "direct";
+      const host = ((c as { referer_host?: string | null }).referer_host ?? "").toLowerCase();
+      let s = "direct";
+      if (host.includes("facebook") || host.includes("fb.")) s = "facebook";
+      else if (host.includes("instagram")) s = "instagram";
+      else if (host.includes("tiktok")) s = "tiktok";
+      else if (host.includes("youtube")) s = "youtube";
+      else if (host.includes("twitter") || host.includes("x.com")) s = "twitter";
+      else if (host.includes("google")) s = "google";
+      else if (host.includes("bing")) s = "bing";
+      else if (host.includes("reddit")) s = "reddit";
+      else if (host.includes("telegram") || host.includes("t.me")) s = "telegram";
+      else if (host.includes("whatsapp")) s = "whatsapp";
+      else if (host) s = "other";
       const cur = sourceMap.get(s) ?? { total: 0, humans: 0, bots: 0 };
       cur.total++;
       if (c.is_bot) cur.bots++; else cur.humans++;
