@@ -34,8 +34,10 @@ function DashboardPage() {
   const dashQ = useQuery({
     queryKey: ["dashboard"],
     queryFn: () => dash(),
-    staleTime: 30_000,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   const [adsterra, setAdsterra] = useState("");

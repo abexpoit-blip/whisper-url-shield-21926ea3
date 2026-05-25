@@ -37,8 +37,8 @@ function AdminLoginPage() {
       return;
     }
     toast.success("Welcome, admin");
-    // Hard redirect — guarantees session is fully hydrated on /control-panel
-    window.location.replace("/control-panel");
+    await router.invalidate();
+    navigate({ to: "/control-panel", replace: true });
   };
 
   return (
