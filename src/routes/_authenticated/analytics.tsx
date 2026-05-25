@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { Activity, Download, Globe2, Smartphone, Monitor, Tablet, HelpCircle, Zap, ShieldCheck, ShieldAlert, AlertTriangle, X, TrendingDown, Users } from "lucide-react";
-import { ComposableMap, Geographies, Geography, Sphere, Graticule } from "react-simple-maps";
+import { ComposableMap, Geographies, Geography, Sphere, Graticule, Marker } from "react-simple-maps";
+import { geoCentroid } from "d3-geo";
 import { getAnalyticsData, getCohortRetention, getLinkDrilldown } from "@/lib/analytics.functions";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
