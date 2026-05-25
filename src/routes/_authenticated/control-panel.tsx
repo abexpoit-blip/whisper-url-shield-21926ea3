@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   Users, Link2, MousePointerClick, Sparkles, Settings2, ShieldCheck, CreditCard, Bot,
   Target, Zap, Calendar, DollarSign, TrendingUp, Globe, Package, Ban, RotateCcw, Trash2,
-  Plus, Search, X, Eye,
+  Plus, Search, X, Eye, Check, Star, RefreshCw,
 } from "lucide-react";
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
