@@ -246,7 +246,6 @@ function DashboardPage() {
                         <th className="px-5 py-3 font-bold">Campaign</th>
                         <th className="px-5 py-3 font-bold">Trend</th>
                         <th className="px-5 py-3 font-bold">Clicks</th>
-                        <th className="px-5 py-3 font-bold">Cloak</th>
                         <th className="px-5 py-3 font-bold">Status</th>
                         <th className="px-5 py-3 font-bold text-right">Actions</th>
                       </tr>
