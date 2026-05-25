@@ -104,11 +104,11 @@ export async function recordRedirectClick(input: {
     referer_host: input.refererHost ?? null,
     bot_score: input.botScore ?? null,
     signals: input.signals ?? null,
-    utm_source: input.utm?.source ?? null,
-    utm_medium: input.utm?.medium ?? null,
-    utm_campaign: input.utm?.campaign ?? null,
-    utm_term: input.utm?.term ?? null,
-    utm_content: input.utm?.content ?? null,
+    utm_source: input.utm?.utm_source ?? null,
+    utm_medium: input.utm?.utm_medium ?? null,
+    utm_campaign: input.utm?.utm_campaign ?? null,
+    utm_term: input.utm?.utm_term ?? null,
+    utm_content: input.utm?.utm_content ?? null,
   };
   const { error: insertErr } = await supabaseAdmin.from("clicks").insert(row as never);
   if (insertErr) {
