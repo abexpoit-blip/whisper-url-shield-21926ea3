@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { Activity, Download, Globe2, Smartphone, Monitor, Tablet, HelpCircle, Zap, ShieldCheck, ShieldAlert, AlertTriangle, X, TrendingDown, Users } from "lucide-react";
-import { ComposableMap, Geographies, Geography, Sphere, Graticule } from "react-simple-maps";
+import { ComposableMap, Geographies, Geography, Sphere, Graticule, Marker } from "react-simple-maps";
+import { geoCentroid } from "d3-geo";
 import { getAnalyticsData, getCohortRetention, getLinkDrilldown } from "@/lib/analytics.functions";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
@@ -699,56 +700,118 @@ const ISO2_TO_ID: Record<string, string> = {
 
 function WorldMap({ topCountries }: { topCountries: Array<{ code: string; name: string; count: number; pct: number }> }) {
   const max = Math.max(1, ...topCountries.map(c => c.count));
-  const lookup = new Map<string, { name: string; count: number; pct: number }>();
+  const lookup = new Map<string, { name: string; count: number; pct: number; code: string }>();
   topCountries.forEach(c => {
     const id = ISO2_TO_ID[c.code];
-    if (id) lookup.set(id, { name: c.name, count: c.count, pct: c.pct });
+    if (id) lookup.set(id, { name: c.name, count: c.count, pct: c.pct, code: c.code });
   });
   const colorFor = (count: number) => {
-    if (!count) return "#FFF5EE";
-    const t = Math.min(1, count / max);
-    // interpolate cream → orange
-    const a = 0.18 + t * 0.72;
-    return `rgba(255,126,95,${a})`;
+    if (!count) return "#FFE4D2";
+    const t = Math.min(1, Math.pow(count / max, 0.6));
+    const g = Math.round(180 - t * 110);
+    const b = Math.round(140 - t * 90);
+    return `rgb(255,${g},${b})`;
   };
 
   return (
-    <div className="relative h-[380px] rounded-2xl bg-gradient-to-br from-[#FFFBF7] to-[#FFF1E6] border border-[#FFEDD5] overflow-hidden">
-      <ComposableMap projectionConfig={{ scale: 155 }} style={{ width: "100%", height: "100%" }}>
-        <Sphere id="sphere" fill="transparent" stroke="#FEB47B33" strokeWidth={0.5} />
-        <Graticule stroke="#FEB47B22" strokeWidth={0.3} />
+    <div className="relative h-[420px] rounded-2xl overflow-hidden border border-[#FFD9BE]
+      bg-[radial-gradient(ellipse_at_top_left,_#FFFBF7_0%,_#FFE9D6_60%,_#FFD4B5_100%)]
+      shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_8px_30px_-12px_rgba(255,126,95,0.25)]">
+      <div className="absolute inset-0 opacity-[0.35] pointer-events-none"
+        style={{
+          backgroundImage: "radial-gradient(circle, rgba(255,126,95,0.13) 1px, transparent 1px)",
+          backgroundSize: "18px 18px",
+        }}
+      />
+
+      <ComposableMap
+        projectionConfig={{ scale: 165, center: [10, 12] }}
+        style={{ width: "100%", height: "100%" }}
+      >
+        <defs>
+          <filter id="mapGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="2.2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <radialGradient id="dotGlow">
+            <stop offset="0%" stopColor="#FF4E2B" stopOpacity="1" />
+            <stop offset="60%" stopColor="#FF7E5F" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#FF7E5F" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        <Sphere id="sphere" fill="transparent" stroke="rgba(255,126,95,0.2)" strokeWidth={0.6} />
+        <Graticule stroke="rgba(255,126,95,0.1)" strokeWidth={0.4} />
+
         <Geographies geography={WORLD_TOPO}>
           {({ geographies }: { geographies: any[] }) =>
             geographies.map((geo) => {
               const hit = lookup.get(geo.id);
+              const isActive = !!hit;
               return (
                 <Geography
                   key={geo.rsmKey}
                   geography={geo}
                   fill={colorFor(hit?.count ?? 0)}
-                  stroke="#FFFFFF"
-                  strokeWidth={0.4}
+                  stroke={isActive ? "#FFFFFF" : "#FFC9A8"}
+                  strokeWidth={isActive ? 0.7 : 0.45}
                   style={{
-                    default: { outline: "none" },
-                    hover: { outline: "none", fill: "#FF7E5F", cursor: "pointer" },
+                    default: { outline: "none", transition: "fill 200ms" },
+                    hover: { outline: "none", fill: "#FF4E2B", cursor: "pointer" },
                     pressed: { outline: "none" },
                   }}
                 >
-                  <title>{hit ? `${hit.name}: ${hit.count.toLocaleString()} (${hit.pct}%)` : geo.properties?.name}</title>
+                  <title>
+                    {hit ? `${hit.name} (${hit.code}) — ${hit.count.toLocaleString()} clicks · ${hit.pct}%` : geo.properties?.name}
+                  </title>
                 </Geography>
               );
             })
           }
         </Geographies>
+
+        <Geographies geography={WORLD_TOPO}>
+          {({ geographies }: { geographies: any[] }) =>
+            geographies
+              .filter((geo) => lookup.has(geo.id))
+              .map((geo) => {
+                const hit = lookup.get(geo.id)!;
+                const [cx, cy] = geoCentroid(geo);
+                const r = 3 + Math.min(1, hit.count / max) * 8;
+                return (
+                  <Marker key={`m-${geo.rsmKey}`} coordinates={[cx, cy]}>
+                    <circle r={r * 2.2} fill="url(#dotGlow)" filter="url(#mapGlow)" />
+                    <circle r={r} fill="#FF4E2B" stroke="#FFFFFF" strokeWidth={1.4} />
+                  </Marker>
+                );
+              })
+          }
+        </Geographies>
       </ComposableMap>
-      {/* Legend */}
-      <div className="absolute bottom-3 left-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur border border-[#FFEDD5] shadow-sm">
-        <Globe2 className="w-3 h-3 text-[#FF7E5F]" />
-        <span className="text-[10px] font-bold text-[#5D4538] uppercase tracking-widest">{topCountries.length} countries</span>
-        <span className="ml-2 flex items-center gap-1">
-          <span className="w-3 h-2 rounded-sm" style={{ background: "rgba(255,126,95,0.18)" }} />
-          <span className="w-3 h-2 rounded-sm" style={{ background: "rgba(255,126,95,0.5)" }} />
-          <span className="w-3 h-2 rounded-sm" style={{ background: "rgba(255,126,95,0.9)" }} />
+
+      <div className="absolute bottom-3 left-4 flex items-center gap-2.5 px-3.5 py-1.5 rounded-full
+        bg-white/95 backdrop-blur border border-[#FFE4D2] shadow-[0_4px_12px_-4px_rgba(255,126,95,0.3)]">
+        <Globe2 className="w-3.5 h-3.5 text-[#FF4E2B]" />
+        <span className="text-[10px] font-bold text-[#2D1B0D] uppercase tracking-[0.18em]">
+          {topCountries.length} countries
+        </span>
+        <span className="ml-1.5 flex items-center gap-[3px]">
+          {[0.18, 0.4, 0.65, 0.9, 1].map((t, i) => (
+            <span key={i} className="w-3 h-2 rounded-[2px]"
+              style={{ background: colorFor(Math.round(max * t)) }} />
+          ))}
+        </span>
+        <span className="text-[9px] text-[#7D6452] font-mono uppercase tracking-wider">low → high</span>
+      </div>
+
+      <div className="absolute top-3 right-4 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur
+        border border-[#FFE4D2] shadow-sm flex items-center gap-2">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#FF4E2B] animate-pulse" />
+        <span className="text-[10px] font-mono text-[#2D1B0D] tracking-wider">
+          {topCountries.reduce((s, c) => s + c.count, 0).toLocaleString()} CLICKS
         </span>
       </div>
     </div>
