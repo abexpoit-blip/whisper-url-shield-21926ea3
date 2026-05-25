@@ -54,8 +54,21 @@ export const createInvoice = createServerFn({ method: "POST" })
       email: "",
     });
 
-    const res = await fetch(`https://api.plisio.net/api/v1/invoices/new?${params}`);
-    const raw = await res.text();
+    console.log("[plisio] requesting invoice for order", req.id, "amount", chargeAmount);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 20000);
+    let res: Response;
+    let raw = "";
+    try {
+      res = await fetch(`https://api.plisio.net/api/v1/invoices/new?${params}`, { signal: ctrl.signal });
+      raw = await res.text();
+    } catch (e: any) {
+      clearTimeout(timer);
+      console.error("[plisio] fetch failed:", e?.message || e);
+      throw new Error(`Plisio request failed: ${e?.message || "network error"}`);
+    }
+    clearTimeout(timer);
+
     let json: any;
     try { json = JSON.parse(raw); } catch { json = null; }
     console.log("[plisio] http", res.status, "body", raw.slice(0, 500));
