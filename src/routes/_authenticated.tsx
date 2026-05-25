@@ -23,6 +23,7 @@ export const Route = createFileRoute("/_authenticated")({
 const navMgmt = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/live", label: "Live Feed", icon: Activity },
   { to: "/domains", label: "Domains", icon: Globe },
 ] as const;
 
