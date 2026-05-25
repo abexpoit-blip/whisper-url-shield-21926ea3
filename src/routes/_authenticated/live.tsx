@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { Activity, Bot, User, Globe2, MapPin, Zap, RefreshCw } from "lucide-react";
 import { getLiveFeed } from "@/lib/analytics.functions";
+import { Flag, DeviceIcon, BrowserIcon } from "@/components/StatIcons";
 
 export const Route = createFileRoute("/_authenticated/live")({
   head: () => ({ meta: [{ title: "Live Feed — Sleepox" }] }),
@@ -40,10 +41,10 @@ function LiveFeedPage() {
             {paused ? "Paused" : "Streaming · 3s"}
           </div>
           <h1 className="text-3xl lg:text-4xl font-extrabold text-[#2D1B0D]">Live Click Feed</h1>
-          <p className="text-sm text-[#7D6452] mt-2 max-w-2xl">Real-time stream of every click hitting your links — country, cohort source & verdict.</p>
+          <p className="text-sm text-[#7D6452] mt-2 max-w-2xl">Real-time stream of every click hitting your links — country, device, browser & verdict.</p>
         </div>
         <button onClick={() => setPaused(p => !p)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-white border border-[#FFEDD5] text-[#2D1B0D] hover:bg-[#FFEDD5]/40">
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-white border border-[#FFEDD5] text-[#2D1B0D] hover:bg-[#FFEDD5]/40 shadow-sm">
           {paused ? <><Activity className="w-4 h-4" /> Resume</> : <><RefreshCw className="w-4 h-4" /> Pause</>}
         </button>
       </header>
@@ -57,8 +58,8 @@ function LiveFeedPage() {
 
       <div className="grid lg:grid-cols-3 gap-5">
         {/* LEFT: Live event stream */}
-        <div className="lg:col-span-2 rounded-2xl border border-[#FFEDD5] bg-white overflow-hidden">
-          <div className="px-5 py-3 border-b border-[#FFEDD5] flex items-center justify-between">
+        <div className="lg:col-span-2 rounded-2xl border border-[#FFEDD5] bg-white overflow-hidden shadow-sm">
+          <div className="px-5 py-3 border-b border-[#FFEDD5] flex items-center justify-between bg-gradient-to-r from-[#FFF9F5] to-white">
             <h3 className="text-sm font-bold text-[#2D1B0D]">Last 50 clicks</h3>
             <span className="text-[11px] text-[#A38D7D]">{data?.events?.length ?? 0} events</span>
           </div>
@@ -71,25 +72,34 @@ function LiveFeedPage() {
               const age = Math.floor((now - new Date(e.created_at).getTime()) / 1000);
               const ageStr = age < 60 ? `${age}s` : age < 3600 ? `${Math.floor(age / 60)}m` : `${Math.floor(age / 3600)}h`;
               return (
-                <li key={e.id} className="px-5 py-3 flex items-center gap-3 hover:bg-[#FFF9F5]">
-                  <span className="text-2xl shrink-0">{e.flag}</span>
+                <li key={e.id} className="px-5 py-3 flex items-center gap-3 hover:bg-[#FFF9F5] transition-colors">
+                  <Flag code={e.country} large />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-bold text-[#2D1B0D]">{e.countryName}</span>
                       <span className="text-[10px] text-[#A38D7D]">·</span>
-                      <span className="text-xs text-[#7D6452]">/r/{e.short_code}</span>
+                      <span className="text-xs text-[#7D6452] font-mono">/r/{e.short_code}</span>
                       {e.referrer_source && (
                         <>
                           <span className="text-[10px] text-[#A38D7D]">·</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#FFEDD5] text-[#FF7E5F] font-bold uppercase">{e.referrer_source}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#FFEDD5] text-[#FF7E5F] font-bold uppercase tracking-wider">{e.referrer_source}</span>
                         </>
                       )}
                     </div>
-                    <div className="text-[10px] text-[#A38D7D] mt-0.5 truncate">{e.ua ?? "no UA"}</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#FFF5EE] ring-1 ring-[#FFEDD5]">
+                        <DeviceIcon name={e.device} os={e.deviceOs} />
+                        <span className="text-[10px] font-semibold text-[#7D6452]">{e.deviceOs || e.device}</span>
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#FFF5EE] ring-1 ring-[#FFEDD5]">
+                        <BrowserIcon slug={e.browserSlug} color={e.browserColor} title={e.browser} />
+                        <span className="text-[10px] font-semibold text-[#7D6452]">{e.browser}</span>
+                      </span>
+                    </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      e.is_bot ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700"
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm ${
+                      e.is_bot ? "bg-rose-100 text-rose-700 ring-1 ring-rose-200" : "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200"
                     }`}>
                       {e.is_bot ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
                       {e.is_bot ? "BOT" : "HUMAN"}
@@ -104,14 +114,15 @@ function LiveFeedPage() {
 
         {/* RIGHT: Country breakdown + Cohort */}
         <div className="space-y-5">
-          <div className="rounded-2xl border border-[#FFEDD5] bg-white p-5">
+          <div className="rounded-2xl border border-[#FFEDD5] bg-white p-5 shadow-sm">
             <h3 className="text-sm font-bold text-[#2D1B0D] mb-4 flex items-center gap-2"><MapPin className="w-4 h-4 text-[#FF7E5F]" /> Top countries (24h)</h3>
             <div className="space-y-2.5">
               {data?.countries?.length ? data.countries.slice(0, 10).map(c => (
                 <div key={c.code}>
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="flex items-center gap-1.5 text-[#2D1B0D] font-semibold">
-                      <span>{c.flag}</span> {c.name}
+                    <span className="flex items-center gap-2 text-[#2D1B0D] font-semibold">
+                      <Flag code={c.code} small />
+                      <span>{c.name}</span>
                     </span>
                     <span className="font-bold tabular-nums text-[#2D1B0D]">{c.count}</span>
                   </div>
@@ -123,7 +134,7 @@ function LiveFeedPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[#FFEDD5] bg-white p-5">
+          <div className="rounded-2xl border border-[#FFEDD5] bg-white p-5 shadow-sm">
             <h3 className="text-sm font-bold text-[#2D1B0D] mb-1 flex items-center gap-2"><Globe2 className="w-4 h-4 text-[#FF7E5F]" /> Cohort by source (24h)</h3>
             <p className="text-[11px] text-[#A38D7D] mb-3">Which referrer brings the cleanest traffic?</p>
             <div className="space-y-2.5">
@@ -150,16 +161,16 @@ function LiveFeedPage() {
 }
 
 function Stat({ label, value, icon: Icon, tone }: { label: string; value: string; icon: typeof Activity; tone: "orange" | "green" | "rose" | "blue" }) {
-  const toneClass = {
-    orange: "bg-[#FFEDD5] text-[#FF7E5F]",
-    green: "bg-emerald-100 text-emerald-600",
-    rose: "bg-rose-100 text-rose-600",
-    blue: "bg-blue-100 text-blue-600",
+  const cfg = {
+    orange: { grad: "from-[#FF7E5F] to-[#FEB47B]", ring: "ring-[#FFEDD5]", glow: "shadow-[0_8px_24px_-8px_rgba(255,126,95,0.55)]" },
+    green:  { grad: "from-emerald-500 to-emerald-300", ring: "ring-emerald-100", glow: "shadow-[0_8px_24px_-8px_rgba(16,185,129,0.55)]" },
+    rose:   { grad: "from-rose-500 to-rose-300", ring: "ring-rose-100", glow: "shadow-[0_8px_24px_-8px_rgba(244,63,94,0.55)]" },
+    blue:   { grad: "from-sky-500 to-sky-300", ring: "ring-sky-100", glow: "shadow-[0_8px_24px_-8px_rgba(14,165,233,0.55)]" },
   }[tone];
   return (
-    <div className="rounded-2xl border border-[#FFEDD5] bg-white p-4 flex items-center gap-3">
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${toneClass}`}>
-        <Icon className="w-5 h-5" />
+    <div className={`relative rounded-2xl border border-[#FFEDD5] bg-white p-4 flex items-center gap-3 ring-1 ${cfg.ring} shadow-sm hover:shadow-md transition-shadow`}>
+      <div className={`w-11 h-11 rounded-xl flex items-center justify-center bg-gradient-to-br ${cfg.grad} ${cfg.glow}`}>
+        <Icon className="w-5 h-5 text-white drop-shadow-sm" />
       </div>
       <div>
         <p className="text-[10px] font-bold uppercase tracking-widest text-[#A38D7D]">{label}</p>
