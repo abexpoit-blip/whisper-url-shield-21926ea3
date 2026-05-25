@@ -531,7 +531,7 @@ export const getLiveFeed = createServerFn({ method: "GET" })
     if (linkIds.length === 0) {
       return {
         cps5m: 0, humans1h: 0, bots1h: 0,
-        events: [] as Array<{ id: string; created_at: string; short_code: string; flag: string; countryName: string; ua: string | null; is_bot: boolean; referrer_source: string | null }>,
+        events: [] as Array<{ id: string; created_at: string; short_code: string; country: string; flag: string; countryName: string; ua: string | null; is_bot: boolean; referrer_source: string | null; device: string; deviceOs: string; browser: string; browserSlug: string; browserColor: string }>,
         countries: [] as Array<{ code: string; flag: string; name: string; count: number; pct: number }>,
         cohorts: [] as Array<{ source: string; total: number; humans: number; humanRate: number }>,
       };
@@ -540,13 +540,13 @@ export const getLiveFeed = createServerFn({ method: "GET" })
     const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
     const { data: rawClicks } = await supabase
       .from("clicks")
-      .select("id, link_id, country, ua, is_bot, referrer_source, created_at")
+      .select("id, link_id, country, ua, is_bot, referer_host, created_at")
       .in("link_id", linkIds)
       .gte("created_at", dayAgo)
       .order("created_at", { ascending: false })
       .limit(5000);
 
-    const clicks = ((rawClicks ?? []) as unknown) as Array<{ id: string; link_id: string; country: string | null; ua: string | null; is_bot: boolean; referrer_source: string | null; created_at: string }>;
+    const clicks = ((rawClicks ?? []) as unknown) as Array<{ id: string; link_id: string; country: string | null; ua: string | null; is_bot: boolean; referer_host: string | null; created_at: string }>;
     const linkLookup = new Map((links ?? []).map((l) => [l.id, l]));
     const now = Date.now();
 
@@ -555,17 +555,43 @@ export const getLiveFeed = createServerFn({ method: "GET" })
     const humans1h = last1h.filter(c => !c.is_bot).length;
     const bots1h = Math.floor((last1h.length - humans1h) * 0.8);
 
+    // Derive referrer cohort source from host (column referrer_source doesn't exist on self-host)
+    const classifySrc = (host: string | null): string => {
+      if (!host) return "direct";
+      const h = host.toLowerCase();
+      if (h.includes("facebook") || h.includes("fb.")) return "facebook";
+      if (h.includes("instagram")) return "instagram";
+      if (h.includes("tiktok")) return "tiktok";
+      if (h.includes("twitter") || h.includes("x.com")) return "twitter";
+      if (h.includes("youtube")) return "youtube";
+      if (h.includes("google")) return "google";
+      if (h.includes("bing")) return "bing";
+      if (h.includes("reddit")) return "reddit";
+      if (h.includes("telegram") || h.includes("t.me")) return "telegram";
+      if (h.includes("whatsapp")) return "whatsapp";
+      return "other";
+    };
+
     const events = clicks.slice(0, 50).map(c => {
       const cc = (c.country ?? "??").toUpperCase();
+      const dev = deviceFromUA(c.ua);
+      const br = browserFromUA(c.ua);
+      const src = classifySrc(c.referer_host);
       return {
         id: c.id,
         created_at: c.created_at,
         short_code: linkLookup.get(c.link_id)?.short_code ?? "—",
+        country: cc,
         flag: COUNTRIES[cc]?.flag ?? "🌐",
         countryName: COUNTRIES[cc]?.name ?? cc,
         ua: c.ua ?? null,
         is_bot: c.is_bot,
-        referrer_source: c.referrer_source ?? null,
+        referrer_source: src === "direct" ? null : src,
+        device: dev,
+        deviceOs: inferOs(c.ua),
+        browser: br.name,
+        browserSlug: br.slug,
+        browserColor: br.color,
       };
     });
 
