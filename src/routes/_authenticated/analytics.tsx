@@ -3,8 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { Activity, Download, Globe2, Smartphone, Monitor, Tablet, HelpCircle, Zap, ShieldCheck, ShieldAlert, AlertTriangle, X, TrendingDown, Users } from "lucide-react";
-import { ComposableMap, Geographies, Geography, Sphere, Graticule, Marker } from "react-simple-maps";
-import { geoCentroid } from "d3-geo";
+import { geoCentroid, geoEqualEarth, geoGraticule, geoPath } from "d3-geo";
 import { getAnalyticsData, getCohortRetention, getLinkDrilldown } from "@/lib/analytics.functions";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
@@ -690,117 +689,149 @@ function CohortGrid({ rows, loading }: { rows: Array<{ day: string; size: number
   );
 }
 
-/* ---- Real SVG World Map (react-simple-maps + d3-style choropleth) ---- */
-const WORLD_TOPO = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+/* ---- Fast local SVG World Map (React 19 compatible) ---- */
+const WORLD_GEOJSON = "/world.geojson";
 
-// ISO-2 → numeric ID used by world-atlas
+type MapFeature = {
+  id?: string | number;
+  properties?: { name?: string };
+  geometry: unknown;
+};
+
+type MapCollection = {
+  type: "FeatureCollection";
+  features: MapFeature[];
+};
+
+// ISO-2 → ISO-3 used by the bundled local GeoJSON file
 const ISO2_TO_ID: Record<string, string> = {
-  US:"840",GB:"826",DE:"276",FR:"250",CA:"124",IN:"356",BD:"050",PK:"586",JP:"392",CN:"156",
-  BR:"076",AU:"036",NL:"528",IT:"380",ES:"724",MX:"484",RU:"643",ID:"360",PH:"608",NG:"566",
-  ZA:"710",SE:"752",PL:"616",TR:"792",KR:"410",VN:"704",AE:"784",SA:"682",EG:"818",AR:"032",
-  CO:"170",CL:"152",TH:"764",MY:"458",SG:"702",CH:"756",BE:"056",AT:"040",PT:"620",IE:"372",
-  NO:"578",DK:"208",FI:"246",NZ:"554",
+  US:"USA",GB:"GBR",DE:"DEU",FR:"FRA",CA:"CAN",IN:"IND",BD:"BGD",PK:"PAK",JP:"JPN",CN:"CHN",
+  BR:"BRA",AU:"AUS",NL:"NLD",IT:"ITA",ES:"ESP",MX:"MEX",RU:"RUS",ID:"IDN",PH:"PHL",NG:"NGA",
+  ZA:"ZAF",SE:"SWE",PL:"POL",TR:"TUR",KR:"KOR",VN:"VNM",AE:"ARE",SA:"SAU",EG:"EGY",AR:"ARG",
+  CO:"COL",CL:"CHL",TH:"THA",MY:"MYS",SG:"SGP",CH:"CHE",BE:"BEL",AT:"AUT",PT:"PRT",IE:"IRL",
+  NO:"NOR",DK:"DNK",FI:"FIN",NZ:"NZL",
 };
 
 function WorldMap({ topCountries }: { topCountries: Array<{ code: string; name: string; count: number; pct: number }> }) {
-  const max = Math.max(1, ...topCountries.map(c => c.count));
-  const lookup = new Map<string, { name: string; count: number; pct: number; code: string }>();
-  topCountries.forEach(c => {
-    const id = ISO2_TO_ID[c.code];
-    if (id) lookup.set(id, { name: c.name, count: c.count, pct: c.pct, code: c.code });
+  const mapQ = useQuery({
+    queryKey: ["world-geojson"],
+    queryFn: async () => {
+      const res = await fetch(WORLD_GEOJSON);
+      if (!res.ok) throw new Error("Map failed to load");
+      return (await res.json()) as MapCollection;
+    },
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
+
+  const max = Math.max(1, ...topCountries.map(c => c.count));
+  const lookup = useMemo(() => {
+    const m = new Map<string, { name: string; count: number; pct: number; code: string }>();
+    topCountries.forEach(c => {
+      const id = ISO2_TO_ID[c.code];
+      if (id) m.set(id, { name: c.name, count: c.count, pct: c.pct, code: c.code });
+    });
+    return m;
+  }, [topCountries]);
+
+  const mapData = useMemo(() => {
+    if (!mapQ.data) return null;
+    const projection = geoEqualEarth().fitExtent([[22, 18], [938, 398]], mapQ.data as any);
+    const path = geoPath(projection);
+    const graticule = geoGraticule().step([20, 20]);
+    return { projection, path, graticule: path(graticule() as any), sphere: path({ type: "Sphere" } as any) };
+  }, [mapQ.data]);
+
   const colorFor = (count: number) => {
-    if (!count) return "#F5C9A8"; // darker empty fill — visible on warm background
-    const t = Math.min(1, Math.pow(count / max, 0.55));
-    // Ramp: light orange (#FFB088) → deep red (#B81E0F)
-    const r = Math.round(255 - t * 71);   // 255 → 184
-    const g = Math.round(176 - t * 146);  // 176 → 30
-    const b = Math.round(136 - t * 121);  // 136 → 15
+    if (!count) return "#DE9B72"; // stronger empty fill for readability
+    const t = Math.min(1, Math.pow(count / max, 0.5));
+    // High-contrast ramp: amber → red-orange → deep maroon
+    const r = Math.round(255 - t * 125); // 255 → 130
+    const g = Math.round(185 - t * 145); // 185 → 40
+    const b = Math.round(95 - t * 75);   // 95 → 20
     return `rgb(${r},${g},${b})`;
   };
 
   return (
     <div className="relative h-[420px] rounded-2xl overflow-hidden border border-[#FFD9BE]
-      bg-[radial-gradient(ellipse_at_top_left,_#FFFBF7_0%,_#FFE9D6_60%,_#FFD4B5_100%)]
-      shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_8px_30px_-12px_rgba(255,126,95,0.25)]">
-      <div className="absolute inset-0 opacity-[0.35] pointer-events-none"
+      bg-[radial-gradient(ellipse_at_top_left,_#FFFBF7_0%,_#FFE4CC_55%,_#FFC093_100%)]
+      shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_8px_30px_-12px_rgba(255,126,95,0.28)]">
+      <div className="absolute inset-0 opacity-[0.32] pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(circle, rgba(255,126,95,0.13) 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(circle, rgba(130,40,20,0.16) 1px, transparent 1px)",
           backgroundSize: "18px 18px",
         }}
       />
 
-      <ComposableMap
-        projectionConfig={{ scale: 165, center: [10, 12] }}
-        style={{ width: "100%", height: "100%" }}
-      >
-        <defs>
-          <filter id="mapGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="2.2" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <radialGradient id="dotGlow">
-            <stop offset="0%" stopColor="#FF4E2B" stopOpacity="1" />
-            <stop offset="60%" stopColor="#FF7E5F" stopOpacity="0.55" />
-            <stop offset="100%" stopColor="#FF7E5F" stopOpacity="0" />
-          </radialGradient>
-        </defs>
+      {!mapData || !mapQ.data ? (
+        <div className="absolute inset-0 flex items-center justify-center text-[#7D6452] text-xs font-bold uppercase tracking-[0.18em]">
+          Loading map…
+        </div>
+      ) : (
+        <svg viewBox="0 0 960 420" className="relative z-10 h-full w-full" role="img" aria-label="World map showing clicks by country">
+          <defs>
+            <filter id="mapGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="2.2" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <radialGradient id="dotGlow">
+              <stop offset="0%" stopColor="#D92312" stopOpacity="1" />
+              <stop offset="60%" stopColor="#FF6E3D" stopOpacity="0.58" />
+              <stop offset="100%" stopColor="#FF6E3D" stopOpacity="0" />
+            </radialGradient>
+          </defs>
 
-        <Sphere id="sphere" fill="transparent" stroke="rgba(255,126,95,0.2)" strokeWidth={0.6} />
-        <Graticule stroke="rgba(255,126,95,0.1)" strokeWidth={0.4} />
+          {mapData.sphere && <path d={mapData.sphere} fill="transparent" stroke="rgba(130,40,20,0.22)" strokeWidth={0.7} />}
+          {mapData.graticule && <path d={mapData.graticule} fill="none" stroke="rgba(130,40,20,0.16)" strokeWidth={0.45} />}
 
-        <Geographies geography={WORLD_TOPO}>
-          {({ geographies }: { geographies: any[] }) =>
-            geographies.map((geo) => {
-              const hit = lookup.get(geo.id);
-              const isActive = !!hit;
+          {mapQ.data.features.map((feature) => {
+            const id = String(feature.id ?? "");
+            const hit = lookup.get(id);
+            const isActive = !!hit;
+            const d = mapData.path(feature as any);
+            if (!d) return null;
+            return (
+              <path
+                key={id || feature.properties?.name}
+                d={d}
+                fill={colorFor(hit?.count ?? 0)}
+                stroke={isActive ? "#FFFDFB" : "#8E4E2D"}
+                strokeWidth={isActive ? 1.1 : 0.55}
+                className="transition-colors duration-200 hover:fill-[#D92312]"
+              >
+                <title>
+                  {hit ? `${hit.name} (${hit.code}) — ${hit.count.toLocaleString()} clicks · ${hit.pct}%` : feature.properties?.name}
+                </title>
+              </path>
+            );
+          })}
+
+          {mapQ.data.features
+            .filter((feature) => lookup.has(String(feature.id ?? "")))
+            .map((feature) => {
+              const hit = lookup.get(String(feature.id ?? ""))!;
+              const projected = mapData.projection(geoCentroid(feature as any));
+              if (!projected) return null;
+              const [cx, cy] = projected;
+              const r = 3.5 + Math.min(1, hit.count / max) * 8;
               return (
-                <Geography
-                  key={geo.rsmKey}
-                  geography={geo}
-                  fill={colorFor(hit?.count ?? 0)}
-                  stroke={isActive ? "#FFFFFF" : "#C97A4F"}
-                  strokeWidth={isActive ? 0.9 : 0.5}
-                  style={{
-                    default: { outline: "none", transition: "fill 200ms" },
-                    hover: { outline: "none", fill: "#FF4E2B", cursor: "pointer" },
-                    pressed: { outline: "none" },
-                  }}
-                >
-                  <title>
-                    {hit ? `${hit.name} (${hit.code}) — ${hit.count.toLocaleString()} clicks · ${hit.pct}%` : geo.properties?.name}
-                  </title>
-                </Geography>
+                <g key={`m-${String(feature.id)}`} transform={`translate(${cx},${cy})`}>
+                  <circle r={r * 2.2} fill="url(#dotGlow)" filter="url(#mapGlow)" />
+                  <circle r={r} fill="#D92312" stroke="#FFFDFB" strokeWidth={1.6} />
+                </g>
               );
-            })
-          }
-        </Geographies>
+            })}
+        </svg>
+      )}
 
-        <Geographies geography={WORLD_TOPO}>
-          {({ geographies }: { geographies: any[] }) =>
-            geographies
-              .filter((geo) => lookup.has(geo.id))
-              .map((geo) => {
-                const hit = lookup.get(geo.id)!;
-                const [cx, cy] = geoCentroid(geo);
-                const r = 3 + Math.min(1, hit.count / max) * 8;
-                return (
-                  <Marker key={`m-${geo.rsmKey}`} coordinates={[cx, cy]}>
-                    <circle r={r * 2.2} fill="url(#dotGlow)" filter="url(#mapGlow)" />
-                    <circle r={r} fill="#FF4E2B" stroke="#FFFFFF" strokeWidth={1.4} />
-                  </Marker>
-                );
-              })
-          }
-        </Geographies>
-      </ComposableMap>
-
-      <div className="absolute bottom-3 left-4 flex items-center gap-2.5 px-3.5 py-1.5 rounded-full
+      <div className="absolute bottom-3 left-4 z-20 flex items-center gap-2.5 px-3.5 py-1.5 rounded-full
         bg-white/95 backdrop-blur border border-[#FFE4D2] shadow-[0_4px_12px_-4px_rgba(255,126,95,0.3)]">
-        <Globe2 className="w-3.5 h-3.5 text-[#FF4E2B]" />
+        <Globe2 className="w-3.5 h-3.5 text-[#D92312]" />
         <span className="text-[10px] font-bold text-[#2D1B0D] uppercase tracking-[0.18em]">
           {topCountries.length} countries
         </span>
@@ -813,9 +844,9 @@ function WorldMap({ topCountries }: { topCountries: Array<{ code: string; name: 
         <span className="text-[9px] text-[#7D6452] font-mono uppercase tracking-wider">low → high</span>
       </div>
 
-      <div className="absolute top-3 right-4 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur
+      <div className="absolute top-3 right-4 z-20 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur
         border border-[#FFE4D2] shadow-sm flex items-center gap-2">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#FF4E2B] animate-pulse" />
+        <span className="w-1.5 h-1.5 rounded-full bg-[#D92312] animate-pulse" />
         <span className="text-[10px] font-mono text-[#2D1B0D] tracking-wider">
           {topCountries.reduce((s, c) => s + c.count, 0).toLocaleString()} CLICKS
         </span>
