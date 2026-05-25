@@ -166,6 +166,19 @@ function AuthenticatedLayout() {
               Control Panel
             </Link>
           )}
+          {isAdmin && (
+            <Link
+              to="/smart-filter"
+              className={
+                pathname === "/smart-filter"
+                  ? "flex items-center gap-3 px-4 py-2.5 text-[#FF7E5F] bg-[#FF7E5F]/10 rounded-2xl border border-[#FF7E5F]/25 font-semibold"
+                  : "flex items-center gap-3 px-4 py-2.5 text-[#7D6452] hover:text-[#2D1B0D] hover:bg-white/40 rounded-2xl transition-all font-medium"
+              }
+            >
+              <Shield className="w-4 h-4" />
+              Smart Filter
+            </Link>
+          )}
           <button
             onClick={logout}
             className="w-full flex items-center gap-3 px-4 py-2.5 text-[#7D6452] hover:text-[#2D1B0D] hover:bg-white/40 rounded-2xl transition-all font-medium"
