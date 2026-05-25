@@ -231,18 +231,40 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
   const url = new URL(request.url);
   const ua = request.headers.get("user-agent") || "";
   const referer = request.headers.get("referer") || "";
-  const country =
-    request.headers.get("cf-ipcountry") || request.headers.get("x-vercel-ip-country") || "";
   const asn = request.headers.get("cf-asn") || "";
   const ip =
     request.headers.get("cf-connecting-ip") ||
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
     request.headers.get("x-real-ip") || "";
+
+  // Country: prefer CDN headers, then IP geolocation, then Accept-Language hint
+  let country =
+    request.headers.get("cf-ipcountry") ||
+    request.headers.get("x-vercel-ip-country") ||
+    request.headers.get("x-country-code") ||
+    "";
   const acceptLanguage = request.headers.get("accept-language") || "";
+  if (!country && ip) {
+    try {
+      const geoip = await import("geoip-lite");
+      const geo = geoip.default.lookup(ip);
+      if (geo?.country) country = geo.country;
+    } catch (e) {
+      console.warn("[redirect] geoip lookup failed", (e as Error)?.message);
+    }
+  }
+  if (!country && acceptLanguage) {
+    // last-resort: en-BD,en;q=0.9 → BD
+    const m = acceptLanguage.match(/[a-z]{2}-([A-Z]{2})/);
+    if (m) country = m[1];
+  }
+  country = (country || "").toUpperCase();
+
   const accept = request.headers.get("accept") || "";
   const acceptEncoding = request.headers.get("accept-encoding") || "";
   const secChUa = request.headers.get("sec-ch-ua") || "";
   const ja3 = request.headers.get("cf-ja3") || request.headers.get("x-ja3-hash") || "";
+
 
   const detectInput = { ua, ip, asn, country, referer, acceptLanguage, accept, acceptEncoding, secChUa, ja3 };
   const fpHash = fingerprint(detectInput);
