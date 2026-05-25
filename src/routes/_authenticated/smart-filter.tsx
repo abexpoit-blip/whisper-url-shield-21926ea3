@@ -1,7 +1,7 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Shield, Globe2, Bot, MapPin, Plus, Trash2, ToggleLeft, ToggleRight, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,13 +14,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/smart-filter")({
   head: () => ({ meta: [{ title: "Smart Filter — Sleepox" }] }),
-  beforeLoad: async ({ context }) => {
-    const { user } = context as { user?: { id: string } };
-    if (!user) throw redirect({ to: "/login" });
-    const { data } = await supabase
-      .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
-    if (!data) throw redirect({ to: "/dashboard" });
-  },
+  // Auth + admin check runs client-side (parent _authenticated layout is also client-only).
   component: SmartFilterPage,
 });
 
@@ -30,7 +24,25 @@ const font = { fontFamily: "'Outfit', system-ui, sans-serif" } as const;
 type Tab = "cloaking" | "referrer" | "blacklist" | "tiers";
 
 function SmartFilterPage() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("cloaking");
+  const [adminChecked, setAdminChecked] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { navigate({ to: "/login" }); return; }
+      const { data } = await supabase
+        .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+      if (!data) { navigate({ to: "/dashboard" }); return; }
+      setAdminChecked(true);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!adminChecked) {
+    return <div className="p-10 text-sm text-[#7D6452]" style={font}>Verifying admin access…</div>;
+  }
 
   const tabs: { k: Tab; label: string; icon: typeof Shield }[] = [
     { k: "cloaking", label: "Cloaking", icon: Shield },
