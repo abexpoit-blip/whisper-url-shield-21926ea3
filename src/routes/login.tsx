@@ -31,6 +31,8 @@ function LoginPage() {
     if (error) { setLoading(false); toast.error(error.message); return; }
     // Hard redirect — guarantees session is hydrated before _authenticated layout runs
     window.location.replace("/dashboard");
+  };
+
 
   return (
     <div
