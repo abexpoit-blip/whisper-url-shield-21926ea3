@@ -90,6 +90,7 @@ function AdminPage() {
             <TabsTrigger value="rules">Bot/Cloak</TabsTrigger>
             <TabsTrigger value="geo">Geo Tiers</TabsTrigger>
             <TabsTrigger value="traffic">Traffic</TabsTrigger>
+            <TabsTrigger value="domains">Domains</TabsTrigger>
           </TabsList>
           <TabsContent value="overview"><OverviewTab /></TabsContent>
           <TabsContent value="users"><UsersTab /></TabsContent>
@@ -99,6 +100,7 @@ function AdminPage() {
           <TabsContent value="rules"><RulesTab /></TabsContent>
           <TabsContent value="geo"><GeoTab /></TabsContent>
           <TabsContent value="traffic"><TrafficTab /></TabsContent>
+          <TabsContent value="domains"><DomainsTab /></TabsContent>
         </Tabs>
       </div>
     </div>
