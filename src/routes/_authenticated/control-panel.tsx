@@ -28,6 +28,10 @@ import {
   adminUserDetail,
 } from "@/lib/admin.functions";
 import { getAppSettings, updateAppSettings } from "@/lib/app-settings.functions";
+import {
+  listShortenerDomains, addShortenerDomain, verifyShortenerDomain,
+  setPrimaryShortenerDomain, toggleShortenerDomainActive, deleteShortenerDomain,
+} from "@/lib/shortener-domains.functions";
 
 export const Route = createFileRoute("/_authenticated/control-panel")({
   head: () => ({ meta: [{ title: "Control Panel — Sleepox" }] }),
