@@ -86,33 +86,34 @@ export async function recordRedirectClick(input: {
   abVariant?: string | null;
   ja3Hash?: string | null;
 }) {
-  // Direct insert — only columns that exist on self-host clicks table.
+  // Direct insert — ONLY columns that exist on self-host clicks table.
+  // Schema: id, link_id, ip, country, ua, is_bot, bot_reason, routed_to,
+  //         ja3_hash, ab_variant, country_tier, referrer_source,
+  //         fingerprint_hash, challenge_passed, prelanding_shown, created_at
   const row: Record<string, unknown> = {
     link_id: input.linkId,
     ip: input.ip,
-    ip_address: input.ip,
     country: input.country,
     ua: input.ua,
-    user_agent: input.ua,
-    referer: input.refererHost,
-    referer_host: input.refererHost,
     is_bot: input.isBot,
     bot_reason: input.botReason,
     routed_to: input.routedTo,
     challenge_passed: input.challengePassed,
+    prelanding_shown: input.prelandingShown,
     fingerprint_hash: input.fingerprintHash ?? null,
-    bot_score: input.botScore,
-    signals: input.signals as never,
-    variant: input.abVariant ?? null,
-    utm_source: input.utm.utm_source,
-    utm_medium: input.utm.utm_medium,
-    utm_campaign: input.utm.utm_campaign,
-    utm_term: input.utm.utm_term,
-    utm_content: input.utm.utm_content,
+    ja3_hash: input.ja3Hash ?? null,
+    ab_variant: input.abVariant ?? null,
+    country_tier: input.countryTier ?? null,
+    referrer_source: input.referrerSource ?? null,
   };
   const { error: insertErr } = await supabaseAdmin.from("clicks").insert(row as never);
   if (insertErr) {
-    console.error("redirect click insert failed", { linkId: input.linkId, message: insertErr.message });
+    console.error("redirect click insert failed", {
+      linkId: input.linkId,
+      message: insertErr.message,
+      code: (insertErr as { code?: string }).code,
+      details: (insertErr as { details?: string }).details,
+    });
   }
 
   // Update link counters
