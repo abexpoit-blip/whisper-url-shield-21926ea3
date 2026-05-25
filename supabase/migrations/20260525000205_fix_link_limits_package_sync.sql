@@ -124,3 +124,45 @@ DROP TRIGGER IF EXISTS trg_sync_quota_on_plan_change ON public.profiles;
 CREATE TRIGGER trg_sync_quota_on_plan_change
 BEFORE UPDATE ON public.profiles
 FOR EACH ROW EXECUTE FUNCTION public.sync_quota_on_plan_change();
+
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_role public.app_role := 'user';
+  v_telegram text;
+BEGIN
+  IF NEW.email = 'admin@sleepox.com' THEN
+    v_role := 'admin';
+  END IF;
+
+  v_telegram := NULLIF(NEW.raw_user_meta_data->>'telegram','');
+
+  INSERT INTO public.profiles (id, email, full_name, telegram, plan_slug, click_quota, link_limit)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email,'@',1)),
+    v_telegram,
+    CASE WHEN v_role = 'admin' THEN 'lifetime' ELSE 'free' END,
+    CASE WHEN v_role = 'admin' THEN NULL ELSE 10000 END,
+    CASE WHEN v_role = 'admin' THEN NULL ELSE 1 END
+  )
+  ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (NEW.id, v_role)
+  ON CONFLICT (user_id, role) DO NOTHING;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
