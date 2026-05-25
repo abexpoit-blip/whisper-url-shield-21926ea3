@@ -27,10 +27,11 @@ function LoginPage() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
-    if (error) { setLoading(false); toast.error(error.message); return; }
-    // Hard redirect — guarantees session is hydrated before _authenticated layout runs
-    window.location.replace("/dashboard");
+    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    if (error || !data.session) { setLoading(false); toast.error(error?.message ?? "Login failed"); return; }
+    // Session is already in localStorage; SPA navigate is instant (no full reload)
+    await router.invalidate();
+    navigate({ to: "/dashboard", replace: true });
   };
 
 
