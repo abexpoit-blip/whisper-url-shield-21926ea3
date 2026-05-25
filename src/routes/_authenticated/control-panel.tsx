@@ -775,3 +775,151 @@ function StatusPill({ status }: { status: string }) {
   const map: Record<string, string> = { paid: "bg-emerald-100 text-emerald-700", completed: "bg-emerald-100 text-emerald-700", pending: "bg-amber-100 text-amber-700", rejected: "bg-rose-100 text-rose-700" };
   return <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-semibold ${map[status] ?? "bg-[#FFEDD5] text-[#7A5C45]"}`}>{status}</span>;
 }
+
+/* ============== Shortener Domains (admin) ============== */
+function DomainsTab() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(listShortenerDomains);
+  const addFn = useServerFn(addShortenerDomain);
+  const verifyFn = useServerFn(verifyShortenerDomain);
+  const primaryFn = useServerFn(setPrimaryShortenerDomain);
+  const toggleFn = useServerFn(toggleShortenerDomainActive);
+  const delFn = useServerFn(deleteShortenerDomain);
+
+  const q = useQuery({ queryKey: ["sd-list"], queryFn: () => listFn(), staleTime: 15_000 });
+  const [domain, setDomain] = useState("");
+  const [note, setNote] = useState("");
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["sd-list"] });
+
+  const add = useMutation({
+    mutationFn: () => addFn({ data: { domain, note: note || undefined } }),
+    onSuccess: () => { setDomain(""); setNote(""); toast.success("Domain added — now verify DNS"); invalidate(); },
+    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+  });
+  const verify = useMutation({
+    mutationFn: (id: string) => verifyFn({ data: { id } }),
+    onSuccess: (r: any) => { r.ok ? toast.success(r.message) : toast.error(r.message); invalidate(); },
+    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+  });
+  const setPrimary = useMutation({
+    mutationFn: (id: string) => primaryFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Primary domain switched. All new short URLs use this domain.");
+      invalidate();
+      qc.invalidateQueries({ queryKey: ["primary-shortener-domain"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+  });
+  const toggleActive = useMutation({
+    mutationFn: (v: { id: string; is_active: boolean }) => toggleFn({ data: v }),
+    onSuccess: () => invalidate(),
+    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+  });
+  const del = useMutation({
+    mutationFn: (id: string) => delFn({ data: { id } }),
+    onSuccess: () => { toast.success("Deleted"); invalidate(); },
+    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+  });
+
+  const domains: any[] = q.data?.domains ?? [];
+
+  return (
+    <Section>
+      <div className="flex items-center gap-2 mb-4">
+        <Globe className="w-5 h-5 text-[#FF7E5F]" />
+        <h3 className="text-lg font-bold text-[#2D1B0D]">Shortener Domain Pool</h3>
+      </div>
+      <p className="text-sm text-[#7A5C45] mb-5">
+        Add backup domains that point to your VPS (A record → <span className="font-mono">185.158.133.1</span>).
+        If the current primary gets blocked, verify a new one and click <strong>Set Primary</strong> — every short URL
+        instantly uses the new domain. Old short URLs on still-resolving domains keep working too.
+      </p>
+
+      <div className="grid md:grid-cols-[1fr_1fr_auto] gap-3 mb-6 p-4 rounded-2xl bg-white/60 border border-white/80">
+        <input
+          value={domain} onChange={(e) => setDomain(e.target.value)}
+          placeholder="e.g. trk.example.com"
+          className="px-4 py-2.5 rounded-xl bg-white border border-[#FFE4D2] text-sm font-mono outline-none focus:border-[#FF7E5F]"
+        />
+        <input
+          value={note} onChange={(e) => setNote(e.target.value)}
+          placeholder="Note (optional)"
+          className="px-4 py-2.5 rounded-xl bg-white border border-[#FFE4D2] text-sm outline-none focus:border-[#FF7E5F]"
+        />
+        <Button onClick={() => domain.trim() && add.mutate()} disabled={add.isPending} className="bg-gradient-to-r from-[#FF7E5F] to-[#FEB47B] text-white">
+          <Plus className="w-4 h-4 mr-1" /> Add Domain
+        </Button>
+      </div>
+
+      {q.isLoading ? (
+        <p className="text-sm text-[#7A5C45]">Loading…</p>
+      ) : domains.length === 0 ? (
+        <p className="text-sm text-[#7A5C45]">No domains in pool yet.</p>
+      ) : (
+        <div className="overflow-x-auto rounded-2xl border border-[#FFE4D2] bg-white/70">
+          <table className="w-full text-sm">
+            <thead className="bg-[#FFF3E8] text-[#7A5C45]">
+              <tr>
+                <th className="text-left px-4 py-3">Domain</th>
+                <th className="text-left px-4 py-3">DNS Target</th>
+                <th className="text-left px-4 py-3">Status</th>
+                <th className="text-left px-4 py-3">Note</th>
+                <th className="text-right px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#FFEDD5]">
+              {domains.map((d) => (
+                <tr key={d.id} className="hover:bg-[#FFF9F5]">
+                  <td className="px-4 py-3 font-mono font-semibold text-[#2D1B0D]">
+                    {d.domain}
+                    {d.is_primary && <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-wider"><Star className="w-3 h-3" />Primary</span>}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs text-[#7A5C45]">{d.dns_target}</td>
+                  <td className="px-4 py-3">
+                    {d.verified ? <Pill>Verified</Pill> : <span className="text-xs text-amber-600 font-semibold">Pending DNS</span>}
+                    {!d.is_active && <span className="ml-2 text-xs text-rose-600 font-semibold">Inactive</span>}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-[#7A5C45]">{d.note ?? "—"}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                      <Button size="sm" variant="outline" onClick={() => verify.mutate(d.id)} disabled={verify.isPending}>
+                        <RefreshCw className="w-3 h-3 mr-1" /> Verify
+                      </Button>
+                      {!d.is_primary && d.verified && d.is_active && (
+                        <Button size="sm" onClick={() => { if (confirm(`Switch primary to ${d.domain}? All new short URLs will use it.`)) setPrimary.mutate(d.id); }}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                          <Check className="w-3 h-3 mr-1" /> Set Primary
+                        </Button>
+                      )}
+                      {!d.is_primary && (
+                        <Button size="sm" variant="outline" onClick={() => toggleActive.mutate({ id: d.id, is_active: !d.is_active })}>
+                          {d.is_active ? "Disable" : "Enable"}
+                        </Button>
+                      )}
+                      {!d.is_primary && (
+                        <Button size="sm" variant="outline" onClick={() => { if (confirm(`Delete ${d.domain}?`)) del.mutate(d.id); }} className="border-rose-300 text-rose-600">
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div className="mt-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
+        <p className="font-bold">Setup steps for a new domain:</p>
+        <ol className="list-decimal pl-5 space-y-0.5">
+          <li>At your registrar, add an <strong>A record</strong>: <span className="font-mono">@ → 185.158.133.1</span> (and optionally <span className="font-mono">www → 185.158.133.1</span>).</li>
+          <li>On the VPS, add the domain to Nginx/Caddy config and issue an SSL cert.</li>
+          <li>Click <strong>Verify</strong> — DNS check via Cloudflare DoH.</li>
+          <li>Click <strong>Set Primary</strong> when ready. All short links auto-switch.</li>
+        </ol>
+      </div>
+    </Section>
+  );
+}
