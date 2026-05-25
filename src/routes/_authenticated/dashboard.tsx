@@ -334,14 +334,15 @@ function DashboardPage() {
             <Panel className="p-6">
               <h4 className="text-base font-bold text-[#2D1B0D]" style={display}>Traffic by Region</h4>
               <div className="mt-4 space-y-3">
-                <RegionRow color="#BFDBFE" name="United States" pct={45} />
-                <RegionRow color="#FECACA" name="United Kingdom" pct={22} />
-                <RegionRow color="#BBF7D0" name="Germany" pct={14} />
-                <RegionRow color="#FED7AA" name="Other" pct={19} />
+                {regionRows.length === 0 ? (
+                  <p className="text-xs text-[#A38D7D]">No traffic yet.</p>
+                ) : (
+                  regionRows.map((r) => <RegionRow key={r.name} color={r.color} name={r.name} pct={r.pct} />)
+                )}
               </div>
 
               <div className="mt-6 pt-6 border-t border-[#FFEDD5] flex flex-col items-center">
-                <MobileGauge pct={72} />
+                <MobileGauge pct={mobilePct} />
                 <p className="mt-3 text-[10px] uppercase tracking-[0.18em] font-bold text-[#A38D7D] flex items-center gap-1.5">
                   <Smartphone className="w-3 h-3" /> Mobile Traffic
                 </p>
