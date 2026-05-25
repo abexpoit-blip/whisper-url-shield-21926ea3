@@ -258,9 +258,10 @@ function DashboardPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#FFEDD5]">
-                      {filtered.map((l, idx) => {
+                      {filtered.map((l) => {
                         const shortUrl = `${origin}/r/${l.short_code}`;
-                        const up = idx % 3 !== 0;
+                        const spark = stats?.perLinkDaily?.[l.id] ?? [];
+                        const sparkUp = spark.length >= 2 ? spark[spark.length - 1] >= spark[0] : true;
                         return (
                           <tr key={l.id} className="hover:bg-[#FFF9F5] transition-colors">
                             <td className="px-5 py-4">
@@ -272,20 +273,8 @@ function DashboardPage() {
                                 /r/{l.short_code} <Copy className="w-3 h-3" />
                               </button>
                             </td>
-                            const spark = stats?.perLinkDaily?.[l.id] ?? [];
-                            const sparkUp = spark.length >= 2 ? spark[spark.length - 1] >= spark[0] : true;
-                            return (
-                          <tr key={l.id} className="hover:bg-[#FFF9F5] transition-colors">
-                            <td className="px-5 py-4">
-                              <p className="text-sm font-bold text-[#2D1B0D] truncate max-w-[220px]" style={display}>
-                                {l.title || l.short_code}
-                              </p>
-                              <button onClick={() => { navigator.clipboard.writeText(shortUrl); toast.success("Copied"); }}
-                                className="text-[11px] text-[#FF7E5F] hover:text-[#E66D50] flex items-center gap-1 mt-0.5 font-mono">
-                                /r/{l.short_code} <Copy className="w-3 h-3" />
-                              </button>
-                            </td>
                             <td className="px-5 py-4"><MiniSpark up={sparkUp} /></td>
+                            <td className="px-5 py-4">
                               <div className="text-sm font-bold text-[#2D1B0D] tabular-nums" style={display}>
                                 {(l.clicks_count || 0) >= 5000
                                   ? "5,000+"
