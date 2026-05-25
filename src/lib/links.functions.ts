@@ -77,7 +77,7 @@ export const getMyProfile = createServerFn({ method: "GET" })
     return data;
   });
 
-// Combined: one server-fn call = one auth round-trip = ~2x faster dashboard load
+// Combined: one server-fn call = links + profile + REAL click stats
 export const getDashboardData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -87,7 +87,63 @@ export const getDashboardData = createServerFn({ method: "GET" })
     ]);
     if (linksRes.error) throw new Error(linksRes.error.message);
     if (profileRes.error) throw new Error(profileRes.error.message);
-    return { links: linksRes.data, profile: profileRes.data };
+
+    const links = linksRes.data ?? [];
+    const linkIds = links.map((l) => l.id);
+
+    const clicksByDay: Record<string, number> = {};
+    const countryStats: Record<string, number> = {};
+    const perLinkDaily: Record<string, number[]> = {};
+    let mobileCount = 0;
+    let totalForMobile = 0;
+    const uniqueIps = new Set<string>();
+
+    // init 30-day buckets
+    for (let i = 29; i >= 0; i--) {
+      const k = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+      clicksByDay[k] = 0;
+    }
+    for (const id of linkIds) perLinkDaily[id] = new Array(7).fill(0);
+
+    if (linkIds.length > 0) {
+      const since = new Date(Date.now() - 30 * 86400000).toISOString();
+      const { data: clicks } = await context.supabase
+        .from("clicks")
+        .select("link_id, country, ua, ip, created_at, is_bot")
+        .in("link_id", linkIds)
+        .gte("created_at", since)
+        .eq("is_bot", false)
+        .limit(50000);
+
+      for (const c of clicks ?? []) {
+        const created = c.created_at as string;
+        const k = created.slice(0, 10);
+        if (k in clicksByDay) clicksByDay[k]++;
+        const country = (c.country as string) || "Unknown";
+        countryStats[country] = (countryStats[country] ?? 0) + 1;
+        const ua = (c.ua as string) || "";
+        totalForMobile++;
+        if (/Mobile|Android|iPhone|iPad/i.test(ua)) mobileCount++;
+        if (c.ip) uniqueIps.add(c.ip as string);
+        const daysAgo = Math.floor((Date.now() - new Date(created).getTime()) / 86400000);
+        if (daysAgo >= 0 && daysAgo < 7) {
+          const arr = perLinkDaily[c.link_id as string];
+          if (arr) arr[6 - daysAgo]++;
+        }
+      }
+    }
+
+    return {
+      links,
+      profile: profileRes.data,
+      stats: {
+        clicksByDay,
+        countryStats,
+        mobilePct: totalForMobile > 0 ? Math.round((mobileCount / totalForMobile) * 100) : 0,
+        uniqueVisitors: uniqueIps.size,
+        perLinkDaily,
+      },
+    };
   });
 
 export const createLink = createServerFn({ method: "POST" })
