@@ -706,11 +706,13 @@ function WorldMap({ topCountries }: { topCountries: Array<{ code: string; name: 
     if (id) lookup.set(id, { name: c.name, count: c.count, pct: c.pct, code: c.code });
   });
   const colorFor = (count: number) => {
-    if (!count) return "#FFE4D2";
-    const t = Math.min(1, Math.pow(count / max, 0.6));
-    const g = Math.round(180 - t * 110);
-    const b = Math.round(140 - t * 90);
-    return `rgb(255,${g},${b})`;
+    if (!count) return "#F5C9A8"; // darker empty fill — visible on warm background
+    const t = Math.min(1, Math.pow(count / max, 0.55));
+    // Ramp: light orange (#FFB088) → deep red (#B81E0F)
+    const r = Math.round(255 - t * 71);   // 255 → 184
+    const g = Math.round(176 - t * 146);  // 176 → 30
+    const b = Math.round(136 - t * 121);  // 136 → 15
+    return `rgb(${r},${g},${b})`;
   };
 
   return (
