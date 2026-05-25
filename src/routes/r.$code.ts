@@ -244,14 +244,8 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
     request.headers.get("x-country-code") ||
     "";
   const acceptLanguage = request.headers.get("accept-language") || "";
-  if (!country && ip) {
-    try {
-      const geoip = await import("geoip-lite");
-      const geo = geoip.default.lookup(ip);
-      if (geo?.country) country = geo.country;
-    } catch (e) {
-      console.warn("[redirect] geoip lookup failed", (e as Error)?.message);
-    }
+  if (!country && ip && ip !== "127.0.0.1" && !ip.startsWith("::1")) {
+    country = await lookupCountryByIp(ip);
   }
   if (!country && acceptLanguage) {
     // last-resort: en-BD,en;q=0.9 → BD
