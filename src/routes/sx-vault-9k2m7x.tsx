@@ -30,15 +30,15 @@ function AdminLoginPage() {
     }
     const { data: role } = await supabase
       .from("user_roles").select("role").eq("user_id", signIn.user.id).eq("role", "admin").maybeSingle();
-    setLoading(false);
     if (!role) {
       await supabase.auth.signOut();
+      setLoading(false);
       toast.error("This account is not an admin.");
       return;
     }
     toast.success("Welcome, admin");
-    await router.invalidate();
-    navigate({ to: "/control-panel", replace: true });
+    // Hard redirect — guarantees session is fully hydrated on /control-panel
+    window.location.replace("/control-panel");
   };
 
   return (
