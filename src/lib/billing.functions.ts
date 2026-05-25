@@ -47,7 +47,6 @@ export const createInvoice = createServerFn({ method: "POST" })
       order_name: `${pkg.name} — Sleepox`,
       source_amount: chargeAmount,
       source_currency: "USD",
-      currency: "USDT_TRX",
       callback_url: `${origin}/api/public/plisio-webhook?json=true`,
       success_callback_url: `${origin}/upgrade?status=success`,
       fail_callback_url: `${origin}/upgrade?status=fail`,
