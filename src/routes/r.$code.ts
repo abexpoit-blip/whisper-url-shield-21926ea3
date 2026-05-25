@@ -86,22 +86,29 @@ export async function recordRedirectClick(input: {
   abVariant?: string | null;
   ja3Hash?: string | null;
 }) {
-  // Direct insert — no RPC dependency, so this works regardless of DB function state.
-  const row = {
+  // Direct insert — only columns that exist on self-host clicks table.
+  const row: Record<string, unknown> = {
     link_id: input.linkId,
     ip: input.ip,
+    ip_address: input.ip,
     country: input.country,
     ua: input.ua,
+    user_agent: input.ua,
+    referer: input.refererHost,
+    referer_host: input.refererHost,
     is_bot: input.isBot,
     bot_reason: input.botReason,
     routed_to: input.routedTo,
     challenge_passed: input.challengePassed,
-    prelanding_shown: input.prelandingShown,
     fingerprint_hash: input.fingerprintHash ?? null,
-    referrer_source: input.referrerSource ?? null,
-    country_tier: input.countryTier ?? null,
-    ab_variant: input.abVariant ?? null,
-    ja3_hash: input.ja3Hash ?? null,
+    bot_score: input.botScore,
+    signals: input.signals as never,
+    variant: input.abVariant ?? null,
+    utm_source: input.utm.utm_source,
+    utm_medium: input.utm.utm_medium,
+    utm_campaign: input.utm.utm_campaign,
+    utm_term: input.utm.utm_term,
+    utm_content: input.utm.utm_content,
   };
   const { error: insertErr } = await supabaseAdmin.from("clicks").insert(row as never);
   if (insertErr) {
