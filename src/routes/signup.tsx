@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Mail, Lock, User, Send, ArrowRight, CheckCircle2 } from "lucide-react";
@@ -14,6 +14,7 @@ const font = { fontFamily: "'Outfit', system-ui, sans-serif" } as const;
 
 function SignupPage() {
   const navigate = useNavigate();
+  const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [telegram, setTelegram] = useState("");
@@ -23,20 +24,22 @@ function SignupPage() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    const normalizedEmail = email.trim().toLowerCase();
     const tg = telegram.trim().replace(/^@/, "");
     const { error } = await supabase.auth.signUp({
-      email, password,
+      email: normalizedEmail, password,
       options: {
         emailRedirectTo: `${window.location.origin}/dashboard`,
         data: { full_name: fullName.trim(), telegram: tg },
       },
     });
     if (error) { setLoading(false); toast.error(error.message); return; }
-    const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+    const { error: signInErr } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
     setLoading(false);
     if (signInErr) { toast.success("Check your email to confirm."); navigate({ to: "/login" }); return; }
+    await router.invalidate();
     toast.success("Welcome to Sleepox!");
-    navigate({ to: "/dashboard" });
+    navigate({ to: "/dashboard", replace: true });
   };
 
   return (
