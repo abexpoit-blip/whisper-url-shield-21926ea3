@@ -55,10 +55,18 @@ export const createInvoice = createServerFn({ method: "POST" })
     });
 
     const res = await fetch(`https://api.plisio.net/api/v1/invoices/new?${params}`);
-    const json = (await res.json()) as { status: string; data?: { invoice_url?: string; txn_id?: string }; message?: string };
+    const raw = await res.text();
+    let json: any;
+    try { json = JSON.parse(raw); } catch { json = null; }
+    console.log("[plisio] http", res.status, "body", raw.slice(0, 500));
 
-    if (json.status !== "success" || !json.data?.invoice_url) {
-      throw new Error(`Plisio error: ${json.message || "unknown"}`);
+    if (!json || json.status !== "success" || !json.data?.invoice_url) {
+      const msg =
+        json?.data?.message ||
+        json?.message ||
+        json?.data?.name ||
+        `HTTP ${res.status}: ${raw.slice(0, 200)}`;
+      throw new Error(`Plisio error: ${msg}`);
     }
 
     await supabaseAdmin
