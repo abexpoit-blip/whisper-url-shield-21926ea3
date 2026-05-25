@@ -36,6 +36,52 @@ function detectDevice(ua: string): "mobile" | "tablet" | "desktop" {
   return "desktop";
 }
 
+// ------- IP → Country lookup (workerd-compatible, no native deps) -------
+// Cache by /24 subnet to drastically reduce upstream calls under high traffic.
+// Uses https://api.country.is (free, no key, HTTPS, country-only).
+const countryCache = new Map<string, { c: string; exp: number }>();
+const COUNTRY_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+const COUNTRY_CACHE_MAX = 50_000;
+
+function subnetKey(ip: string): string {
+  if (ip.includes(":")) return ip.split(":").slice(0, 4).join(":"); // IPv6 /64-ish
+  const parts = ip.split(".");
+  return parts.length === 4 ? `${parts[0]}.${parts[1]}.${parts[2]}.0` : ip;
+}
+
+async function lookupCountryByIp(ip: string): Promise<string> {
+  const key = subnetKey(ip);
+  const now = Date.now();
+  const hit = countryCache.get(key);
+  if (hit && hit.exp > now) return hit.c;
+
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 1200);
+    const r = await fetch(`https://api.country.is/${encodeURIComponent(ip)}`, {
+      signal: ctrl.signal,
+      headers: { accept: "application/json" },
+    });
+    clearTimeout(t);
+    if (r.ok) {
+      const j = (await r.json()) as { country?: string };
+      const c = (j.country || "").toUpperCase();
+      if (countryCache.size >= COUNTRY_CACHE_MAX) {
+        const firstKey = countryCache.keys().next().value;
+        if (firstKey) countryCache.delete(firstKey);
+      }
+      countryCache.set(key, { c, exp: now + COUNTRY_TTL_MS });
+      return c;
+    }
+  } catch (e) {
+    console.warn("[redirect] country lookup failed", (e as Error)?.message);
+  }
+  // Negative cache for 5 min to avoid hammering on bad IPs
+  countryCache.set(key, { c: "", exp: now + 5 * 60 * 1000 });
+  return "";
+}
+
+
 function sanitizeRedirectTarget(target: string | null | undefined): string {
   try {
     if (!target) return SAFE_FALLBACK;
