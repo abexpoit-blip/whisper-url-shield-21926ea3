@@ -274,23 +274,9 @@ function DashboardPage() {
                               </div>
                             </td>
                             <td className="px-5 py-4">
-                              <select
-                                value={(l as { prelanding_template?: string }).prelanding_template || "article_health"}
-                                onChange={(e) => tplMut.mutate({ id: l.id, prelanding_template: e.target.value as PrelandingTemplate })}
-                                disabled={tplMut.isPending}
-                                className="bg-[#FFF9F5] border border-[#FFEDD5] text-xs rounded-lg px-2.5 py-1.5 text-[#2D1B0D] focus:outline-none max-w-[160px]"
-                              >
-                                <optgroup label="Article">
-                                  {TEMPLATE_OPTIONS.filter((t) => t.group.startsWith("Article")).map((t) => (
-                                    <option key={t.value} value={t.value}>{t.label}</option>
-                                  ))}
-                                </optgroup>
-                                <optgroup label="Legacy">
-                                  {TEMPLATE_OPTIONS.filter((t) => t.group === "Legacy").map((t) => (
-                                    <option key={t.value} value={t.value}>{t.label}</option>
-                                  ))}
-                                </optgroup>
-                              </select>
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700">
+                                AUTO-ROTATE
+                              </span>
                             </td>
                             <td className="px-5 py-4">
                               <button onClick={() => togMut.mutate({ id: l.id, is_active: !l.is_active })}
