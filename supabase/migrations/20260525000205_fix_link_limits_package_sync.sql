@@ -14,6 +14,16 @@ ON CONFLICT (slug) DO UPDATE SET
   is_active = true,
   sort_order = EXCLUDED.sort_order;
 
+UPDATE public.profiles
+SET plan_slug = 'monthly'
+WHERE plan_slug = 'pro_monthly';
+
+UPDATE public.packages
+SET click_quota = 1000000,
+    link_limit = 50,
+    is_active = false
+WHERE slug = 'pro_monthly';
+
 UPDATE public.profiles p
 SET click_quota = pk.click_quota,
     link_limit = pk.link_limit
