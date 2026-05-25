@@ -71,11 +71,12 @@ function DashboardPage() {
   const origin = typeof window !== "undefined" ? window.location.origin : "https://sleepox.com";
   const links = dashQ.data?.links ?? [];
   const profile = dashQ.data?.profile;
+  const stats = dashQ.data?.stats;
 
   const totalClicks = links.reduce((s, l) => s + (l.clicks_count || 0), 0);
   const botBlocked = links.reduce((s, l) => s + (l.bot_clicks_count || 0), 0);
   const activeLinks = links.filter((l) => l.is_active).length;
-  const uniqueVisitors = Math.round(totalClicks * 0.62);
+  const uniqueVisitors = stats?.uniqueVisitors ?? 0;
   const botPct = totalClicks > 0 ? ((botBlocked / (totalClicks + botBlocked)) * 100) : 0;
 
   const clickQuota = profile?.click_quota ?? null;
@@ -94,20 +95,32 @@ function DashboardPage() {
     );
   }, [links, search]);
 
+  // REAL chart data from clicks table
   const chartData = useMemo(() => {
-    const len = range === "7D" ? 7 : 30;
-    const out: number[] = [];
-    let s = 13;
-    for (let i = 0; i < len; i++) {
-      s = (s * 9301 + 49297) % 233280;
-      const r = s / 233280;
-      const t = i / (len - 1);
-      const wave = Math.sin(t * Math.PI * 1.7) * 0.4 + 0.5;
-      const peak = Math.exp(-Math.pow((t - 0.6) / 0.18, 2)) * 0.5;
-      out.push(0.2 + wave * 0.5 + peak + (r - 0.5) * 0.1);
-    }
-    return out;
-  }, [range]);
+    const byDay = stats?.clicksByDay ?? {};
+    const keys = Object.keys(byDay).sort();
+    const slice = range === "7D" ? keys.slice(-7) : keys.slice(-30);
+    const vals = slice.map((k) => byDay[k] ?? 0);
+    const max = Math.max(1, ...vals);
+    // normalize 0..1 for AreaChart
+    return vals.map((v) => v / max);
+  }, [stats, range]);
+
+  // REAL country stats top 4
+  const regionRows = useMemo(() => {
+    const cs = stats?.countryStats ?? {};
+    const entries = Object.entries(cs).sort((a, b) => b[1] - a[1]);
+    const total = entries.reduce((s, [, n]) => s + n, 0);
+    if (total === 0) return [] as { name: string; pct: number; color: string }[];
+    const palette = ["#BFDBFE", "#FECACA", "#BBF7D0", "#FED7AA"];
+    const top = entries.slice(0, 3);
+    const otherCount = entries.slice(3).reduce((s, [, n]) => s + n, 0);
+    const rows = top.map(([name, n], i) => ({ name, pct: Math.round((n / total) * 100), color: palette[i] }));
+    if (otherCount > 0) rows.push({ name: "Other", pct: Math.round((otherCount / total) * 100), color: palette[3] });
+    return rows;
+  }, [stats]);
+
+  const mobilePct = stats?.mobilePct ?? 0;
 
   return (
     <div className="min-h-screen w-full text-[#2D1B0D]" style={display}>
