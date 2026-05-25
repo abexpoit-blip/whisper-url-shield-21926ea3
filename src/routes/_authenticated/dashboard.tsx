@@ -76,6 +76,7 @@ function DashboardPage() {
 
   const origin = typeof window !== "undefined" ? window.location.origin : "https://sleepox.com";
   const links = dashQ.data?.links ?? [];
+  const profile = dashQ.data?.profile;
 
   const totalClicks = links.reduce((s, l) => s + (l.clicks_count || 0), 0);
   const botBlocked = links.reduce((s, l) => s + (l.bot_clicks_count || 0), 0);
@@ -83,9 +84,10 @@ function DashboardPage() {
   const uniqueVisitors = Math.round(totalClicks * 0.62);
   const botPct = totalClicks > 0 ? ((botBlocked / (totalClicks + botBlocked)) * 100) : 0;
 
-  const quotaUsed = totalClicks;
-  const quotaMax = 10000;
-  const quotaPct = Math.min(100, Math.round((quotaUsed / quotaMax) * 100));
+  const clickQuota = profile?.click_quota ?? null;
+  const clicksUsed = Number(profile?.clicks_used ?? 0);
+  const quotaPct = clickQuota ? Math.min(100, Math.round((clicksUsed / clickQuota) * 100)) : 0;
+  const quotaLabel = clickQuota ? `${fmtCompact(clicksUsed)} / ${fmtCompact(clickQuota)}` : "Unlimited";
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -145,7 +147,7 @@ function DashboardPage() {
           <KpiCard label="ACTIVE LINKS" value={String(activeLinks)} sub={`${links.length} total`} tone="muted" />
           <KpiCard label="UNIQUE VISITORS" value={fmtCompact(uniqueVisitors)} sub="62% direct traffic" tone="muted" />
           <KpiCard label="BOT BLOCKED" value={`${botPct.toFixed(1)}%`} sub={`${fmtCompact(botBlocked)} attempts`} tone="muted" />
-          <QuotaCard pct={quotaPct} />
+          <QuotaCard pct={quotaPct} label={quotaLabel} />
         </div>
 
         {/* MAIN GRID: chart + side panels */}
@@ -329,7 +331,7 @@ function DashboardPage() {
               <h4 className="text-base font-bold text-[#2D1B0D]" style={display}>Account Quota</h4>
               <div className="mt-5 flex items-center justify-between text-xs">
                 <span className="text-[#7D6452]">Redirects used</span>
-                <span className="font-bold text-[#2D1B0D] tabular-nums">{fmtCompact(quotaUsed)} / {fmtCompact(quotaMax)}</span>
+                <span className="font-bold text-[#2D1B0D] tabular-nums">{quotaLabel}</span>
               </div>
               <div className="mt-2 h-2 bg-[#FFEDD5] rounded-full overflow-hidden">
                 <div className="h-full bg-gradient-to-r from-[#FF7E5F] to-[#FEB47B] shadow-[0_0_8px_rgba(255,126,95,0.5)]" style={{ width: `${quotaPct}%` }} />
@@ -387,12 +389,12 @@ function KpiCard({ label, value, sub, tone }: { label: string; value: string; su
   );
 }
 
-function QuotaCard({ pct }: { pct: number }) {
+function QuotaCard({ pct, label }: { pct: number; label: string }) {
   return (
     <div className="rounded-2xl border border-white/80 bg-white/80 backdrop-blur-xl p-4 shadow-sm shadow-orange-900/5">
       <div className="flex items-center justify-between">
         <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#A38D7D]">QUOTA</span>
-        <span className="text-[11px] font-bold text-[#FF7E5F] tabular-nums">{pct}%</span>
+        <span className="text-[11px] font-bold text-[#FF7E5F] tabular-nums">{label}</span>
       </div>
       <div className="mt-4 h-2 bg-[#FFEDD5] rounded-full overflow-hidden">
         <div className="h-full bg-gradient-to-r from-[#FF7E5F] to-[#FEB47B] shadow-[0_0_8px_rgba(255,126,95,0.5)] transition-all" style={{ width: `${pct}%` }} />

@@ -41,15 +41,6 @@ async function selectLinks(supabase: any): Promise<{ data: DashboardLink[] | nul
 }
 
 async function getProfileQuota(supabase: any, userId: string) {
-  const legacy = await supabase
-    .from("profiles")
-    .select("link_quota, links_used")
-    .eq("id", userId)
-    .single();
-  if (!legacy.error) {
-    return { limit: legacy.data?.link_quota ?? null, used: legacy.data?.links_used ?? 0 };
-  }
-
   const modern = await supabase
     .from("profiles")
     .select("link_limit, links_used")
