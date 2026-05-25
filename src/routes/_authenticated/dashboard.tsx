@@ -274,11 +274,6 @@ function DashboardPage() {
                               </div>
                             </td>
                             <td className="px-5 py-4">
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700">
-                                AUTO-ROTATE
-                              </span>
-                            </td>
-                            <td className="px-5 py-4">
                               <button onClick={() => togMut.mutate({ id: l.id, is_active: !l.is_active })}
                                 className={l.is_active
                                   ? "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700"
