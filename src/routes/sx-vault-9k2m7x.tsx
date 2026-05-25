@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { ShieldCheck, Lock, Mail } from "lucide-react";
@@ -14,6 +14,7 @@ export const Route = createFileRoute("/sx-vault-9k2m7x")({
 
 function AdminLoginPage() {
   const navigate = useNavigate();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,7 +22,7 @@ function AdminLoginPage() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { data: signIn, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: signIn, error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
     if (error || !signIn.user) {
       setLoading(false);
       toast.error(error?.message ?? "Login failed");
@@ -36,7 +37,8 @@ function AdminLoginPage() {
       return;
     }
     toast.success("Welcome, admin");
-    navigate({ to: "/control-panel" });
+    await router.invalidate();
+    navigate({ to: "/control-panel", replace: true });
   };
 
   return (
