@@ -576,6 +576,7 @@ export const getLiveFeed = createServerFn({ method: "GET" })
       const cc = (c.country ?? "??").toUpperCase();
       const dev = deviceFromUA(c.ua);
       const br = browserFromUA(c.ua);
+      const os = osFromUA(c.ua);
       const src = classifySrc(c.referer_host);
       return {
         id: c.id,
@@ -588,7 +589,7 @@ export const getLiveFeed = createServerFn({ method: "GET" })
         is_bot: c.is_bot,
         referrer_source: src === "direct" ? null : src,
         device: dev,
-        deviceOs: inferOs(c.ua),
+        deviceOs: os.name,
         browser: br.name,
         browserSlug: br.slug,
         browserColor: br.color,
