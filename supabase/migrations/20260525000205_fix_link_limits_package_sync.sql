@@ -16,13 +16,17 @@ ON CONFLICT (slug) DO UPDATE SET
 
 UPDATE public.profiles
 SET plan_slug = 'monthly'
-WHERE plan_slug = 'pro_monthly';
+WHERE plan_slug IN ('pro_monthly', 'starter', 'pro');
+
+UPDATE public.profiles
+SET plan_slug = 'lifetime'
+WHERE plan_slug = 'unlimited';
 
 UPDATE public.packages
 SET click_quota = 1000000,
     link_limit = 50,
     is_active = false
-WHERE slug = 'pro_monthly';
+WHERE slug IN ('pro_monthly', 'starter', 'pro', 'unlimited');
 
 UPDATE public.profiles p
 SET click_quota = pk.click_quota,
