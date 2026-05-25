@@ -523,6 +523,45 @@ export type Database = {
         }
         Relationships: []
       }
+      shortener_domains: {
+        Row: {
+          created_at: string
+          dns_target: string
+          domain: string
+          id: string
+          is_active: boolean
+          is_primary: boolean
+          note: string | null
+          updated_at: string
+          verified: boolean
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          dns_target?: string
+          domain: string
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          note?: string | null
+          updated_at?: string
+          verified?: boolean
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          dns_target?: string
+          domain?: string
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          note?: string | null
+          updated_at?: string
+          verified?: boolean
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       upgrade_requests: {
         Row: {
           amount: number

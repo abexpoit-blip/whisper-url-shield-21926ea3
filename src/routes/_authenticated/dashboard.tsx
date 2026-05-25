@@ -8,6 +8,7 @@ import {
   TrendingUp, Filter, RefreshCw, ChevronRight, Smartphone,
 } from "lucide-react";
 import { getDashboardData, createLink, deleteLink, toggleLink } from "@/lib/links.functions";
+import { getPrimaryShortenerDomain } from "@/lib/shortener-domains.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Sleepox" }] }),
@@ -70,7 +71,16 @@ function DashboardPage() {
     createMut.mutate({ title: title || undefined, adsterra_url: adsterra, safe_url: safe || undefined });
   };
 
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://sleepox.com";
+  const primaryFn = useServerFn(getPrimaryShortenerDomain);
+  const primaryQ = useQuery({
+    queryKey: ["primary-shortener-domain"],
+    queryFn: () => primaryFn(),
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
+    refetchOnWindowFocus: false,
+  });
+  const primaryDomain = primaryQ.data?.domain ?? "sleepox.com";
+  const origin = typeof window !== "undefined" ? `${window.location.protocol}//${primaryDomain}` : `https://${primaryDomain}`;
   const links = dashQ.data?.links ?? [];
   const profile = dashQ.data?.profile;
   const stats = dashQ.data?.stats;
