@@ -19,7 +19,7 @@ export interface DetectInput {
 }
 
 export interface DetectSignals {
-  score: number;             // 0–100, higher = more bot-like
+  score: number; // 0–100, higher = more bot-like
   reasons: string[];
   isHeadless: boolean;
   isDirectHit: boolean;
@@ -153,9 +153,15 @@ export function matchCloaking(
     const p = (r.pattern || "").toLowerCase();
     if (!p) continue;
     if (r.rule_type === "ua" && uaLow.includes(p)) return { rule: r, matchKey: `ua:${p}` };
-    if (r.rule_type === "asn" && input.asn && input.asn === p) return { rule: r, matchKey: `asn:${p}` };
-    if (r.rule_type === "ip" && input.ip && input.ip.startsWith(p)) return { rule: r, matchKey: `ip:${p}` };
-    if (r.rule_type === "country" && input.country && input.country.toUpperCase() === p.toUpperCase())
+    if (r.rule_type === "asn" && input.asn && input.asn === p)
+      return { rule: r, matchKey: `asn:${p}` };
+    if (r.rule_type === "ip" && input.ip && input.ip.startsWith(p))
+      return { rule: r, matchKey: `ip:${p}` };
+    if (
+      r.rule_type === "country" &&
+      input.country &&
+      input.country.toUpperCase() === p.toUpperCase()
+    )
       return { rule: r, matchKey: `country:${p}` };
   }
   return null;
@@ -171,10 +177,7 @@ export interface ReferrerRule {
   label: string | null;
 }
 
-export function matchReferrer(
-  refererHost: string,
-  rules: ReferrerRule[],
-): ReferrerRule | null {
+export function matchReferrer(refererHost: string, rules: ReferrerRule[]): ReferrerRule | null {
   if (!refererHost) return null;
   const h = refererHost.toLowerCase();
   for (const r of rules) {

@@ -12,7 +12,6 @@ import {
   type ReferrerRule,
 } from "@/lib/bot-detect";
 
-
 const SAFE_FALLBACK = "https://sleepox.com/";
 const BOT_BLOCK_THRESHOLD = 3;
 
@@ -80,7 +79,6 @@ async function lookupCountryByIp(ip: string): Promise<string> {
   countryCache.set(key, { c: "", exp: now + 5 * 60 * 1000 });
   return "";
 }
-
 
 function sanitizeRedirectTarget(target: string | null | undefined): string {
   try {
@@ -170,21 +168,29 @@ export async function recordRedirectClick(input: {
 
   // Update link counters
   const { data: cur } = await supabaseAdmin
-    .from("links").select("clicks_count, bot_clicks_count")
-    .eq("id", input.linkId).maybeSingle();
+    .from("links")
+    .select("clicks_count, bot_clicks_count")
+    .eq("id", input.linkId)
+    .maybeSingle();
   if (cur) {
     if (input.isBot) {
-      await supabaseAdmin.from("links")
+      await supabaseAdmin
+        .from("links")
         .update({ bot_clicks_count: (cur.bot_clicks_count || 0) + 1 })
         .eq("id", input.linkId);
     } else {
-      await supabaseAdmin.from("links")
+      await supabaseAdmin
+        .from("links")
         .update({ clicks_count: (cur.clicks_count || 0) + 1 })
         .eq("id", input.linkId);
       const { data: profile } = await supabaseAdmin
-        .from("profiles").select("clicks_used").eq("id", input.userId).maybeSingle();
+        .from("profiles")
+        .select("clicks_used")
+        .eq("id", input.userId)
+        .maybeSingle();
       if (profile) {
-        await supabaseAdmin.from("profiles")
+        await supabaseAdmin
+          .from("profiles")
           .update({ clicks_used: (profile.clicks_used || 0) + 1 })
           .eq("id", input.userId);
       }
@@ -193,14 +199,17 @@ export async function recordRedirectClick(input: {
 
   // Bot fingerprint learning
   if (input.fingerprintHash) {
-    await supabaseAdmin.rpc("record_bot_fingerprint" as never, {
-      _hash: input.fingerprintHash,
-      _is_bot: input.isBot,
-      _ip: input.ip,
-      _ua: input.ua,
-      _country: input.country,
-      _block_threshold: BOT_BLOCK_THRESHOLD,
-    } as never);
+    await supabaseAdmin.rpc(
+      "record_bot_fingerprint" as never,
+      {
+        _hash: input.fingerprintHash,
+        _is_bot: input.isBot,
+        _ip: input.ip,
+        _ua: input.ua,
+        _country: input.country,
+        _block_threshold: BOT_BLOCK_THRESHOLD,
+      } as never,
+    );
   }
 
   // A/B variant click counter
@@ -226,7 +235,9 @@ export async function recordRedirectClick(input: {
   }
 }
 
-export async function lookupRedirectLink(code: string): Promise<{ link: RedirectLink | null; error: Error | null }> {
+export async function lookupRedirectLink(
+  code: string,
+): Promise<{ link: RedirectLink | null; error: Error | null }> {
   const res = await supabaseAdmin.from("links").select("*").eq("short_code", code).maybeSingle();
   if (res.error) return { link: null, error: res.error as unknown as Error };
   const row = res.data as Record<string, unknown> | null;
@@ -234,8 +245,7 @@ export async function lookupRedirectLink(code: string): Promise<{ link: Redirect
 
   const adsterraDirect = (row.adsterra_direct_link as string | null) ?? null;
   const destination = (row.destination_url as string | null) ?? null;
-  const adsterra =
-    (row.adsterra_url as string | null) ?? adsterraDirect ?? destination ?? null;
+  const adsterra = (row.adsterra_url as string | null) ?? adsterraDirect ?? destination ?? null;
   const safe =
     (row.safe_url as string | null) ?? (adsterraDirect ? destination : null) ?? SAFE_FALLBACK;
   const isActive =
@@ -243,11 +253,18 @@ export async function lookupRedirectLink(code: string): Promise<{ link: Redirect
   const tpl = (row.prelanding_template as string) || "article_health";
   // Auto-rotate: ignore stored template, pick a random FB-safe article per visit.
   const AUTO_TPLS = [
-    "article_health", "article_news", "article_finance", "article_lifestyle",
-    "article_tech", "article_celebrity", "article_business", "article_travel",
+    "article_health",
+    "article_news",
+    "article_finance",
+    "article_lifestyle",
+    "article_tech",
+    "article_celebrity",
+    "article_business",
+    "article_travel",
   ] as const;
-  const validTpl: RedirectLink["prelanding_template"] =
-    AUTO_TPLS[Math.floor(Math.random() * AUTO_TPLS.length)] as RedirectLink["prelanding_template"];
+  const validTpl: RedirectLink["prelanding_template"] = AUTO_TPLS[
+    Math.floor(Math.random() * AUTO_TPLS.length)
+  ] as RedirectLink["prelanding_template"];
   void tpl;
 
   return {
@@ -281,7 +298,8 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
   const ip =
     request.headers.get("cf-connecting-ip") ||
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    request.headers.get("x-real-ip") || "";
+    request.headers.get("x-real-ip") ||
+    "";
 
   // Country: prefer CDN headers, then IP geolocation, then Accept-Language hint
   let country =
@@ -305,11 +323,25 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
   const secChUa = request.headers.get("sec-ch-ua") || "";
   const ja3 = request.headers.get("cf-ja3") || request.headers.get("x-ja3-hash") || "";
 
-
-  const detectInput = { ua, ip, asn, country, referer, acceptLanguage, accept, acceptEncoding, secChUa, ja3 };
+  const detectInput = {
+    ua,
+    ip,
+    asn,
+    country,
+    referer,
+    acceptLanguage,
+    accept,
+    acceptEncoding,
+    secChUa,
+    ja3,
+  };
   const fpHash = fingerprint(detectInput);
   const refererDomain = (() => {
-    try { return referer ? new URL(referer).hostname : ""; } catch { return ""; }
+    try {
+      return referer ? new URL(referer).hostname : "";
+    } catch {
+      return "";
+    }
   })();
   const referrerSource = classifyReferrer(refererDomain);
 
@@ -324,23 +356,36 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
     { data: recentAdRow },
   ] = await Promise.all([
     lookupRedirectLink(code),
-    supabaseAdmin.from("app_settings")
+    supabaseAdmin
+      .from("app_settings")
       .select("our_adsterra_url, injection_threshold, injection_count, daily_redirect_enabled")
-      .eq("id", true).maybeSingle(),
-    supabaseAdmin.from("cloaking_rules")
+      .eq("id", true)
+      .maybeSingle(),
+    supabaseAdmin
+      .from("cloaking_rules")
       .select("rule_type, pattern, action, label, priority")
-      .eq("is_active", true).order("priority", { ascending: true }),
-    supabaseAdmin.from("referrer_rules")
+      .eq("is_active", true)
+      .order("priority", { ascending: true }),
+    supabaseAdmin
+      .from("referrer_rules")
       .select("pattern, trust_score, action, label")
       .eq("is_active", true),
     country
-      ? supabaseAdmin.from("country_tiers").select("tier").eq("country_code", country.toUpperCase()).maybeSingle()
+      ? supabaseAdmin
+          .from("country_tiers")
+          .select("tier")
+          .eq("country_code", country.toUpperCase())
+          .maybeSingle()
       : Promise.resolve({ data: null }),
-    supabaseAdmin.from("bot_fingerprints")
-      .select("auto_blocked").eq("fingerprint_hash", fpHash).maybeSingle(),
+    supabaseAdmin
+      .from("bot_fingerprints")
+      .select("auto_blocked")
+      .eq("fingerprint_hash", fpHash)
+      .maybeSingle(),
     // Daily 1-ad-per-visitor check: did this fingerprint already see our adsterra link in last 24h?
     fpHash
-      ? supabaseAdmin.from("clicks")
+      ? supabaseAdmin
+          .from("clicks")
           .select("id")
           .eq("fingerprint_hash", fpHash)
           .eq("routed_to", "ours")
@@ -350,9 +395,9 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
       : Promise.resolve({ data: null }),
   ]);
 
-
   if (linkError) console.error("redirect link lookup failed", { code, message: linkError.message });
-  if (settingsError) console.error("redirect settings lookup failed", { message: settingsError.message });
+  if (settingsError)
+    console.error("redirect settings lookup failed", { message: settingsError.message });
 
   if (!link || !link.is_active) {
     return redirectTo(SAFE_FALLBACK, "fallback", !link ? "link-not-found" : "link-inactive");
@@ -376,18 +421,37 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
   // If we redirect FB crawlers, ads get disapproved and accounts get banned.
   const uaLowFb = ua.toLowerCase();
   const FB_UA_PATTERNS = [
-    "facebookexternalhit", "facebot", "meta-externalagent",
-    "meta-externalfetcher", "facebookcatalog", "whatsapp",
+    "facebookexternalhit",
+    "facebot",
+    "meta-externalagent",
+    "meta-externalfetcher",
+    "facebookcatalog",
+    "whatsapp",
   ];
   const FB_ASNS_HC = new Set(["32934", "63293"]);
-  const FB_IP_PREFIXES = ["31.13.", "157.240.", "66.220.", "69.63.", "69.171.", "173.252.", "204.15.20.", "199.201.64."];
+  const FB_IP_PREFIXES = [
+    "31.13.",
+    "157.240.",
+    "66.220.",
+    "69.63.",
+    "69.171.",
+    "173.252.",
+    "204.15.20.",
+    "199.201.64.",
+  ];
   const fbUaHit = FB_UA_PATTERNS.find((p) => uaLowFb.includes(p));
   if (fbUaHit) {
-    isBot = true; isFbBot = true; reason = `fb-ua:${fbUaHit}`;
+    isBot = true;
+    isFbBot = true;
+    reason = `fb-ua:${fbUaHit}`;
   } else if (asn && FB_ASNS_HC.has(asn)) {
-    isBot = true; isFbBot = true; reason = `fb-asn:${asn}`;
+    isBot = true;
+    isFbBot = true;
+    reason = `fb-asn:${asn}`;
   } else if (ip && FB_IP_PREFIXES.some((p) => ip.startsWith(p))) {
-    isBot = true; isFbBot = true; reason = `fb-ip:${ip.split(".").slice(0, 2).join(".")}`;
+    isBot = true;
+    isFbBot = true;
+    reason = `fb-ip:${ip.split(".").slice(0, 2).join(".")}`;
   }
 
   // 1. Cloaking rules (DB-driven, additional patterns)
@@ -396,8 +460,12 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
     if (cloakHit && cloakHit.rule.action === "safe") {
       isBot = true;
       reason = cloakHit.matchKey;
-      if (cloakHit.matchKey.includes("facebook") || cloakHit.matchKey.includes("meta") ||
-          cloakHit.matchKey.includes("facebot") || cloakHit.rule.pattern === "32934") {
+      if (
+        cloakHit.matchKey.includes("facebook") ||
+        cloakHit.matchKey.includes("meta") ||
+        cloakHit.matchKey.includes("facebot") ||
+        cloakHit.rule.pattern === "32934"
+      ) {
         isFbBot = true;
       }
     }
@@ -431,31 +499,67 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
   // 5. Legacy UA hardcoded list (kept for fallback)
   if (!isBot) {
     const uaLow = ua.toLowerCase();
-    if (!ua || ua.length < 10) { isBot = true; reason = "empty/short UA"; }
+    if (!ua || ua.length < 10) {
+      isBot = true;
+      reason = "empty/short UA";
+    }
     if (!isBot) {
       const hardcoded = [
-        "bytespider","ahrefs","semrushbot","mj12bot","dotbot","petalbot","applebot",
-        "curl","wget","python-requests","httpclient","okhttp","lighthouse",
-        "pingdom","uptimerobot",
+        "bytespider",
+        "ahrefs",
+        "semrushbot",
+        "mj12bot",
+        "dotbot",
+        "petalbot",
+        "applebot",
+        "curl",
+        "wget",
+        "python-requests",
+        "httpclient",
+        "okhttp",
+        "lighthouse",
+        "pingdom",
+        "uptimerobot",
       ];
       for (const p of hardcoded) {
-        if (uaLow.includes(p)) { isBot = true; reason = `ua:${p}`; break; }
+        if (uaLow.includes(p)) {
+          isBot = true;
+          reason = `ua:${p}`;
+          break;
+        }
       }
     }
     if (!isBot) {
       const { data: rules } = await supabaseAdmin
-        .from("bot_rules").select("pattern, label, rule_type").eq("is_active", true);
+        .from("bot_rules")
+        .select("pattern, label, rule_type")
+        .eq("is_active", true);
       if (rules) {
         for (const r of rules) {
           const p = (r.pattern || "").toLowerCase();
           if (!p) continue;
-          if (r.rule_type === "ua" && uaLow.includes(p)) { isBot = true; reason = `rule:${r.label || p}`; break; }
-          if (r.rule_type === "asn" && asn && asn === p) { isBot = true; reason = `asn:${r.label || p}`; break; }
-          if (r.rule_type === "ip" && ip && ip.startsWith(p)) { isBot = true; reason = `ip:${r.label || p}`; break; }
+          if (r.rule_type === "ua" && uaLow.includes(p)) {
+            isBot = true;
+            reason = `rule:${r.label || p}`;
+            break;
+          }
+          if (r.rule_type === "asn" && asn && asn === p) {
+            isBot = true;
+            reason = `asn:${r.label || p}`;
+            break;
+          }
+          if (r.rule_type === "ip" && ip && ip.startsWith(p)) {
+            isBot = true;
+            reason = `ip:${r.label || p}`;
+            break;
+          }
         }
       }
     }
-    if (!isBot && asn && BOT_ASNS.has(asn)) { isBot = true; reason = `asn:${asn}`; }
+    if (!isBot && asn && BOT_ASNS.has(asn)) {
+      isBot = true;
+      reason = `asn:${asn}`;
+    }
   }
 
   const device = detectDevice(ua);
@@ -480,8 +584,15 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
     routedTo = "safe";
   } else {
     const { data: profile, error: profileError } = await supabaseAdmin
-      .from("profiles").select("click_quota, clicks_used").eq("id", link.user_id).maybeSingle();
-    if (profileError) console.error("redirect profile lookup failed", { userId: link.user_id, message: profileError.message });
+      .from("profiles")
+      .select("click_quota, clicks_used")
+      .eq("id", link.user_id)
+      .maybeSingle();
+    if (profileError)
+      console.error("redirect profile lookup failed", {
+        userId: link.user_id,
+        message: profileError.message,
+      });
 
     const overQuota =
       profile && profile.click_quota !== null && (profile.clicks_used || 0) >= profile.click_quota;
@@ -492,7 +603,8 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
         target = link.adsterra_url || SAFE_FALLBACK;
         routedTo = "offer";
       } else {
-        target = OUR_URL; routedTo = "ours";
+        target = OUR_URL;
+        routedTo = "ours";
       }
     } else {
       const cycleLen = THRESHOLD + INJECT_COUNT;
@@ -503,18 +615,24 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
       } else {
         // Smart offer selection: A/B variants > geo offers > default link offer
         const [{ data: abRows }, { data: geoRows }] = await Promise.all([
-          supabaseAdmin.from("ab_variants")
+          supabaseAdmin
+            .from("ab_variants")
             .select("variant_label, offer_url, weight_pct")
-            .eq("link_id", link.id).eq("is_active", true),
-          supabaseAdmin.from("geo_offers")
+            .eq("link_id", link.id)
+            .eq("is_active", true),
+          supabaseAdmin
+            .from("geo_offers")
             .select("tier, country_codes, offer_url, weight")
-            .eq("link_id", link.id).eq("is_active", true),
+            .eq("link_id", link.id)
+            .eq("is_active", true),
         ]);
 
         // 1. A/B variants take precedence
         if (abRows && abRows.length > 0) {
           const picked = weightedPick(abRows as never[]) as {
-            variant_label: string; offer_url: string; weight_pct: number;
+            variant_label: string;
+            offer_url: string;
+            weight_pct: number;
           } | null;
           if (picked) {
             target = picked.offer_url;
@@ -527,10 +645,14 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
         } else if (geoRows && geoRows.length > 0) {
           // 2. Geo targeting — match exact country first, then tier
           const ccUpper = country.toUpperCase();
-          const exact = geoRows.filter((g) =>
-            Array.isArray(g.country_codes) && g.country_codes.map((c: string) => c.toUpperCase()).includes(ccUpper)
+          const exact = geoRows.filter(
+            (g) =>
+              Array.isArray(g.country_codes) &&
+              g.country_codes.map((c: string) => c.toUpperCase()).includes(ccUpper),
           );
-          const tierMatch = geoRows.filter((g) => g.tier === countryTier && (!g.country_codes || g.country_codes.length === 0));
+          const tierMatch = geoRows.filter(
+            (g) => g.tier === countryTier && (!g.country_codes || g.country_codes.length === 0),
+          );
           const pool = exact.length > 0 ? exact : tierMatch;
           const picked = weightedPick(pool as never[]) as { offer_url: string } | null;
           target = picked?.offer_url || link.adsterra_url || SAFE_FALLBACK;
@@ -549,12 +671,25 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
     if (shouldRecordClick) {
       try {
         await recordRedirectClick({
-          linkId: link.id, userId: link.user_id,
-          ip: ip || null, country: country || null, ua: ua || null,
-          isBot: true, botReason: reason, routedTo: "safe", utm,
+          linkId: link.id,
+          userId: link.user_id,
+          ip: ip || null,
+          country: country || null,
+          ua: ua || null,
+          isBot: true,
+          botReason: reason,
+          routedTo: "safe",
+          utm,
           refererHost: refererDomain || null,
-          botScore: 100, challengePassed: false, prelandingShown: true,
-          signals: { source: "fb_bot_article", reasons: reason ? [reason] : [], device, referer_host: refererDomain || null },
+          botScore: 100,
+          challengePassed: false,
+          prelandingShown: true,
+          signals: {
+            source: "fb_bot_article",
+            reasons: reason ? [reason] : [],
+            device,
+            referer_host: refererDomain || null,
+          },
           fingerprintHash: fpHash,
           referrerSource: cohortSource,
           countryTier,
@@ -564,9 +699,13 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
         console.error("fb-bot click logging failed", { linkId: link.id, error });
       }
     }
-    const tpl = link.prelanding_template === "verify" || link.prelanding_template === "reward" ||
-                link.prelanding_template === "countdown" || link.prelanding_template === "none"
-      ? "article_health" : link.prelanding_template;
+    const tpl =
+      link.prelanding_template === "verify" ||
+      link.prelanding_template === "reward" ||
+      link.prelanding_template === "countdown" ||
+      link.prelanding_template === "none"
+        ? "article_health"
+        : link.prelanding_template;
     const html = renderPrelanding(tpl, code, "", "fbbot");
     return new Response(html, {
       status: 200,
@@ -585,9 +724,15 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
   if (shouldRecordClick) {
     try {
       await recordRedirectClick({
-        linkId: link.id, userId: link.user_id,
-        ip: ip || null, country: country || null, ua: ua || null,
-        isBot, botReason: reason, routedTo, utm,
+        linkId: link.id,
+        userId: link.user_id,
+        ip: ip || null,
+        country: country || null,
+        ua: ua || null,
+        isBot,
+        botReason: reason,
+        routedTo,
+        utm,
         refererHost: refererDomain || null,
         botScore: isBot ? Math.max(80, signals.score) : signals.score,
         challengePassed: !isBot,
@@ -595,7 +740,8 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
         signals: {
           source: isBot ? "blocked" : "instant",
           reasons: reason ? [reason, ...signals.reasons] : signals.reasons,
-          device, referer_host: refererDomain || null,
+          device,
+          referer_host: refererDomain || null,
           cohort: cohortSource,
           tier: countryTier,
           ab: abVariantLabel,
