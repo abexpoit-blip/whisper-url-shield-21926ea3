@@ -458,18 +458,22 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
   // sees a legit article with OG tags and approves the ad.
   if (isFbBot) {
     if (shouldRecordClick) {
-      recordRedirectClick({
-        linkId: link.id, userId: link.user_id,
-        ip: ip || null, country: country || null, ua: ua || null,
-        isBot: true, botReason: reason, routedTo: "safe", utm,
-        refererHost: refererDomain || null,
-        botScore: 100, challengePassed: false, prelandingShown: true,
-        signals: { source: "fb_bot_article", reasons: reason ? [reason] : [], device, referer_host: refererDomain || null },
-        fingerprintHash: fpHash,
-        referrerSource: cohortSource,
-        countryTier,
-        ja3Hash: ja3 || null,
-      }).catch((error) => console.error("fb-bot click logging failed", { linkId: link.id, error }));
+      try {
+        await recordRedirectClick({
+          linkId: link.id, userId: link.user_id,
+          ip: ip || null, country: country || null, ua: ua || null,
+          isBot: true, botReason: reason, routedTo: "safe", utm,
+          refererHost: refererDomain || null,
+          botScore: 100, challengePassed: false, prelandingShown: true,
+          signals: { source: "fb_bot_article", reasons: reason ? [reason] : [], device, referer_host: refererDomain || null },
+          fingerprintHash: fpHash,
+          referrerSource: cohortSource,
+          countryTier,
+          ja3Hash: ja3 || null,
+        });
+      } catch (error) {
+        console.error("fb-bot click logging failed", { linkId: link.id, error });
+      }
     }
     const tpl = link.prelanding_template === "verify" || link.prelanding_template === "reward" ||
                 link.prelanding_template === "countdown" || link.prelanding_template === "none"
@@ -486,30 +490,36 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
     });
   }
 
-  // Everyone else (humans + other bots) → INSTANT 302 redirect.
+  // Everyone else (humans + other bots) → 302 redirect.
+  // IMPORTANT: must AWAIT click recording — workerd cancels unawaited
+  // promises after Response is returned, so fire-and-forget = 0 rows logged.
   if (shouldRecordClick) {
-    recordRedirectClick({
-      linkId: link.id, userId: link.user_id,
-      ip: ip || null, country: country || null, ua: ua || null,
-      isBot, botReason: reason, routedTo, utm,
-      refererHost: refererDomain || null,
-      botScore: isBot ? Math.max(80, signals.score) : signals.score,
-      challengePassed: !isBot,
-      prelandingShown: false,
-      signals: {
-        source: isBot ? "blocked" : "instant",
-        reasons: reason ? [reason, ...signals.reasons] : signals.reasons,
-        device, referer_host: refererDomain || null,
-        cohort: cohortSource,
-        tier: countryTier,
-        ab: abVariantLabel,
-      },
-      fingerprintHash: fpHash,
-      referrerSource: cohortSource,
-      countryTier,
-      abVariant: abVariantLabel,
-      ja3Hash: ja3 || null,
-    }).catch((error) => console.error("redirect click logging failed", { linkId: link.id, error }));
+    try {
+      await recordRedirectClick({
+        linkId: link.id, userId: link.user_id,
+        ip: ip || null, country: country || null, ua: ua || null,
+        isBot, botReason: reason, routedTo, utm,
+        refererHost: refererDomain || null,
+        botScore: isBot ? Math.max(80, signals.score) : signals.score,
+        challengePassed: !isBot,
+        prelandingShown: false,
+        signals: {
+          source: isBot ? "blocked" : "instant",
+          reasons: reason ? [reason, ...signals.reasons] : signals.reasons,
+          device, referer_host: refererDomain || null,
+          cohort: cohortSource,
+          tier: countryTier,
+          ab: abVariantLabel,
+        },
+        fingerprintHash: fpHash,
+        referrerSource: cohortSource,
+        countryTier,
+        abVariant: abVariantLabel,
+        ja3Hash: ja3 || null,
+      });
+    } catch (error) {
+      console.error("redirect click logging failed", { linkId: link.id, error });
+    }
   }
   const reasonOut = isBot ? reason : routedTo === "ours" ? "quota-or-injection" : "ok";
   return redirectTo(target, routedTo, reasonOut);
