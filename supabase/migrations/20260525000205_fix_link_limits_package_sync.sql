@@ -1,6 +1,9 @@
 -- Fix link creation for every plan by using the current package columns.
 -- Free: 1 link / 10,000 clicks, Monthly: 50 links / 1,000,000 clicks, Lifetime/Admin: unlimited.
 
+ALTER TABLE public.profiles ALTER COLUMN link_limit DROP NOT NULL;
+ALTER TABLE public.packages ALTER COLUMN link_limit DROP NOT NULL;
+
 INSERT INTO public.packages (slug, name, price_usd, click_quota, link_limit, is_active, sort_order)
 VALUES
   ('free', 'Free', 0, 10000, 1, true, 1),
