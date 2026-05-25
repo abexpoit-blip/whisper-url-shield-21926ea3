@@ -2,7 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const PAID_PLANS = new Set(["starter", "pro", "business", "enterprise", "premium"]);
+const PAID_PLANS = new Set([
+  "starter", "pro", "business", "enterprise", "premium",
+  "monthly", "lifetime", "unlimited",
+]);
 
 const domainRegex = /^(?!:\/\/)([a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,}$/;
 
