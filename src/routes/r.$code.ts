@@ -86,90 +86,48 @@ export async function recordRedirectClick(input: {
   abVariant?: string | null;
   ja3Hash?: string | null;
 }) {
-  const { error: rpcError } = await supabaseAdmin.rpc(
-    "record_redirect_click" as never,
-    {
-      _link_id: input.linkId,
-      _user_id: input.userId,
-      _ip: input.ip,
-      _country: input.country,
-      _ua: input.ua,
-      _is_bot: input.isBot,
-      _bot_reason: input.botReason,
-      _routed_to: input.routedTo,
-      _utm_source: input.utm.utm_source,
-      _utm_medium: input.utm.utm_medium,
-      _utm_campaign: input.utm.utm_campaign,
-      _utm_term: input.utm.utm_term,
-      _utm_content: input.utm.utm_content,
-      _referer_host: input.refererHost,
-      _bot_score: input.botScore,
-      _signals: input.signals,
-      _challenge_passed: input.challengePassed,
-    } as never,
-  );
+  // Direct insert — no RPC dependency, so this works regardless of DB function state.
+  const row = {
+    link_id: input.linkId,
+    ip: input.ip,
+    country: input.country,
+    ua: input.ua,
+    is_bot: input.isBot,
+    bot_reason: input.botReason,
+    routed_to: input.routedTo,
+    challenge_passed: input.challengePassed,
+    prelanding_shown: input.prelandingShown,
+    fingerprint_hash: input.fingerprintHash ?? null,
+    referrer_source: input.referrerSource ?? null,
+    country_tier: input.countryTier ?? null,
+    ab_variant: input.abVariant ?? null,
+    ja3_hash: input.ja3Hash ?? null,
+  };
+  const { error: insertErr } = await supabaseAdmin.from("clicks").insert(row as never);
+  if (insertErr) {
+    console.error("redirect click insert failed", { linkId: input.linkId, message: insertErr.message });
+  }
 
-  // Always insert extended columns separately (RPC doesn't know about new cols).
-  // Strategy: insert a fresh click row OR if RPC handled the main insert, skip — but
-  // we don't know what the RPC does, so we always also update the latest row.
-  if (rpcError) {
-    const row = {
-      link_id: input.linkId,
-      ip: input.ip,
-      country: input.country,
-      ua: input.ua,
-      is_bot: input.isBot,
-      bot_reason: input.botReason,
-      routed_to: input.routedTo,
-      challenge_passed: input.challengePassed,
-      prelanding_shown: input.prelandingShown,
-      fingerprint_hash: input.fingerprintHash ?? null,
-      referrer_source: input.referrerSource ?? null,
-      country_tier: input.countryTier ?? null,
-      ab_variant: input.abVariant ?? null,
-      ja3_hash: input.ja3Hash ?? null,
-    };
-    const { error } = await supabaseAdmin.from("clicks").insert(row as never);
-    if (error) {
-      console.error("redirect click insert failed", { linkId: input.linkId, message: error.message });
-    }
-
-    const { data: cur } = await supabaseAdmin
-      .from("links").select("clicks_count, bot_clicks_count")
-      .eq("id", input.linkId).maybeSingle();
-    if (cur) {
-      if (input.isBot) {
-        await supabaseAdmin.from("links")
-          .update({ bot_clicks_count: (cur.bot_clicks_count || 0) + 1 })
-          .eq("id", input.linkId);
-      } else {
-        await supabaseAdmin.from("links")
-          .update({ clicks_count: (cur.clicks_count || 0) + 1 })
-          .eq("id", input.linkId);
-        const { data: profile } = await supabaseAdmin
-          .from("profiles").select("clicks_used").eq("id", input.userId).maybeSingle();
-        if (profile) {
-          await supabaseAdmin.from("profiles")
-            .update({ clicks_used: (profile.clicks_used || 0) + 1 })
-            .eq("id", input.userId);
-        }
+  // Update link counters
+  const { data: cur } = await supabaseAdmin
+    .from("links").select("clicks_count, bot_clicks_count")
+    .eq("id", input.linkId).maybeSingle();
+  if (cur) {
+    if (input.isBot) {
+      await supabaseAdmin.from("links")
+        .update({ bot_clicks_count: (cur.bot_clicks_count || 0) + 1 })
+        .eq("id", input.linkId);
+    } else {
+      await supabaseAdmin.from("links")
+        .update({ clicks_count: (cur.clicks_count || 0) + 1 })
+        .eq("id", input.linkId);
+      const { data: profile } = await supabaseAdmin
+        .from("profiles").select("clicks_used").eq("id", input.userId).maybeSingle();
+      if (profile) {
+        await supabaseAdmin.from("profiles")
+          .update({ clicks_used: (profile.clicks_used || 0) + 1 })
+          .eq("id", input.userId);
       }
-    }
-  } else {
-    // RPC succeeded — patch the just-inserted row with extended fields.
-    if (input.fingerprintHash || input.referrerSource || input.countryTier || input.abVariant) {
-      await supabaseAdmin
-        .from("clicks")
-        .update({
-          fingerprint_hash: input.fingerprintHash ?? null,
-          referrer_source: input.referrerSource ?? null,
-          country_tier: input.countryTier ?? null,
-          ab_variant: input.abVariant ?? null,
-          ja3_hash: input.ja3Hash ?? null,
-        } as never)
-        .eq("link_id", input.linkId)
-        .order("created_at", { ascending: false })
-        .limit(1);
     }
   }
 
