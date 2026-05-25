@@ -617,7 +617,7 @@ export const getLiveFeed = createServerFn({ method: "GET" })
     // Cohorts by referrer_source
     const cohortMap = new Map<string, { total: number; humans: number }>();
     clicks.forEach(c => {
-      const src = c.referrer_source ?? "direct";
+      const src = classifySrc(c.referer_host);
       const cur = cohortMap.get(src) ?? { total: 0, humans: 0 };
       cur.total++;
       if (!c.is_bot) cur.humans++;
