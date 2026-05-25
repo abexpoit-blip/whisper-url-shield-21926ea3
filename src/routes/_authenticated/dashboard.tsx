@@ -29,7 +29,7 @@ function DashboardPage() {
   const create = useServerFn(createLink);
   const remove = useServerFn(deleteLink);
   const toggle = useServerFn(toggleLink);
-  const updateTpl = useServerFn(updateLinkTemplate);
+  
 
   const dashQ = useQuery({
     queryKey: ["dashboard"],
