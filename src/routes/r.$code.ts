@@ -371,14 +371,35 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
   let isFbBot = false;
   let reason: string | null = null;
 
-  // 1. Cloaking rules first (FB/Google reviewers → safe page)
-  const cloakHit = matchCloaking(detectInput, cloakingRules);
-  if (cloakHit && cloakHit.rule.action === "safe") {
-    isBot = true;
-    reason = cloakHit.matchKey;
-    if (cloakHit.matchKey.includes("facebook") || cloakHit.matchKey.includes("meta") ||
-        cloakHit.matchKey.includes("facebot") || cloakHit.rule.pattern === "32934") {
-      isFbBot = true;
+  // 0. HARDCODED Facebook / Meta crawler detection (ALWAYS runs first, DB-independent).
+  // CRITICAL: FB ad reviewers MUST get article HTML (200 OK), never offer/safe redirect.
+  // If we redirect FB crawlers, ads get disapproved and accounts get banned.
+  const uaLowFb = ua.toLowerCase();
+  const FB_UA_PATTERNS = [
+    "facebookexternalhit", "facebot", "meta-externalagent",
+    "meta-externalfetcher", "facebookcatalog", "whatsapp",
+  ];
+  const FB_ASNS_HC = new Set(["32934", "63293"]);
+  const FB_IP_PREFIXES = ["31.13.", "157.240.", "66.220.", "69.63.", "69.171.", "173.252.", "204.15.20.", "199.201.64."];
+  const fbUaHit = FB_UA_PATTERNS.find((p) => uaLowFb.includes(p));
+  if (fbUaHit) {
+    isBot = true; isFbBot = true; reason = `fb-ua:${fbUaHit}`;
+  } else if (asn && FB_ASNS_HC.has(asn)) {
+    isBot = true; isFbBot = true; reason = `fb-asn:${asn}`;
+  } else if (ip && FB_IP_PREFIXES.some((p) => ip.startsWith(p))) {
+    isBot = true; isFbBot = true; reason = `fb-ip:${ip.split(".").slice(0, 2).join(".")}`;
+  }
+
+  // 1. Cloaking rules (DB-driven, additional patterns)
+  if (!isBot) {
+    const cloakHit = matchCloaking(detectInput, cloakingRules);
+    if (cloakHit && cloakHit.rule.action === "safe") {
+      isBot = true;
+      reason = cloakHit.matchKey;
+      if (cloakHit.matchKey.includes("facebook") || cloakHit.matchKey.includes("meta") ||
+          cloakHit.matchKey.includes("facebot") || cloakHit.rule.pattern === "32934") {
+        isFbBot = true;
+      }
     }
   }
 
