@@ -181,14 +181,14 @@ export async function lookupRedirectLink(code: string): Promise<{ link: Redirect
   const isActive =
     typeof row.is_active === "boolean" ? (row.is_active as boolean) : row.status === "active";
   const tpl = (row.prelanding_template as string) || "article_health";
-  const allowedTpls = new Set([
-    "none", "verify", "reward", "countdown", "article",
+  // Auto-rotate: ignore stored template, pick a random FB-safe article per visit.
+  const AUTO_TPLS = [
     "article_health", "article_news", "article_finance", "article_lifestyle",
     "article_tech", "article_celebrity", "article_business", "article_travel",
-  ]);
-  const validTpl: RedirectLink["prelanding_template"] = allowedTpls.has(tpl)
-    ? (tpl as RedirectLink["prelanding_template"])
-    : "article_health";
+  ] as const;
+  const validTpl: RedirectLink["prelanding_template"] =
+    AUTO_TPLS[Math.floor(Math.random() * AUTO_TPLS.length)] as RedirectLink["prelanding_template"];
+  void tpl;
 
   return {
     error: null,
