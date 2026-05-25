@@ -22,15 +22,19 @@ function AnalyticsPage() {
     queryKey: ["analytics"],
     queryFn: () => fn(),
     refetchInterval: 60_000,
-    staleTime: 30_000,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     retry: 1,
   });
   const cohortQ = useQuery({
     queryKey: ["cohort-retention"],
     queryFn: () => cohortFn(),
     staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   const d = q.data;
