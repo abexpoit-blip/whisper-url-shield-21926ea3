@@ -982,3 +982,87 @@ function KPIBox({ label, value, accent }: { label: string; value: string; accent
     </div>
   );
 }
+
+// ============================================================
+// Premium "data resets every Sunday" warning banner
+// ============================================================
+function SundayResetBanner() {
+  const [countdown, setCountdown] = useState(getNextSundayCountdown());
+  const [dismissed, setDismissed] = useState(false);
+
+  useMemo(() => {
+    if (dismissed) return;
+    const t = setInterval(() => setCountdown(getNextSundayCountdown()), 60_000);
+    return () => clearInterval(t);
+  }, [dismissed]);
+
+  if (dismissed) return null;
+
+  return (
+    <div className="relative overflow-hidden rounded-3xl border border-amber-300/60 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 p-6 lg:p-7 shadow-[0_10px_40px_rgba(251,146,60,0.18)]">
+      {/* Decorative glow */}
+      <div className="absolute -top-24 -right-24 w-72 h-72 bg-amber-300/30 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-rose-300/25 blur-[90px] rounded-full pointer-events-none" />
+
+      <div className="relative flex flex-col lg:flex-row lg:items-center gap-5">
+        {/* Icon + Premium chip */}
+        <div className="flex items-start gap-4 flex-1 min-w-0">
+          <div className="relative shrink-0">
+            <div className="absolute inset-0 bg-amber-400/40 blur-xl rounded-2xl animate-pulse" />
+            <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 flex items-center justify-center shadow-lg shadow-orange-500/40">
+              <AlertTriangle className="w-7 h-7 text-white" strokeWidth={2.5} />
+            </div>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2 mb-1.5">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase shadow-md">
+                <Zap className="w-3 h-3" fill="currentColor" /> Premium Notice
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/80 border border-amber-200 text-[10px] font-bold text-amber-700 tracking-wider uppercase">
+                Weekly Maintenance
+              </span>
+            </div>
+
+            <h3 className="text-lg lg:text-xl font-bold text-[#2D1B0D] tracking-tight" style={display}>
+              Every Sunday 00:00 UTC — raw click data resets
+            </h3>
+            <p className="text-sm text-[#5D4538] mt-1.5 leading-relaxed">
+              To keep your dashboard <span className="font-bold text-[#2D1B0D]">blazing fast</span> at billions of clicks scale,
+              detailed per-click logs older than 7 days are automatically purged.{" "}
+              <span className="font-semibold text-emerald-700">Your totals, bot stats, country breakdown & daily charts are kept forever ✓</span>
+            </p>
+          </div>
+        </div>
+
+        {/* Countdown */}
+        <div className="flex items-center gap-3 lg:border-l lg:border-amber-300/50 lg:pl-5 shrink-0">
+          <div className="text-right">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-amber-700 font-bold mb-1">Next reset in</p>
+            <p className="text-2xl font-bold font-mono text-[#2D1B0D] tabular-nums">{countdown}</p>
+          </div>
+          <button
+            onClick={() => setDismissed(true)}
+            className="w-8 h-8 rounded-full bg-white/60 hover:bg-white/90 border border-amber-200 flex items-center justify-center text-amber-700 transition"
+            aria-label="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function getNextSundayCountdown(): string {
+  const now = new Date();
+  const next = new Date(now);
+  const daysUntilSun = (7 - now.getUTCDay()) % 7 || 7;
+  next.setUTCDate(now.getUTCDate() + daysUntilSun);
+  next.setUTCHours(0, 0, 0, 0);
+  const ms = next.getTime() - now.getTime();
+  const d = Math.floor(ms / 86_400_000);
+  const h = Math.floor((ms % 86_400_000) / 3_600_000);
+  const m = Math.floor((ms % 3_600_000) / 60_000);
+  return `${d}d ${h.toString().padStart(2, "0")}h ${m.toString().padStart(2, "0")}m`;
+}
