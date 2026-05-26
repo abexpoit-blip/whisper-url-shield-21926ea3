@@ -94,7 +94,10 @@ function AnalyticsPage() {
         </div>
       </header>
 
+      <SundayResetBanner />
+
       {/* HERO — Live ticker + total card */}
+
       <section className="grid grid-cols-12 gap-6">
         <div className="col-span-12 lg:col-span-8 p-8 rounded-3xl bg-white/80 border border-white/90 backdrop-blur-2xl shadow-[0_8px_30px_rgba(255,126,95,0.08)] relative overflow-hidden">
           <div className="absolute -top-20 -right-20 w-72 h-72 bg-[#FF7E5F]/10 blur-[100px] rounded-full" />
