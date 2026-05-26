@@ -382,17 +382,9 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
       .select("auto_blocked")
       .eq("fingerprint_hash", fpHash)
       .maybeSingle(),
-    // Daily 1-ad-per-visitor check: did this fingerprint already see our adsterra link in last 24h?
-    fpHash
-      ? supabaseAdmin
-          .from("clicks")
-          .select("id")
-          .eq("fingerprint_hash", fpHash)
-          .eq("routed_to", "ours")
-          .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-          .limit(1)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
+    // Daily 1-ad-per-visitor check disabled: fingerprint_hash no longer stored on clicks
+    Promise.resolve({ data: null }),
+
   ]);
 
   if (linkError) console.error("redirect link lookup failed", { code, message: linkError.message });
