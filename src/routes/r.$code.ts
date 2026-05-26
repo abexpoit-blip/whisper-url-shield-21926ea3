@@ -687,7 +687,6 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
         refererHost: refererDomain || null,
         botScore: isBot ? Math.max(80, signals.score) : signals.score,
         challengePassed: !isBot,
-        prelandingShown: false,
         signals: {
           source: isBot ? "blocked" : "instant",
           reasons: reason ? [reason, ...signals.reasons] : signals.reasons,
@@ -698,11 +697,9 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
           ab: abVariantLabel,
         },
         fingerprintHash: fpHash,
-        referrerSource: cohortSource,
-        countryTier,
         abVariant: abVariantLabel,
-        ja3Hash: ja3 || null,
       });
+
     } catch (error) {
       console.error("redirect click logging failed", { linkId: link.id, error });
     }
