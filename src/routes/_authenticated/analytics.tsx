@@ -990,7 +990,7 @@ function SundayResetBanner() {
   const [countdown, setCountdown] = useState(getNextSundayCountdown());
   const [dismissed, setDismissed] = useState(false);
 
-  useMemo(() => {
+  useEffect(() => {
     if (dismissed) return;
     const t = setInterval(() => setCountdown(getNextSundayCountdown()), 60_000);
     return () => clearInterval(t);
