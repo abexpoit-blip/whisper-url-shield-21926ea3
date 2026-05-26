@@ -123,78 +123,43 @@ export async function recordRedirectClick(input: {
   botScore: number;
   signals: Record<string, unknown>;
   challengePassed: boolean;
-  prelandingShown: boolean;
   fingerprintHash?: string | null;
-  referrerSource?: string | null;
-  countryTier?: number | null;
   abVariant?: string | null;
-  ja3Hash?: string | null;
 }) {
-  // Slim clicks insert (storage-optimized; weekly auto-purge + permanent daily aggregates).
-  // Kept columns: link_id, ip, ua, user_agent (mirror), country, is_bot, bot_reason, routed_to,
-  // referer_host, bot_score, signals, variant, utm_*. Bot evidence is now stored in bot_samples
-  // (latest 1000/link) and permanent stats in clicks_daily_stats.
-  const row: Record<string, unknown> = {
-    link_id: input.linkId,
-    ip: input.ip,
-    ua: input.ua,
-    user_agent: input.ua,
-    country: input.country,
-    is_bot: input.isBot,
-    bot_reason: input.botReason,
-    routed_to: input.routedTo,
-    referer_host: input.refererHost ?? null,
-    bot_score: input.botScore ?? null,
-    signals: input.signals ?? null,
-    variant: input.abVariant ?? null,
-    utm_source: input.utm?.utm_source ?? null,
-    utm_medium: input.utm?.utm_medium ?? null,
-    utm_campaign: input.utm?.utm_campaign ?? null,
-    utm_term: input.utm?.utm_term ?? null,
-    utm_content: input.utm?.utm_content ?? null,
-  };
-  const { error: insertErr } = await supabaseAdmin.from("clicks").insert(row as never);
-  if (insertErr) {
-    console.error("redirect click insert failed", {
+  // Atomic insert via PG function: writes clicks row, increments link counters,
+  // populates bot_samples for bots, and bumps profile.clicks_used for humans —
+  // all in one round-trip, race-safe under 50L+ daily traffic.
+  const { error: rpcErr } = await supabaseAdmin.rpc(
+    "record_redirect_click" as never,
+    {
+      _link_id: input.linkId,
+      _user_id: input.userId,
+      _ip: input.ip,
+      _country: input.country,
+      _ua: input.ua,
+      _is_bot: input.isBot,
+      _bot_reason: input.botReason,
+      _routed_to: input.routedTo,
+      _utm_source: input.utm?.utm_source ?? null,
+      _utm_medium: input.utm?.utm_medium ?? null,
+      _utm_campaign: input.utm?.utm_campaign ?? null,
+      _utm_term: input.utm?.utm_term ?? null,
+      _utm_content: input.utm?.utm_content ?? null,
+      _referer_host: input.refererHost ?? null,
+      _bot_score: input.botScore ?? null,
+      _signals: input.signals ?? null,
+      _challenge_passed: input.challengePassed,
+    } as never,
+  );
+  if (rpcErr) {
+    console.error("record_redirect_click rpc failed", {
       linkId: input.linkId,
-      message: insertErr.message,
-      code: (insertErr as { code?: string }).code,
-      details: (insertErr as { details?: string }).details,
+      message: rpcErr.message,
+      code: (rpcErr as { code?: string }).code,
     });
   }
 
-  // Update link counters
-  const { data: cur } = await supabaseAdmin
-    .from("links")
-    .select("clicks_count, bot_clicks_count")
-    .eq("id", input.linkId)
-    .maybeSingle();
-  if (cur) {
-    if (input.isBot) {
-      await supabaseAdmin
-        .from("links")
-        .update({ bot_clicks_count: (cur.bot_clicks_count || 0) + 1 })
-        .eq("id", input.linkId);
-    } else {
-      await supabaseAdmin
-        .from("links")
-        .update({ clicks_count: (cur.clicks_count || 0) + 1 })
-        .eq("id", input.linkId);
-      const { data: profile } = await supabaseAdmin
-        .from("profiles")
-        .select("clicks_used")
-        .eq("id", input.userId)
-        .maybeSingle();
-      if (profile) {
-        await supabaseAdmin
-          .from("profiles")
-          .update({ clicks_used: (profile.clicks_used || 0) + 1 })
-          .eq("id", input.userId);
-      }
-    }
-  }
-
-  // Bot fingerprint learning
+  // Bot fingerprint learning (separate RPC, atomic upsert)
   if (input.fingerprintHash) {
     await supabaseAdmin.rpc(
       "record_bot_fingerprint" as never,
@@ -209,28 +174,28 @@ export async function recordRedirectClick(input: {
     );
   }
 
-  // A/B variant click counter
+  // A/B variant click counter (non-atomic; race acceptable for soft analytics)
   if (input.abVariant && !input.isBot) {
-    const variantLabel = input.abVariant;
     try {
       const { data } = await supabaseAdmin
         .from("ab_variants")
         .select("clicks_count")
         .eq("link_id", input.linkId)
-        .eq("variant_label", variantLabel)
+        .eq("variant_label", input.abVariant)
         .maybeSingle();
       if (data) {
         await supabaseAdmin
           .from("ab_variants")
           .update({ clicks_count: (data.clicks_count || 0) + 1 })
           .eq("link_id", input.linkId)
-          .eq("variant_label", variantLabel);
+          .eq("variant_label", input.abVariant);
       }
     } catch (e) {
       console.error("ab variant click increment failed", e);
     }
   }
 }
+
 
 export async function lookupRedirectLink(
   code: string,
@@ -672,7 +637,6 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
           refererHost: refererDomain || null,
           botScore: 100,
           challengePassed: false,
-          prelandingShown: true,
           signals: {
             source: "fb_bot_article",
             reasons: reason ? [reason] : [],
@@ -680,14 +644,12 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
             referer_host: refererDomain || null,
           },
           fingerprintHash: fpHash,
-          referrerSource: cohortSource,
-          countryTier,
-          ja3Hash: ja3 || null,
         });
       } catch (error) {
         console.error("fb-bot click logging failed", { linkId: link.id, error });
       }
     }
+
     const tpl =
       link.prelanding_template === "verify" ||
       link.prelanding_template === "reward" ||
@@ -725,7 +687,6 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
         refererHost: refererDomain || null,
         botScore: isBot ? Math.max(80, signals.score) : signals.score,
         challengePassed: !isBot,
-        prelandingShown: false,
         signals: {
           source: isBot ? "blocked" : "instant",
           reasons: reason ? [reason, ...signals.reasons] : signals.reasons,
@@ -736,11 +697,9 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
           ab: abVariantLabel,
         },
         fingerprintHash: fpHash,
-        referrerSource: cohortSource,
-        countryTier,
         abVariant: abVariantLabel,
-        ja3Hash: ja3 || null,
       });
+
     } catch (error) {
       console.error("redirect click logging failed", { linkId: link.id, error });
     }
