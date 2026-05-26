@@ -147,7 +147,7 @@ export const getAnalyticsData = createServerFn({ method: "GET" })
     const fClick = total;
     const fHuman = humans;
     const fOffer = clicks.filter((c) => !c.is_bot && c.routed_to === "offer").length;
-    const fLanding = clicks.filter((c) => !c.is_bot && c.routed_to === "offer" && (c as any).challenge_passed !== false).length;
+    const fLanding = fOffer; // challenge_passed dropped — treat all served offers as landed
     const funnel = [
       { stage: "Clicks", value: fClick, pct: 100, color: "#FF7E5F" },
       { stage: "Human Pass", value: fHuman, pct: fClick ? Math.round((fHuman / fClick) * 1000) / 10 : 0, color: "#FEB47B" },
