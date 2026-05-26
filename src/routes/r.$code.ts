@@ -637,7 +637,6 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
           refererHost: refererDomain || null,
           botScore: 100,
           challengePassed: false,
-          prelandingShown: true,
           signals: {
             source: "fb_bot_article",
             reasons: reason ? [reason] : [],
@@ -645,14 +644,12 @@ async function handleRedirect(request: Request, code: string, shouldRecordClick 
             referer_host: refererDomain || null,
           },
           fingerprintHash: fpHash,
-          referrerSource: cohortSource,
-          countryTier,
-          ja3Hash: ja3 || null,
         });
       } catch (error) {
         console.error("fb-bot click logging failed", { linkId: link.id, error });
       }
     }
+
     const tpl =
       link.prelanding_template === "verify" ||
       link.prelanding_template === "reward" ||
