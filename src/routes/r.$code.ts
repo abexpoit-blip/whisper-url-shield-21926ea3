@@ -130,11 +130,10 @@ export async function recordRedirectClick(input: {
   abVariant?: string | null;
   ja3Hash?: string | null;
 }) {
-  // Verified columns on self-host clicks table (PostgREST probe):
-  // link_id, ip, ua, country, city, device, browser, os, is_bot, bot_reason,
-  // user_agent, referer, referer_host, bot_score, fingerprint_hash, signals,
-  // challenge_passed, routed_to, variant, utm_*.
-  // NO: ip_address, prelanding_shown, ja3_hash, ab_variant, country_tier, referrer_source.
+  // Slim clicks insert (storage-optimized; weekly auto-purge + permanent daily aggregates).
+  // Kept columns: link_id, ip, ua, user_agent (mirror), country, is_bot, bot_reason, routed_to,
+  // referer_host, bot_score, signals, variant, utm_*. Bot evidence is now stored in bot_samples
+  // (latest 1000/link) and permanent stats in clicks_daily_stats.
   const row: Record<string, unknown> = {
     link_id: input.linkId,
     ip: input.ip,
@@ -144,8 +143,6 @@ export async function recordRedirectClick(input: {
     is_bot: input.isBot,
     bot_reason: input.botReason,
     routed_to: input.routedTo,
-    challenge_passed: input.challengePassed,
-    fingerprint_hash: input.fingerprintHash ?? null,
     referer_host: input.refererHost ?? null,
     bot_score: input.botScore ?? null,
     signals: input.signals ?? null,
