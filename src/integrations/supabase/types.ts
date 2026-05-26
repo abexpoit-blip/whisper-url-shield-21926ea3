@@ -157,58 +157,67 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_samples: {
+        Row: {
+          bot_reason: string | null
+          country: string | null
+          created_at: string
+          id: number
+          ip: string | null
+          link_id: string
+          ua: string | null
+        }
+        Insert: {
+          bot_reason?: string | null
+          country?: string | null
+          created_at?: string
+          id?: number
+          ip?: string | null
+          link_id: string
+          ua?: string | null
+        }
+        Update: {
+          bot_reason?: string | null
+          country?: string | null
+          created_at?: string
+          id?: number
+          ip?: string | null
+          link_id?: string
+          ua?: string | null
+        }
+        Relationships: []
+      }
       clicks: {
         Row: {
-          ab_variant: string | null
           bot_reason: string | null
-          challenge_passed: boolean
           country: string | null
-          country_tier: number | null
           created_at: string
-          fingerprint_hash: string | null
           id: string
           ip: string | null
           is_bot: boolean
-          ja3_hash: string | null
           link_id: string
-          prelanding_shown: boolean
-          referrer_source: string | null
           routed_to: string
           ua: string | null
         }
         Insert: {
-          ab_variant?: string | null
           bot_reason?: string | null
-          challenge_passed?: boolean
           country?: string | null
-          country_tier?: number | null
           created_at?: string
-          fingerprint_hash?: string | null
           id?: string
           ip?: string | null
           is_bot?: boolean
-          ja3_hash?: string | null
           link_id: string
-          prelanding_shown?: boolean
-          referrer_source?: string | null
           routed_to?: string
           ua?: string | null
         }
         Update: {
-          ab_variant?: string | null
           bot_reason?: string | null
-          challenge_passed?: boolean
           country?: string | null
-          country_tier?: number | null
           created_at?: string
-          fingerprint_hash?: string | null
           id?: string
           ip?: string | null
           is_bot?: boolean
-          ja3_hash?: string | null
           link_id?: string
-          prelanding_shown?: boolean
-          referrer_source?: string | null
           routed_to?: string
           ua?: string | null
         }
@@ -221,6 +230,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      clicks_daily_stats: {
+        Row: {
+          bot_reason: string | null
+          clicks_count: number
+          country: string | null
+          created_at: string
+          day: string
+          id: number
+          is_bot: boolean
+          link_id: string
+          routed_to: string | null
+        }
+        Insert: {
+          bot_reason?: string | null
+          clicks_count?: number
+          country?: string | null
+          created_at?: string
+          day: string
+          id?: number
+          is_bot?: boolean
+          link_id: string
+          routed_to?: string | null
+        }
+        Update: {
+          bot_reason?: string | null
+          clicks_count?: number
+          country?: string | null
+          created_at?: string
+          day?: string
+          id?: number
+          is_bot?: boolean
+          link_id?: string
+          routed_to?: string | null
+        }
+        Relationships: []
       }
       cloaking_rules: {
         Row: {
@@ -629,20 +674,6 @@ export type Database = {
       }
     }
     Views: {
-      cohort_stats: {
-        Row: {
-          bot_clicks: number | null
-          bot_pct: number | null
-          countries: number | null
-          first_click: string | null
-          human_clicks: number | null
-          last_click: string | null
-          source: string | null
-          total_clicks: number | null
-          unique_fps: number | null
-        }
-        Relationships: []
-      }
       country_stats_24h: {
         Row: {
           bots: number | null
@@ -654,6 +685,7 @@ export type Database = {
       }
     }
     Functions: {
+      aggregate_daily_clicks: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -694,6 +726,8 @@ export type Database = {
         }
         Returns: undefined
       }
+      trim_bot_samples: { Args: never; Returns: undefined }
+      weekly_cleanup_clicks: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "user" | "admin"
