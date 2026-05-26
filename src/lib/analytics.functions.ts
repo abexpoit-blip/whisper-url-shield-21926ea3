@@ -416,22 +416,22 @@ export const getCohortRetention = createServerFn({ method: "GET" })
     const thirtyAgo = new Date(Date.now() - 30 * 86_400_000).toISOString();
     const { data: raw } = await supabase
       .from("clicks")
-      .select("ip, fingerprint_hash, created_at, is_bot")
+      .select("ip, created_at, is_bot")
       .in("link_id", linkIds)
       .gte("created_at", thirtyAgo)
       .order("created_at", { ascending: true })
       .limit(50000);
 
-    const clicks = (raw ?? []) as Array<{ ip: string | null; fingerprint_hash: string | null; created_at: string; is_bot: boolean }>;
+    const clicks = (raw ?? []) as Array<{ ip: string | null; created_at: string; is_bot: boolean }>;
     const dayMs = 86_400_000;
     const today = Math.floor(Date.now() / dayMs);
 
-    // First-seen day per visitor
+    // First-seen day per visitor (IP-based; fingerprint_hash dropped for storage savings)
     const firstSeen = new Map<string, number>();
     const visitDays = new Map<string, Set<number>>();
     clicks.forEach((c) => {
       if (c.is_bot) return;
-      const id = c.fingerprint_hash || c.ip;
+      const id = c.ip;
       if (!id) return;
       const day = Math.floor(new Date(c.created_at).getTime() / dayMs);
       if (!firstSeen.has(id)) firstSeen.set(id, day);
