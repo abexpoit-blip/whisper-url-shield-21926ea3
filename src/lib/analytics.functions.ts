@@ -562,13 +562,23 @@ export const getLiveFeed = createServerFn({ method: "GET" })
     }
 
     const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
-    const modern = await supabase
+    const modernWithSource = await supabase
       .from("clicks")
-      .select("id, link_id, country, ua, is_bot, created_at")
+      .select("id, link_id, country, ua, is_bot, referer_host, created_at")
       .in("link_id", linkIds)
       .gte("created_at", dayAgo)
       .order("created_at", { ascending: false })
       .limit(5000);
+
+    const modern = modernWithSource.error
+      ? await supabase
+          .from("clicks")
+          .select("id, link_id, country, ua, is_bot, created_at")
+          .in("link_id", linkIds)
+          .gte("created_at", dayAgo)
+          .order("created_at", { ascending: false })
+          .limit(5000)
+      : modernWithSource;
 
     const legacy = modern.error
       ? await supabase
