@@ -16,12 +16,20 @@ type Click = {
 };
 
 
-// CRITICAL: Display 80% of real bot count so users don't panic.
-// Real numbers stay in DB; only DISPLAY is reduced.
-const BOT_DISPLAY_RATIO = 0.8;
-const hideBots = (real: number) => Math.floor(real * BOT_DISPLAY_RATIO);
+// Stats must show the same numbers that are stored in the database.
+const hideBots = (real: number) => real;
 
 async function selectClicks(supabase: any, linkIds: string[], sevenDaysAgo: string) {
+  const modern = await supabase
+    .from("clicks")
+    .select("id, link_id, country, ua, is_bot, bot_reason, routed_to, created_at")
+    .in("link_id", linkIds)
+    .gte("created_at", sevenDaysAgo)
+    .order("created_at", { ascending: false })
+    .limit(50000);
+
+  if (!modern.error) return modern;
+
   const legacy = await supabase
     .from("clicks")
     .select("id, link_id, country, user_agent, is_bot, bot_reason, variant, created_at")
@@ -41,14 +49,7 @@ async function selectClicks(supabase: any, linkIds: string[], sevenDaysAgo: stri
     };
   }
 
-  const modern = await supabase
-    .from("clicks")
-    .select("id, link_id, country, ua, is_bot, bot_reason, routed_to, referer_host, created_at")
-    .in("link_id", linkIds)
-    .gte("created_at", sevenDaysAgo)
-    .order("created_at", { ascending: false })
-    .limit(50000);
-  return modern.error ? legacy : modern;
+  return legacy;
 }
 
 function deviceFromUA(ua: string | null): "Mobile" | "Desktop" | "Tablet" | "Other" {
