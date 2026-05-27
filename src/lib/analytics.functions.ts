@@ -551,15 +551,25 @@ export const getLiveFeed = createServerFn({ method: "GET" })
     }
 
     const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
-    const { data: rawClicks } = await supabase
+    const modern = await supabase
       .from("clicks")
-      .select("id, link_id, country, ua, is_bot, referer_host, created_at")
+      .select("id, link_id, country, ua, is_bot, created_at")
       .in("link_id", linkIds)
       .gte("created_at", dayAgo)
       .order("created_at", { ascending: false })
       .limit(5000);
 
-    const clicks = ((rawClicks ?? []) as unknown) as Array<{ id: string; link_id: string; country: string | null; ua: string | null; is_bot: boolean; referer_host: string | null; created_at: string }>;
+    const legacy = modern.error
+      ? await supabase
+          .from("clicks")
+          .select("id, link_id, country, user_agent, is_bot, referer_host, created_at")
+          .in("link_id", linkIds)
+          .gte("created_at", dayAgo)
+          .order("created_at", { ascending: false })
+          .limit(5000)
+      : { data: null };
+
+    const clicks = (((modern.error ? legacy.data : modern.data) ?? []) as unknown) as Array<{ id: string; link_id: string; country: string | null; ua?: string | null; user_agent?: string | null; is_bot: boolean; referer_host?: string | null; created_at: string }>;
     const linkLookup = new Map((links ?? []).map((l) => [l.id, l]));
     const now = Date.now();
 
@@ -587,9 +597,10 @@ export const getLiveFeed = createServerFn({ method: "GET" })
 
     const events = clicks.slice(0, 50).map(c => {
       const cc = (c.country ?? "??").toUpperCase();
-      const dev = deviceFromUA(c.ua);
-      const br = browserFromUA(c.ua);
-      const os = osFromUA(c.ua);
+      const ua = c.ua ?? c.user_agent ?? null;
+      const dev = deviceFromUA(ua);
+      const br = browserFromUA(ua);
+      const os = osFromUA(ua);
       const src = classifySrc(c.referer_host);
       return {
         id: c.id,
@@ -598,7 +609,7 @@ export const getLiveFeed = createServerFn({ method: "GET" })
         country: cc,
         flag: COUNTRIES[cc]?.flag ?? "🌐",
         countryName: COUNTRIES[cc]?.name ?? cc,
-        ua: c.ua ?? null,
+        ua,
         is_bot: c.is_bot,
         referrer_source: src === "direct" ? null : src,
         device: dev,
