@@ -11,6 +11,7 @@ type Click = {
   bot_reason?: string | null;
   created_at: string;
   user_agent?: string | null;
+  referer_host?: string | null;
   variant?: string | null;
   referrer_source?: string | null;
 };
@@ -20,6 +21,16 @@ type Click = {
 const hideBots = (real: number) => real;
 
 async function selectClicks(supabase: any, linkIds: string[], sevenDaysAgo: string) {
+  const modernWithSource = await supabase
+    .from("clicks")
+    .select("id, link_id, country, ua, is_bot, bot_reason, routed_to, referer_host, created_at")
+    .in("link_id", linkIds)
+    .gte("created_at", sevenDaysAgo)
+    .order("created_at", { ascending: false })
+    .limit(50000);
+
+  if (!modernWithSource.error) return modernWithSource;
+
   const modern = await supabase
     .from("clicks")
     .select("id, link_id, country, ua, is_bot, bot_reason, routed_to, created_at")
