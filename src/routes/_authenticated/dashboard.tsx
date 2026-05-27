@@ -87,9 +87,10 @@ function DashboardPage() {
 
   const totalClicks = links.reduce((s, l) => s + (l.clicks_count || 0), 0);
   const botBlocked = links.reduce((s, l) => s + (l.bot_clicks_count || 0), 0);
+  const allTraffic = totalClicks + botBlocked;
   const activeLinks = links.filter((l) => l.is_active).length;
   const uniqueVisitors = stats?.uniqueVisitors ?? 0;
-  const botPct = totalClicks > 0 ? ((botBlocked / (totalClicks + botBlocked)) * 100) : 0;
+  const botPct = allTraffic > 0 ? ((botBlocked / allTraffic) * 100) : 0;
 
   const clickQuota = profile?.click_quota ?? null;
   const clicksUsed = Number(profile?.clicks_used ?? 0);
@@ -162,9 +163,9 @@ function DashboardPage() {
 
         {/* KPI ROW — 5 floating cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <KpiCard label="TOTAL CLICKS" value={fmtCompact(totalClicks)} sub="+12.5% this week" tone="up" />
+          <KpiCard label="HUMAN CLICKS" value={fmtCompact(totalClicks)} sub={`${fmtCompact(allTraffic)} total incl. bots`} tone="muted" />
           <KpiCard label="ACTIVE LINKS" value={String(activeLinks)} sub={`${links.length} total`} tone="muted" />
-          <KpiCard label="UNIQUE VISITORS" value={fmtCompact(uniqueVisitors)} sub="62% direct traffic" tone="muted" />
+          <KpiCard label="UNIQUE VISITORS" value={fmtCompact(uniqueVisitors)} sub="Last 30 days, humans only" tone="muted" />
           <KpiCard label="BOT BLOCKED" value={`${botPct.toFixed(1)}%`} sub={`${fmtCompact(botBlocked)} attempts`} tone="muted" />
           <QuotaCard pct={quotaPct} label={quotaLabel} />
         </div>
@@ -288,9 +289,7 @@ function DashboardPage() {
                             <td className="px-5 py-4"><MiniSpark up={sparkUp} /></td>
                             <td className="px-5 py-4">
                               <div className="text-sm font-bold text-[#2D1B0D] tabular-nums" style={display}>
-                                {(l.clicks_count || 0) >= 5000
-                                  ? "5,000+"
-                                  : (l.clicks_count || 0).toLocaleString()}
+                                {(l.clicks_count || 0).toLocaleString()}
                               </div>
                             </td>
                             <td className="px-5 py-4">

@@ -11,17 +11,36 @@ type Click = {
   bot_reason?: string | null;
   created_at: string;
   user_agent?: string | null;
+  referer_host?: string | null;
   variant?: string | null;
   referrer_source?: string | null;
 };
 
 
-// CRITICAL: Display 80% of real bot count so users don't panic.
-// Real numbers stay in DB; only DISPLAY is reduced.
-const BOT_DISPLAY_RATIO = 0.8;
-const hideBots = (real: number) => Math.floor(real * BOT_DISPLAY_RATIO);
+// Stats must show the same numbers that are stored in the database.
+const hideBots = (real: number) => real;
 
 async function selectClicks(supabase: any, linkIds: string[], sevenDaysAgo: string) {
+  const modernWithSource = await supabase
+    .from("clicks")
+    .select("id, link_id, country, ua, is_bot, bot_reason, routed_to, referer_host, created_at")
+    .in("link_id", linkIds)
+    .gte("created_at", sevenDaysAgo)
+    .order("created_at", { ascending: false })
+    .limit(50000);
+
+  if (!modernWithSource.error) return modernWithSource;
+
+  const modern = await supabase
+    .from("clicks")
+    .select("id, link_id, country, ua, is_bot, bot_reason, routed_to, created_at")
+    .in("link_id", linkIds)
+    .gte("created_at", sevenDaysAgo)
+    .order("created_at", { ascending: false })
+    .limit(50000);
+
+  if (!modern.error) return modern;
+
   const legacy = await supabase
     .from("clicks")
     .select("id, link_id, country, user_agent, is_bot, bot_reason, variant, created_at")
@@ -41,14 +60,7 @@ async function selectClicks(supabase: any, linkIds: string[], sevenDaysAgo: stri
     };
   }
 
-  const modern = await supabase
-    .from("clicks")
-    .select("id, link_id, country, ua, is_bot, bot_reason, routed_to, referer_host, created_at")
-    .in("link_id", linkIds)
-    .gte("created_at", sevenDaysAgo)
-    .order("created_at", { ascending: false })
-    .limit(50000);
-  return modern.error ? legacy : modern;
+  return legacy;
 }
 
 function deviceFromUA(ua: string | null): "Mobile" | "Desktop" | "Tablet" | "Other" {
@@ -550,7 +562,7 @@ export const getLiveFeed = createServerFn({ method: "GET" })
     }
 
     const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
-    const { data: rawClicks } = await supabase
+    const modernWithSource = await supabase
       .from("clicks")
       .select("id, link_id, country, ua, is_bot, referer_host, created_at")
       .in("link_id", linkIds)
@@ -558,7 +570,27 @@ export const getLiveFeed = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(5000);
 
-    const clicks = ((rawClicks ?? []) as unknown) as Array<{ id: string; link_id: string; country: string | null; ua: string | null; is_bot: boolean; referer_host: string | null; created_at: string }>;
+    const modern = modernWithSource.error
+      ? await supabase
+          .from("clicks")
+          .select("id, link_id, country, ua, is_bot, created_at")
+          .in("link_id", linkIds)
+          .gte("created_at", dayAgo)
+          .order("created_at", { ascending: false })
+          .limit(5000)
+      : modernWithSource;
+
+    const legacy = modern.error
+      ? await supabase
+          .from("clicks")
+          .select("id, link_id, country, user_agent, is_bot, referer_host, created_at")
+          .in("link_id", linkIds)
+          .gte("created_at", dayAgo)
+          .order("created_at", { ascending: false })
+          .limit(5000)
+      : { data: null };
+
+    const clicks = (((modern.error ? legacy.data : modern.data) ?? []) as unknown) as Array<{ id: string; link_id: string; country: string | null; ua?: string | null; user_agent?: string | null; is_bot: boolean; referer_host?: string | null; created_at: string }>;
     const linkLookup = new Map((links ?? []).map((l) => [l.id, l]));
     const now = Date.now();
 
@@ -586,10 +618,11 @@ export const getLiveFeed = createServerFn({ method: "GET" })
 
     const events = clicks.slice(0, 50).map(c => {
       const cc = (c.country ?? "??").toUpperCase();
-      const dev = deviceFromUA(c.ua);
-      const br = browserFromUA(c.ua);
-      const os = osFromUA(c.ua);
-      const src = classifySrc(c.referer_host);
+      const ua = c.ua ?? c.user_agent ?? null;
+      const dev = deviceFromUA(ua);
+      const br = browserFromUA(ua);
+      const os = osFromUA(ua);
+      const src = classifySrc(c.referer_host ?? null);
       return {
         id: c.id,
         created_at: c.created_at,
@@ -597,7 +630,7 @@ export const getLiveFeed = createServerFn({ method: "GET" })
         country: cc,
         flag: COUNTRIES[cc]?.flag ?? "🌐",
         countryName: COUNTRIES[cc]?.name ?? cc,
-        ua: c.ua ?? null,
+        ua,
         is_bot: c.is_bot,
         referrer_source: src === "direct" ? null : src,
         device: dev,
@@ -629,7 +662,7 @@ export const getLiveFeed = createServerFn({ method: "GET" })
     // Cohorts by referrer_source
     const cohortMap = new Map<string, { total: number; humans: number }>();
     clicks.forEach(c => {
-      const src = classifySrc(c.referer_host);
+      const src = classifySrc(c.referer_host ?? null);
       const cur = cohortMap.get(src) ?? { total: 0, humans: 0 };
       cur.total++;
       if (!c.is_bot) cur.humans++;

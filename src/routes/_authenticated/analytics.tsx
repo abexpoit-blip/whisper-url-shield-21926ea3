@@ -375,9 +375,7 @@ function AnalyticsPage() {
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-[10px] text-emerald-600 font-mono">
-                    {(l.humans >= 5000 ? "5,000+" : l.humans.toLocaleString())} ✓
-                  </p>
+                  <p className="text-[10px] text-emerald-600 font-mono">{l.humans.toLocaleString()} ✓</p>
                   <p className="text-[10px] text-amber-600 font-mono">{l.bots.toLocaleString()} 🛡</p>
                 </div>
                 <div className="text-right shrink-0 min-w-[58px]">

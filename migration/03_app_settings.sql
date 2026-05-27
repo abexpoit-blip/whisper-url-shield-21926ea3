@@ -38,3 +38,18 @@ ON CONFLICT (id) DO NOTHING;
 -- 2. Track daily auto-redirect per user
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS last_daily_redirect_at TIMESTAMPTZ;
+
+-- 3. Ensure click detail columns exist on the lean self-host schema so
+-- dashboard/analytics can show exact referrer, UTM, score and UA details.
+ALTER TABLE public.clicks
+  ADD COLUMN IF NOT EXISTS referer_host TEXT,
+  ADD COLUMN IF NOT EXISTS utm_source TEXT,
+  ADD COLUMN IF NOT EXISTS utm_medium TEXT,
+  ADD COLUMN IF NOT EXISTS utm_campaign TEXT,
+  ADD COLUMN IF NOT EXISTS utm_term TEXT,
+  ADD COLUMN IF NOT EXISTS utm_content TEXT,
+  ADD COLUMN IF NOT EXISTS bot_score INTEGER,
+  ADD COLUMN IF NOT EXISTS signals JSONB,
+  ADD COLUMN IF NOT EXISTS challenge_passed BOOLEAN NOT NULL DEFAULT false;
+
+CREATE INDEX IF NOT EXISTS idx_clicks_referer_host ON public.clicks (referer_host) WHERE referer_host IS NOT NULL;

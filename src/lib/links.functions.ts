@@ -19,6 +19,17 @@ type LinkRow = {
   prelanding_template?: string | null;
 };
 
+type DashboardClick = {
+  link_id: string;
+  country: string | null;
+  ua: string | null;
+  user_agent?: string | null;
+  ip: string | null;
+  ip_address?: string | null;
+  created_at: string;
+  is_bot: boolean;
+};
+
 export type DashboardLink = ReturnType<typeof normalizeLink>;
 
 function normalizeLink(row: LinkRow) {
@@ -107,7 +118,7 @@ export const getDashboardData = createServerFn({ method: "GET" })
 
     if (linkIds.length > 0) {
       const since = new Date(Date.now() - 30 * 86400000).toISOString();
-      const { data: clicks } = await context.supabase
+      const modern = await context.supabase
         .from("clicks")
         .select("link_id, country, ua, ip, created_at, is_bot")
         .in("link_id", linkIds)
@@ -115,19 +126,32 @@ export const getDashboardData = createServerFn({ method: "GET" })
         .eq("is_bot", false)
         .limit(50000);
 
-      for (const c of clicks ?? []) {
-        const created = c.created_at as string;
+      const legacy = modern.error
+        ? await context.supabase
+            .from("clicks")
+            .select("link_id, country, user_agent, ip_address, created_at, is_bot")
+            .in("link_id", linkIds)
+            .gte("created_at", since)
+            .eq("is_bot", false)
+            .limit(50000)
+        : { data: null };
+
+      const clicks = ((modern.error ? legacy.data : modern.data) ?? []) as DashboardClick[];
+
+      for (const c of clicks) {
+        const created = c.created_at;
         const k = created.slice(0, 10);
         if (k in clicksByDay) clicksByDay[k]++;
-        const country = (c.country as string) || "Unknown";
+        const country = c.country || "Unknown";
         countryStats[country] = (countryStats[country] ?? 0) + 1;
-        const ua = (c.ua as string) || "";
+        const ua = c.ua || c.user_agent || "";
         totalForMobile++;
         if (/Mobile|Android|iPhone|iPad/i.test(ua)) mobileCount++;
-        if (c.ip) uniqueIps.add(c.ip as string);
+        const ip = c.ip || c.ip_address;
+        if (ip) uniqueIps.add(ip);
         const daysAgo = Math.floor((Date.now() - new Date(created).getTime()) / 86400000);
         if (daysAgo >= 0 && daysAgo < 7) {
-          const arr = perLinkDaily[c.link_id as string];
+          const arr = perLinkDaily[c.link_id];
           if (arr) arr[6 - daysAgo]++;
         }
       }
